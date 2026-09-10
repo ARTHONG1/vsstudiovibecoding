@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vibe Coding</title>
+  <style>
+    :root { color-scheme: dark; font-family: "Segoe UI", "Malgun Gothic", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 32px 24px; background: #10151e; color: #e7edf5; }
+    .tag { color: #79dab4; font-size: 12px; letter-spacing: 2px; }
+    h1 { font-size: 34px; letter-spacing: -1px; margin: 14px 0; }
+    p { color: #aab8ca; font-size: 14px; line-height: 1.8; }
+    section { border-top: 1px solid #293546; padding: 18px 0; }
+    h2 { font-size: 16px; margin: 0 0 8px; }
+    kbd { background: #253346; border: 1px solid #526478; border-radius: 6px; padding: 3px 8px; color: white; }
+    button { background: #80dfba; color: #0a2119; padding: 12px 16px; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    #counter { display: block; margin-top: 12px; font-size: 14px; color: #80dfba; }
+  </style>
+</head>
+<body>
+  <div class="tag">PREVIEW · CODE · OPENCODE</div>
+  <h1>Vibe Coding</h1>
+  <p>코드를 바꾸고, 결과를 바로 확인하세요.</p>
+  <section>
+    <h2>왼쪽 · 미리보기</h2>
+    <p>가운데에서 이 파일을 수정하면 여기에 반영됩니다.</p>
+  </section>
+  <section>
+    <h2>가운데 · 코드</h2>
+    <p><strong>index.html</strong>의 문구나 색상을 바꿔 보세요.</p>
+  </section>
+  <section>
+    <h2>오른쪽 · OpenCode</h2>
+    <p>원하는 작업을 입력해 AI와 코딩하세요.<br><kbd>F12</kbd> 전체 터미널 ↔ 3열 화면<br><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>V</kbd> 화면 배치 복원</p>
+  </section>
+  <button id="testButton" type="button">미리보기 작동 확인</button>
+  <output id="counter">클릭 횟수: 0</output>
+  <script>
+    let count = 0;
+    document.getElementById('testButton').addEventListener('click', () => {
+      document.getElementById('counter').textContent = `클릭 횟수: ${++count}`;
+    });
+  </script>
+</body>
+</html>

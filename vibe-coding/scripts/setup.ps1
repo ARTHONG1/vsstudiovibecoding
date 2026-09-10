@@ -1,0 +1,164 @@
+[CmdletBinding()]
+param(
+  [string]$ProjectPath,
+  [string]$EntryFile = 'index.html',
+  [string]$PreviewUrl,
+  [string]$Root = (Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'VibeCoding'),
+  [string]$CodePath,
+  [string]$OpenCodePath,
+  [string]$DesktopPath = [Environment]::GetFolderPath('Desktop'),
+  [string]$SkillRoot = (Split-Path -Parent $PSScriptRoot),
+  [switch]$CreateSample,
+  [switch]$Apply
+)
+$ErrorActionPreference = 'Stop'
+function Find-Executable([string[]]$Candidates) {
+  foreach ($candidate in $Candidates) { if ($candidate -and (Test-Path -LiteralPath $candidate -PathType Leaf)) { return [IO.Path]::GetFullPath($candidate) } }
+  return $null
+}
+if ($env:OS -ne 'Windows_NT') { throw 'This setup helper supports Windows only.' }
+if ($CreateSample -and $ProjectPath) { throw 'Choose an existing ProjectPath OR CreateSample.' }
+if (!$ProjectPath -and !$CreateSample) { throw 'Specify ProjectPath, or CreateSample for a new demo.' }
+$Root = [IO.Path]::GetFullPath($Root)
+if ($CreateSample) { $ProjectPath = Join-Path $Root 'SampleProject' }
+$ProjectPath = [IO.Path]::GetFullPath($ProjectPath)
+if (!$CreateSample -and !(Test-Path -LiteralPath $ProjectPath -PathType Container)) { throw "Project does not exist: $ProjectPath" }
+$entryPath = [IO.Path]::GetFullPath((Join-Path $ProjectPath $EntryFile))
+if (!$entryPath.StartsWith($ProjectPath.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'EntryFile must stay within the project.' }
+if (!$CreateSample -and !(Test-Path -LiteralPath $entryPath -PathType Leaf)) { throw "Entry file does not exist: $entryPath" }
+if ($PreviewUrl) {
+  $url = [uri]$PreviewUrl
+  if ($url.Scheme -notin @('http','https') -or $url.Host -notin @('localhost','127.0.0.1','::1','[::1]')) { throw 'PreviewUrl must be a localhost HTTP(S) development server.' }
+}
+if (!$CodePath) {
+  $CodePath = Find-Executable @((Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'Programs\Microsoft VS Code\Code.exe'), (Join-Path $env:ProgramFiles 'Microsoft VS Code\Code.exe'))
+  if (!$CodePath) { $command = Get-Command code.cmd -ErrorAction SilentlyContinue; if ($command) { $CodePath = Find-Executable @((Join-Path (Split-Path (Split-Path $command.Source)) 'Code.exe')) } }
+}
+if (!$OpenCodePath) {
+  $command = Get-Command opencode.exe -ErrorAction SilentlyContinue
+  $OpenCodePath = Find-Executable @($(if ($command) {$command.Source}), (Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'npm\node_modules\opencode-ai\bin\opencode.exe'), (Join-Path $env:USERPROFILE '.opencode\bin\opencode.exe'), (Join-Path $env:USERPROFILE 'scoop\shims\opencode.exe'))
+}
+# npm uses a .cmd shim; the integrated terminal needs the underlying native EXE.
+if (!$OpenCodePath) {
+  $npmRoot = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'npm\node_modules\opencode-ai'
+  $shim = Get-Command opencode.cmd -ErrorAction SilentlyContinue
+  $npmRoots = @($npmRoot)
+  if ($shim) { $npmRoots += Join-Path (Split-Path $shim.Source) 'node_modules\opencode-ai' }
+  foreach ($candidateRoot in ($npmRoots | Select-Object -Unique)) {
+    if (!(Test-Path -LiteralPath $candidateRoot)) { continue }
+    $binaries = @(Get-ChildItem -LiteralPath $candidateRoot -Filter opencode.exe -Recurse -File -ErrorAction SilentlyContinue)
+    $preferred = $binaries | Sort-Object @{Expression={ if ($_.FullName -match 'baseline') {0} else {1} }} | Select-Object -First 1
+    if ($preferred) { $OpenCodePath = $preferred.FullName; break }
+  }
+}
+if ($OpenCodePath -and [IO.Path]::GetExtension($OpenCodePath) -ne '.exe') { throw 'OpenCodePath must be the native opencode.exe, not an npm .cmd/.ps1 shim. Locate it inside npm node_modules/opencode-ai.' }
+$missing = @()
+if (!$CodePath -or !(Test-Path -LiteralPath $CodePath -PathType Leaf)) { $missing += 'VS Code executable' }
+if (!$OpenCodePath -or !(Test-Path -LiteralPath $OpenCodePath -PathType Leaf)) { $missing += 'OpenCode executable (not just the extension)' }
+$sha = [Security.Cryptography.SHA256]::Create()
+try { $id = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($ProjectPath.ToLowerInvariant())))).Replace('-','').Substring(0,10).ToLowerInvariant() } finally { $sha.Dispose() }
+$name = (Split-Path -Leaf $ProjectPath) -replace '[<>:"/\\|?*]', '_'
+$workspaceDir = Join-Path $Root 'Workspaces'
+$workspacePath = Join-Path $workspaceDir ($name + '-' + $id + '.code-workspace')
+$shortcutPath = Join-Path $DesktopPath ('Vibe Coding - ' + $name + '-' + $id + '.lnk')
+$plan = [ordered]@{ project=$ProjectPath; entry=$entryPath; previewUrl=$PreviewUrl; root=$Root; code=$CodePath; openCode=$OpenCodePath; workspace=$workspacePath; shortcut=$shortcutPath; missing=$missing; applied=$false }
+if (!$Apply) { $plan | ConvertTo-Json -Depth 5; return }
+if ($missing.Count) { throw ('Install/discover prerequisites first: ' + ($missing -join ', ')) }
+$version = & $OpenCodePath --version
+if ($LASTEXITCODE -ne 0) { throw 'OpenCode --version failed.' }
+$userDir = Join-Path $Root 'VSCodeUserData'
+$extensionsDir = Join-Path $Root 'VSCodeExtensions'
+$backup = Join-Path $Root ('Backups\setup-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
+$utf8 = New-Object Text.UTF8Encoding($false)
+function Read-Object([string]$Path) {
+  if (!(Test-Path -LiteralPath $Path)) { return [pscustomobject]@{} }
+  try { $value = Get-Content -Raw -Encoding UTF8 -LiteralPath $Path | ConvertFrom-Json } catch { throw "Cannot parse $Path. Preserve it and use a JSONC-aware edit; do not overwrite." }
+  if ($null -eq $value -or $value -is [array] -or $value -is [string]) { throw "Expected a JSON object: $Path" }
+  return $value
+}
+function Set-Key($Object, [string]$Key, $Value) { $Object | Add-Member -Force NoteProperty $Key $Value }
+function Save-Json([string]$Path, $Value) {
+  if (Test-Path -LiteralPath $Path) { Copy-Item -LiteralPath $Path -Destination (Join-Path $backup ([IO.Path]::GetFileName($Path))) }
+  [IO.File]::WriteAllText($Path, (ConvertTo-Json -InputObject $Value -Depth 30), $utf8)
+}
+$settingsPath = Join-Path $userDir 'User\settings.json'
+$keybindingsPath = Join-Path $userDir 'User\keybindings.json'
+$settings = Read-Object $settingsPath
+$keys = @()
+if (Test-Path -LiteralPath $keybindingsPath) {
+  try { $parsedKeys = Get-Content -Raw -Encoding UTF8 -LiteralPath $keybindingsPath | ConvertFrom-Json; $keys = @($parsedKeys) } catch { throw 'Keybindings cannot be parsed. Preserve and repair JSONC before continuing.' }
+  if (@($keys | Where-Object { !$_.key -or !$_.command }).Count) { throw 'Existing keybindings contain invalid entries. Preserve and repair before applying.' }
+}
+$workspace = Read-Object $workspacePath
+New-Item -ItemType Directory -Force -Path (Join-Path $userDir 'User'),$extensionsDir,$workspaceDir,$backup | Out-Null
+if ($CreateSample) {
+  New-Item -ItemType Directory -Force -Path $ProjectPath | Out-Null
+  if (!(Test-Path -LiteralPath $entryPath)) { Copy-Item -LiteralPath (Join-Path $SkillRoot 'assets\sample.html') -Destination $entryPath }
+}
+if (!(Test-Path -LiteralPath $entryPath -PathType Leaf)) { throw 'Entry file is not a file.' }
+$profiles = $settings.'terminal.integrated.profiles.windows'
+if (!$profiles) { $profiles = [pscustomobject]@{} }
+$startup = '[Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding; chcp 65001 | Out-Null'
+$tokens=$null; $errors=$null
+[void][Management.Automation.Language.Parser]::ParseInput($startup,[ref]$tokens,[ref]$errors)
+if ($errors.Count) { throw 'Invalid terminal startup command.' }
+Set-Key $profiles 'Vibe PowerShell' @{path=(Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe');args=@('-NoLogo','-NoProfile','-NoExit','-Command',$startup)}
+Set-Key $settings 'terminal.integrated.profiles.windows' $profiles
+Set-Key $settings 'terminal.integrated.defaultProfile.windows' 'Vibe PowerShell'
+$skip = @($settings.'terminal.integrated.commandsToSkipShell' | Where-Object { $_ -and $_ -notin @('-vibe.toggleTerminal','-vibe.restoreLayout') })
+Set-Key $settings 'terminal.integrated.commandsToSkipShell' @($skip + @('vibe.toggleTerminal','vibe.restoreLayout') | Select-Object -Unique)
+Set-Key $settings 'workbench.panel.opensMaximized' 'never'
+Set-Key $settings 'workbench.panel.defaultLocation' 'right'
+Set-Key $settings 'terminal.integrated.enablePersistentSessions' $true
+Set-Key $settings 'terminal.integrated.tabs.enabled' $false
+Set-Key $settings 'livePreview.openPreviewTarget' 'Embedded Preview'
+Set-Key $settings 'livePreview.autoRefreshPreview' 'On All Changes in Editor'
+Set-Key $settings 'workbench.startupEditor' 'none'
+Save-Json $settingsPath $settings
+$keys = @($keys | Where-Object { $_ -and $_.command -notin @('vibe.toggleTerminal','vibe.restoreLayout') })
+foreach ($state in @($false,$true)) {
+  $condition = if ($state) {'panelMaximized'} else {'!panelMaximized'}
+  $keys += @{key='f12';command='vibe.toggleTerminal';when=('config.vibe.enabled && '+$condition);args=@{maximized=$state}}
+  $keys += @{key='ctrl+alt+v';command='vibe.restoreLayout';when=('config.vibe.enabled && '+$condition);args=@{maximized=$state}}
+}
+Save-Json $keybindingsPath $keys
+$wsSettings = $workspace.settings
+if (!$wsSettings) { $wsSettings = [pscustomobject]@{} }
+Set-Key $wsSettings 'vibe.enabled' $true
+Set-Key $wsSettings 'vibe.opencodePath' $OpenCodePath
+Set-Key $wsSettings 'vibe.entryFile' $EntryFile
+Set-Key $wsSettings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
+Set-Key $wsSettings 'window.title' 'Vibe Coding - ${activeEditorShort}${separator}${rootName}'
+$otherFolders = @($workspace.folders | Where-Object { $_ -and $_.path -ne $ProjectPath })
+Set-Key $workspace 'folders' (@(@{path=$ProjectPath}) + $otherFolders)
+Set-Key $workspace 'settings' $wsSettings
+Save-Json $workspacePath $workspace
+$packageSource = Join-Path $SkillRoot 'assets\workspace-extension'
+$manifest = Get-Content -Raw -Encoding UTF8 (Join-Path $packageSource 'extension\package.json') | ConvertFrom-Json
+$packagePath = Join-Path $backup ('vibe-workspace-' + $manifest.version + '.vsix')
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[IO.Compression.ZipFile]::CreateFromDirectory($packageSource, $packagePath)
+$cli = Join-Path (Split-Path -Parent $CodePath) 'bin\code.cmd'
+if (!(Test-Path -LiteralPath $cli)) { throw 'VS Code CLI was not found beside Code.exe.' }
+$installed = @(& $cli --user-data-dir $userDir --extensions-dir $extensionsDir --list-extensions --show-versions)
+if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect installed extensions.' }
+foreach ($extension in @('ms-vscode.live-server','sst-dev.opencode',$packagePath)) {
+  if ($extension -eq $packagePath) { if (('local-vibe.vibe-workspace@'+$manifest.version) -in $installed) { continue } }
+  elseif (@($installed | Where-Object { $_ -like ($extension+'@*') }).Count) { continue }
+  & $cli --user-data-dir $userDir --extensions-dir $extensionsDir --install-extension $extension --force
+  if ($LASTEXITCODE -ne 0) { throw "Extension installation failed: $extension. Configuration backup: $backup" }
+}
+if (!(Test-Path -LiteralPath $DesktopPath -PathType Container)) { throw 'Desktop directory not found; provide the real DesktopPath.' }
+if (Test-Path -LiteralPath $shortcutPath) { Copy-Item -LiteralPath $shortcutPath -Destination $backup }
+$shell = New-Object -ComObject WScript.Shell
+$link = $shell.CreateShortcut($shortcutPath)
+$link.TargetPath = $CodePath
+$link.Arguments = '--new-window --skip-release-notes --user-data-dir "' + $userDir + '" --extensions-dir "' + $extensionsDir + '" "' + $workspacePath + '"'
+$link.WorkingDirectory = $ProjectPath
+$link.IconLocation = $CodePath + ',0'
+$link.Save()
+$plan.applied=$true
+$plan['backup']=$backup
+$plan['openCodeVersion']=($version -join ' ')
+$plan['uiVerification']='PENDING: agent must launch shortcut and complete references/verification.md'
+$plan | ConvertTo-Json -Depth 5

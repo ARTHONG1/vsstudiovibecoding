@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vibe Coding - Windows VS Code 3열 AI 코딩 환경 설정 가이드</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <style>
+    :root {
+      --pico-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
+      --pico-primary: #0078d4;
+      --pico-primary-background: #0078d4;
+    }
+    body {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 2rem 0;
+      border-bottom: 1px solid var(--pico-muted-border-color);
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      background-color: var(--pico-primary-background);
+      color: white;
+      border-radius: 2rem;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+    pre {
+      background-color: #1e1e1e;
+      color: #d4d4d4;
+      padding: 1.25rem;
+      border-radius: 8px;
+      position: relative;
+      overflow-x: auto;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .step-card {
+      border: 1px solid var(--pico-muted-border-color);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      background-color: var(--pico-card-background-color);
+    }
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background-color: var(--pico-primary-background);
+      color: white;
+      font-weight: bold;
+      margin-right: 0.5rem;
+    }
+    .warning-box {
+      background-color: rgba(255, 193, 7, 0.15);
+      border-left: 4px solid #ffc107;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="badge">Windows 전용 Vibe Coding 환경</span>
+    <h1>Vibe Coding 시작 가이드</h1>
+    <p>AI에게 설치부터 화면 검증까지 맡기는 <strong>미리보기 | 코드 | OpenCode</strong> 3열 코딩 환경</p>
+    <div>
+      <a href="https://github.com/ARTHONG1/vsstudiovibecoding" role="button" class="secondary">GitHub 저장소 보기</a>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>🚀 1분 만에 세팅하기 (AI에게 요청)</h2>
+      <p>로컬 실행 권한이 있는 AI 에이전트(Codex 등)에게 아래 프롬프트를 그대로 복사해서 전달하세요.</p>
+      
+      <div style="position: relative;">
+        <pre><code>https://github.com/ARTHONG1/vsstudiovibecoding 의 vibe-coding 폴더를
+내 AI 도구의 스킬 폴더에 설치하고 SKILL.md를 읽어 실행해줘.
+Windows에서 별도 샘플 프로젝트를 만들고 VS Code, OpenCode CLI,
+필수 확장, 미리보기 | 코드 | OpenCode 3열 화면과 F12 전환까지 설정해줘.
+기존 설정과 파일은 보존하고 실제 화면, 버튼, F12 왕복,
+바로가기 재실행을 검증해줘. 보안 승인과 로그인이 필요하면
+정확히 어떤 버튼을 내가 눌러야 하는지 알려줘.</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>📌 핵심 구성 및 단축키</h2>
+      <div class="grid">
+        <div class="step-card">
+          <h3>🖥️ 3열 분할 화면</h3>
+          <p><strong>[왼쪽]</strong> 실시간 웹 미리보기 (Live Preview)<br>
+             <strong>[가운데]</strong> 소스 코드 편집기<br>
+             <strong>[오른쪽]</strong> OpenCode 터미널 (AI 에이전트)</p>
+        </div>
+        <div class="step-card">
+          <h3>⌨️ 편리한 단축키</h3>
+          <p><strong>F12</strong>: 3열 화면 ↔ 전체 터미널 토글<br>
+             <strong>Ctrl + Alt + V</strong>: 화면 배치가 흐트러졌을 때 원래 3열로 즉시 복원</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>⚠️ 사용자가 직접 눌러야 하는 단계 (중요!)</h2>
+      <div class="warning-box">
+        <strong>보안 정책 안내:</strong> AI 에이전트는 PC 보안 설정이나 권한 승인 창을 대신 누를 수 없습니다. 아래 화면이 나오면 직접 확인하고 클릭해주세요.
+      </div>
+      
+      <div class="step-card">
+        <h4>1. 작업 공간 신뢰 (Workspace Trust)</h4>
+        <p>VS Code 실행 후 <em>"Do you trust the authors of the files in this workspace?"</em> 팝업이 뜨면 <strong>[Trust Workspace & Continue]</strong>를 눌러주세요. (제한 모드에서는 Live Preview 및 확장이 실행되지 않습니다)</p>
+      </div>
+
+      <div class="step-card">
+        <h4>2. 화면 제어 승인</h4>
+        <p>AI가 화면을 검증할 수 있도록 AI 클라이언트(Codex 등)가 띄우는 컴퓨터/앱 제어 권한을 승인해주세요.</p>
+      </div>
+
+      <div class="step-card">
+        <h4>3. OpenCode AI 모델 연결</h4>
+        <p>오른쪽 OpenCode 터미널에서 <code>/connect</code>를 입력하여 사용할 AI 모델(OpenCode Zen, OpenAI 등)을 연결하세요.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>❓ 자주 묻는 질문 & 문제 해결</h2>
+      <details>
+        <summary><strong>VS Code가 열렸는데 3열로 안 나뉘고 빈 창만 뜹니다.</strong></summary>
+        <p>상단에 "Restricted Mode"가 떠 있는지 확인하세요. 작업 공간 신뢰(Trust Workspace)를 승인하지 않으면 확장 기능이 동작하지 않습니다. 신뢰 승인 후 <strong>Ctrl + Alt + V</strong>를 누르면 3열 배치가 완성됩니다.</p>
+      </details>
+      <details>
+        <summary><strong>F12를 눌렀는데 반응이 없거나 다른 기능이 동작합니다.</strong></summary>
+        <p>노트북의 경우 <strong>Fn + F12</strong>를 눌러야 할 수 있습니다. 또한 반드시 바탕화면에 생성된 <strong>Vibe Coding - [프로젝트명]</strong> 전용 바로가기로 실행해야 단축키 설정이 적용됩니다.</p>
+      </details>
+      <details>
+        <summary><strong>내 기존 프로젝트에 적용하고 싶습니다.</strong></summary>
+        <p>AI에게 <code>"내 프로젝트 경로(C:...)의 index.html을 대상으로 vibe-coding 환경을 적용해줘"</code>라고 요청하면 기존 파일은 유지하면서 전용 바로가기를 생성해 줍니다.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer style="text-align: center; margin-top: 3rem; color: var(--pico-muted-color);">
+    <p>© 2026 Vibe Coding Project · Released under MIT License</p>
+  </footer>
+</body>
+</html>

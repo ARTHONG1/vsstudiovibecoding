@@ -1,0 +1,49 @@
+﻿{
+    "name":  "vibe-workspace",
+    "displayName":  "Vibe Coding Workspace",
+    "publisher":  "local-vibe",
+    "version":  "1.2.0",
+    "engines":  {
+                    "vscode":  "^1.94.0"
+                },
+    "main":  "./extension.js",
+    "activationEvents":  [
+                             "onStartupFinished"
+                         ],
+    "extensionDependencies":  [
+                                  "ms-vscode.live-server"
+                              ],
+    "contributes":  {
+                        "commands":  [
+                                         {
+                                             "command":  "vibe.restoreLayout",
+                                             "title":  "Vibe Coding: Restore Preview | Code | OpenCode"
+                                         },
+                                         {
+                                             "command":  "vibe.toggleTerminal",
+                                             "title":  "Vibe Coding: Toggle Full Terminal (F12)"
+                                         }
+                                     ],
+                        "configuration":  {
+                                              "title":  "Vibe Coding",
+                                              "properties":  {
+                                                                 "vibe.enabled":  {
+                                                                                      "type":  "boolean",
+                                                                                      "default":  false
+                                                                                  },
+                                                                 "vibe.opencodePath":  {
+                                                                                           "type":  "string",
+                                                                                           "default":  ""
+                                                                                       },
+                                                                 "vibe.entryFile":  {
+                                                                                        "default":  "index.html",
+                                                                                        "type":  "string"
+                                                                                    },
+                                                                 "vibe.previewUrl":  {
+                                                                                         "default":  "",
+                                                                                         "type":  "string"
+                                                                                     }
+                                                             }
+                                          }
+                    }
+}
