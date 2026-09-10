@@ -8,7 +8,6 @@ function activate(context) {
   const output = vscode.window.createOutputChannel('Vibe Coding');
   context.subscriptions.push(output);
   let terminal;
-  let knownPreviewTab;
   let full = false;
   let busy = false;
   const exec = (command, ...args) => vscode.commands.executeCommand(command, ...args);
@@ -29,7 +28,7 @@ function activate(context) {
           name: 'OpenCode', shellPath: executable, shellArgs: [],
           cwd: vscode.workspace.workspaceFolders[0].uri.fsPath,
           location: vscode.TerminalLocation.Panel,
-          env: { OPENCODE_CALLER: 'vscode', VIBE_PROJECT: projectPath }
+          env: { OPENCODE_CALLER: 'vscode', VIBE_PROJECT: projectPath, LANG: 'ko_KR.UTF-8', PYTHONIOENCODING: 'utf-8' }
         });
         record('terminal-created');
       }
@@ -62,14 +61,13 @@ function activate(context) {
     let previewGroup, previewTab;
     for (let attempt = 0; attempt < 100; attempt++) {
       previewGroup = vscode.window.tabGroups.all.find(g => {
-        previewTab = g.tabs.find(t => t === knownPreviewTab || /127\.0\.0\.1|localhost/.test(t.label) || (previewUrl && t.label === 'Simple Browser'));
+        previewTab = g.tabs.find(t => /127\.0\.0\.1|localhost/.test(t.label) || (previewUrl && t.label === 'Simple Browser'));
         return !!previewTab;
       });
       if (previewGroup) break;
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     if (!previewGroup) throw new Error('Live Preview did not open a browser tab within 10 seconds.');
-    knownPreviewTab = previewTab;
     const focusName = ['First', 'Second', 'Third', 'Fourth'][previewGroup.viewColumn - 1];
     if (!focusName) throw new Error('Preview opened outside supported editor groups; restore layout and retry.');
     await exec('workbench.action.focus' + focusName + 'EditorGroup');

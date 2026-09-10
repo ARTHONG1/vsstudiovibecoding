@@ -38,20 +38,6 @@ if (!$OpenCodePath) {
   $command = Get-Command opencode.exe -ErrorAction SilentlyContinue
   $OpenCodePath = Find-Executable @($(if ($command) {$command.Source}), (Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'npm\node_modules\opencode-ai\bin\opencode.exe'), (Join-Path $env:USERPROFILE '.opencode\bin\opencode.exe'), (Join-Path $env:USERPROFILE 'scoop\shims\opencode.exe'))
 }
-# npm uses a .cmd shim; the integrated terminal needs the underlying native EXE.
-if (!$OpenCodePath) {
-  $npmRoot = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'npm\node_modules\opencode-ai'
-  $shim = Get-Command opencode.cmd -ErrorAction SilentlyContinue
-  $npmRoots = @($npmRoot)
-  if ($shim) { $npmRoots += Join-Path (Split-Path $shim.Source) 'node_modules\opencode-ai' }
-  foreach ($candidateRoot in ($npmRoots | Select-Object -Unique)) {
-    if (!(Test-Path -LiteralPath $candidateRoot)) { continue }
-    $binaries = @(Get-ChildItem -LiteralPath $candidateRoot -Filter opencode.exe -Recurse -File -ErrorAction SilentlyContinue)
-    $preferred = $binaries | Sort-Object @{Expression={ if ($_.FullName -match 'baseline') {0} else {1} }} | Select-Object -First 1
-    if ($preferred) { $OpenCodePath = $preferred.FullName; break }
-  }
-}
-if ($OpenCodePath -and [IO.Path]::GetExtension($OpenCodePath) -ne '.exe') { throw 'OpenCodePath must be the native opencode.exe, not an npm .cmd/.ps1 shim. Locate it inside npm node_modules/opencode-ai.' }
 $missing = @()
 if (!$CodePath -or !(Test-Path -LiteralPath $CodePath -PathType Leaf)) { $missing += 'VS Code executable' }
 if (!$OpenCodePath -or !(Test-Path -LiteralPath $OpenCodePath -PathType Leaf)) { $missing += 'OpenCode executable (not just the extension)' }
@@ -98,7 +84,7 @@ if ($CreateSample) {
 if (!(Test-Path -LiteralPath $entryPath -PathType Leaf)) { throw 'Entry file is not a file.' }
 $profiles = $settings.'terminal.integrated.profiles.windows'
 if (!$profiles) { $profiles = [pscustomobject]@{} }
-$startup = '[Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding; chcp 65001 | Out-Null'
+$startup = '[Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false); chcp 65001 | Out-Null; $env:PYTHONIOENCODING = "utf-8"; $env:LANG = "ko_KR.UTF-8"'
 $tokens=$null; $errors=$null
 [void][Management.Automation.Language.Parser]::ParseInput($startup,[ref]$tokens,[ref]$errors)
 if ($errors.Count) { throw 'Invalid terminal startup command.' }
@@ -114,7 +100,14 @@ Set-Key $settings 'terminal.integrated.tabs.enabled' $false
 Set-Key $settings 'livePreview.openPreviewTarget' 'Embedded Preview'
 Set-Key $settings 'livePreview.autoRefreshPreview' 'On All Changes in Editor'
 Set-Key $settings 'workbench.startupEditor' 'none'
+Set-Key $settings 'locale' 'ko'
+Set-Key $settings 'files.autoSave' 'afterDelay'
+Set-Key $settings 'files.autoSaveDelay' 500
 Save-Json $settingsPath $settings
+$argvPath = Join-Path $userDir 'argv.json'
+$argv = Read-Object $argvPath
+Set-Key $argv 'locale' 'ko'
+Save-Json $argvPath $argv
 $keys = @($keys | Where-Object { $_ -and $_.command -notin @('vibe.toggleTerminal','vibe.restoreLayout') })
 foreach ($state in @($false,$true)) {
   $condition = if ($state) {'panelMaximized'} else {'!panelMaximized'}
@@ -142,7 +135,7 @@ $cli = Join-Path (Split-Path -Parent $CodePath) 'bin\code.cmd'
 if (!(Test-Path -LiteralPath $cli)) { throw 'VS Code CLI was not found beside Code.exe.' }
 $installed = @(& $cli --user-data-dir $userDir --extensions-dir $extensionsDir --list-extensions --show-versions)
 if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect installed extensions.' }
-foreach ($extension in @('ms-vscode.live-server','sst-dev.opencode',$packagePath)) {
+foreach ($extension in @('MS-CEINTL.vscode-language-pack-ko','ms-vscode.live-server','sst-dev.opencode',$packagePath)) {
   if ($extension -eq $packagePath) { if (('local-vibe.vibe-workspace@'+$manifest.version) -in $installed) { continue } }
   elseif (@($installed | Where-Object { $_ -like ($extension+'@*') }).Count) { continue }
   & $cli --user-data-dir $userDir --extensions-dir $extensionsDir --install-extension $extension --force

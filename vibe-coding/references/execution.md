@@ -47,11 +47,3 @@ Verify software availability using current official sources when installation is
 | existing instance retains stale state | Save/preserve buffers and close/reopen the affected isolated workspace through UI. Do not kill all Code processes. |
 
 The original demo/HTML workflow is the empirically tested baseline. Server-URL support and different VS Code versions still require the same on-machine visual acceptance checks.
-
-## npm CLI discovery and repeated previews
-
-The setup script accepts a native `opencode.exe`, not a `.cmd`, `.bat`, or `.ps1` wrapper as the terminal shell. For npm installations, it searches the native package under the real user's `AppData/Roaming/npm/node_modules/opencode-ai` and beside a discovered `opencode.cmd`. A custom npm prefix may need an explicit `-OpenCodePath`. Verify the actual EXE with `--version`; a working wrapper does not establish terminal-shell compatibility. Do not reinstall a working CLI just because it is absent from PATH.
-
-Live Preview's tab label can change from its localhost URL to the page title. Version 1.2.0 retains the actual tab identity during the window lifetime so repeated restoration works after a title change. If the tab was closed, discovery runs again; inspect the resulting tabs before retrying. Do not rely only on a mutable label or accumulate replacement previews on timeout.
-
-Before restarting an existing project window, inspect dirty editors. Do not save or discard user edits implicitly. Keep the window open if a verified preservation route is unavailable, and record the restart check as pending. A sample you created and have not edited can be closed normally.
