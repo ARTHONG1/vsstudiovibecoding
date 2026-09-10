@@ -8,9 +8,43 @@ function activate(context) {
   const output = vscode.window.createOutputChannel('Vibe Coding');
   context.subscriptions.push(output);
   let terminal;
-  let full = false;
+  let previewTabRef;
+  let currentMode = 'split'; // 'split' | 'terminal' | 'preview'
   let busy = false;
   const exec = (command, ...args) => vscode.commands.executeCommand(command, ...args);
+
+  const terminalBtn = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1001);
+  terminalBtn.name = 'Vibe Coding Terminal Toggle';
+  terminalBtn.command = 'vibe.toggleTerminal';
+  context.subscriptions.push(terminalBtn);
+
+  const previewBtn = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);
+  previewBtn.name = 'Vibe Coding Preview Toggle';
+  previewBtn.command = 'vibe.togglePreview';
+  context.subscriptions.push(previewBtn);
+
+  function updateStatusBars() {
+    if (currentMode === 'terminal') {
+      terminalBtn.text = '$(layout-sidebar-right) 3열 복원';
+      terminalBtn.tooltip = '미리보기 | 코드 | 터미널 3열 화면으로 복원합니다 (Vibe Coding)';
+      previewBtn.text = '$(browser) 미리보기 전체';
+      previewBtn.tooltip = '웹앱 미리보기를 전체화면으로 전환합니다 (Vibe Coding)';
+    } else if (currentMode === 'preview') {
+      terminalBtn.text = '$(screen-full) 터미널 전체';
+      terminalBtn.tooltip = 'OpenCode 터미널을 전체화면으로 전환합니다 (Vibe Coding)';
+      previewBtn.text = '$(layout-sidebar-right) 3열 복원';
+      previewBtn.tooltip = '미리보기 | 코드 | 터미널 3열 화면으로 복원합니다 (Vibe Coding)';
+    } else {
+      terminalBtn.text = '$(screen-full) 터미널 전체';
+      terminalBtn.tooltip = 'OpenCode 터미널을 전체화면으로 전환합니다 (Vibe Coding)';
+      previewBtn.text = '$(browser) 미리보기 전체';
+      previewBtn.tooltip = '웹앱 미리보기를 전체화면으로 전환합니다 (Vibe Coding)';
+    }
+    terminalBtn.show();
+    previewBtn.show();
+  }
+  updateStatusBars();
+
   function record(event, detail = {}) {
     const data = { time: new Date().toISOString(), event, ...detail };
     output.appendLine(JSON.stringify(data));
@@ -36,10 +70,13 @@ function activate(context) {
     return terminal;
   }
   async function restore(options) {
-    if (typeof options?.maximized === 'boolean') full = options.maximized;
-    if (full) {
+    if (currentMode === 'terminal') {
       await exec('workbench.action.toggleMaximizedPanel');
-      full = false;
+      currentMode = 'split';
+    }
+    if (currentMode === 'preview') {
+      await exec('workbench.action.toggleMaximizeEditorGroup');
+      currentMode = 'split';
     }
     await exec('workbench.action.closeSidebar');
     await exec('workbench.action.closeAuxiliaryBar');
@@ -50,24 +87,28 @@ function activate(context) {
     await vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Two, preview: false });
 
     const previewUrl = config.get('previewUrl', '');
-    if (previewUrl) {
-      const parsed = new URL(previewUrl);
-      if (!['http:', 'https:'].includes(parsed.protocol) || !['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname)) throw new Error('Preview URL must be a local development server.');
-      await exec('simpleBrowser.show', previewUrl);
-    } else {
-      await exec('livePreview.start.internalPreview.atFile', uri);
-    }
-    // The built-in browser opens asynchronously after Live Preview's command returns.
-    let previewGroup, previewTab;
-    for (let attempt = 0; attempt < 100; attempt++) {
-      previewGroup = vscode.window.tabGroups.all.find(g => {
-        previewTab = g.tabs.find(t => /127\.0\.0\.1|localhost/.test(t.label) || (previewUrl && t.label === 'Simple Browser'));
-        return !!previewTab;
-      });
-      if (previewGroup) break;
-      await new Promise(resolve => setTimeout(resolve, 100));
+    let previewTab = previewTabRef;
+    let previewGroup = previewTab && vscode.window.tabGroups.all.find(g => g.tabs.includes(previewTab));
+    if (!previewGroup) {
+      if (previewUrl) {
+        const parsed = new URL(previewUrl);
+        if (!['http:', 'https:'].includes(parsed.protocol) || !['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname)) throw new Error('Preview URL must be a local development server.');
+        await exec('simpleBrowser.show', previewUrl);
+      } else {
+        await exec('livePreview.start.internalPreview.atFile', uri);
+      }
+      // The built-in browser opens asynchronously after Live Preview's command returns.
+      for (let attempt = 0; attempt < 100; attempt++) {
+        previewGroup = vscode.window.tabGroups.all.find(g => {
+          previewTab = g.tabs.find(t => /127\.0\.0\.1|localhost/.test(t.label) || (previewUrl && t.label === 'Simple Browser'));
+          return !!previewTab;
+        });
+        if (previewGroup) break;
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
     }
     if (!previewGroup) throw new Error('Live Preview did not open a browser tab within 10 seconds.');
+    previewTabRef = previewTab;
     const focusName = ['First', 'Second', 'Third', 'Fourth'][previewGroup.viewColumn - 1];
     if (!focusName) throw new Error('Preview opened outside supported editor groups; restore layout and retry.');
     await exec('workbench.action.focus' + focusName + 'EditorGroup');
@@ -78,24 +119,58 @@ function activate(context) {
     await exec('vscode.setEditorLayout', { orientation: 0, groups: [{ size: 0.5 }, { size: 0.5 }] });
     ensureTerminal().show(true);
     await exec('workbench.action.evenEditorWidths');
+    currentMode = 'split';
+    updateStatusBars();
     record('layout-ready', {
+      mode: 'split',
+      previewUrl: previewUrl || 'http://127.0.0.1:3000',
       folders: vscode.workspace.workspaceFolders.map(f => f.uri.fsPath),
       groups: vscode.window.tabGroups.all.map(g => ({ column: g.viewColumn, tabs: g.tabs.map(t => t.label) }))
     });
   }
   async function toggle(options) {
-    if (typeof options?.maximized === 'boolean') full = options.maximized;
-    ensureTerminal().show();
-    if (!full) {
-      await exec('workbench.action.positionPanelBottom');
-      await exec('workbench.action.toggleMaximizedPanel');
-      full = true;
-    } else {
+    if (currentMode === 'preview') {
+      await exec('workbench.action.toggleMaximizeEditorGroup');
+    }
+    if (currentMode === 'terminal') {
       await exec('workbench.action.toggleMaximizedPanel');
       await exec('workbench.action.positionPanelRight');
-      full = false;
+      await exec('workbench.action.evenEditorWidths');
+      currentMode = 'split';
+    } else {
+      ensureTerminal().show();
+      await exec('workbench.action.positionPanelBottom');
+      await exec('workbench.action.toggleMaximizedPanel');
+      currentMode = 'terminal';
     }
-    record(full ? 'terminal-full' : 'terminal-restored');
+    updateStatusBars();
+    record(currentMode === 'terminal' ? 'terminal-full' : 'terminal-restored', { mode: currentMode });
+  }
+  async function togglePreview() {
+    const config = vscode.workspace.getConfiguration('vibe');
+    const uri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, config.get('entryFile', 'index.html'));
+    if (currentMode === 'terminal') {
+      await exec('workbench.action.toggleMaximizedPanel');
+    }
+    if (currentMode === 'preview') {
+      await exec('workbench.action.toggleMaximizeEditorGroup');
+      await exec('vscode.setEditorLayout', { orientation: 0, groups: [{ size: 0.5 }, { size: 0.5 }] });
+      await vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Two, preview: false });
+      await exec('workbench.action.evenEditorWidths');
+      await exec('workbench.action.positionPanelRight');
+      ensureTerminal().show(true);
+      currentMode = 'split';
+    } else {
+      await exec('workbench.action.closePanel');
+      await exec('workbench.action.focusFirstEditorGroup');
+      await exec('workbench.action.toggleMaximizeEditorGroup');
+      currentMode = 'preview';
+    }
+    updateStatusBars();
+    record(currentMode === 'preview' ? 'preview-full' : 'layout-ready', {
+      mode: currentMode,
+      previewUrl: config.get('previewUrl', '') || 'http://127.0.0.1:3000'
+    });
   }
   async function guarded(action) {
     if (busy) return;
@@ -107,6 +182,7 @@ function activate(context) {
   context.subscriptions.push(
     vscode.commands.registerCommand('vibe.restoreLayout', options => guarded(() => restore(options))),
     vscode.commands.registerCommand('vibe.toggleTerminal', options => guarded(() => toggle(options))),
+    vscode.commands.registerCommand('vibe.togglePreview', () => guarded(() => togglePreview())),
     vscode.window.onDidCloseTerminal(t => { if (t === terminal) terminal = undefined; })
   );
   record('activated');

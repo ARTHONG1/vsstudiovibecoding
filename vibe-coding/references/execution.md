@@ -27,7 +27,7 @@ Run from the skill's directory or use an absolute script path. Discover real val
 
 Optional `-Root`, `-CodePath`, `-OpenCodePath`, `-DesktopPath` override discovered physical paths. `-SkillRoot` supports scriptblock invocation when PSScriptRoot is unavailable. If local policy blocks script files, use a supported shell invocation of the inspected script text only when that is allowed by policy; do not change the machine's execution policy or evade organizational restrictions.
 
-Existing settings must be parseable JSON for the bundled merger. If JSONC/comments are present, preserve the original and use a JSONC-aware parser or targeted edit before continuing; do not overwrite settings with defaults. Existing user keybindings are preserved except the two commands owned by this skill. The appended F12/Ctrl+Alt+V bindings take precedence only when vibe.enabled is true. They use panelMaximized context so manual panel controls do not invert the F12 state. Verify this context against the installed VS Code version.
+Existing settings must be parseable JSON for the bundled merger. If JSONC/comments are present, preserve the original and use a JSONC-aware parser or targeted edit before continuing; do not overwrite settings with defaults. Existing user keybindings are 100% preserved. Native VS Code F12 (Go to Definition) is completely untouched. Screen toggling is operated via the dedicated Status Bar button (or Command Palette vibe.toggleTerminal).
 
 For framework previews, PreviewUrl alone does not manage a server. Before claiming restart support, the agent must configure and test the project's existing server task/start mechanism, preserving existing tasks and observing its readiness on relaunch. If that cannot be done, explicitly report the external-server dependency and do not claim a self-starting setup. The bundled sample/static preview is the fully automated default; arbitrary framework startup is project-specific agent work.
 
@@ -39,7 +39,7 @@ Verify software availability using current official sources when installation is
 |---|---|
 | keybindings starts with `{` | Back up; normalize to an array and merge managed bindings. |
 | terminal starts with a syntax error | Use the bundled UTF-8 startup command; parse before running. |
-| F12 enters fullscreen but cannot return | Ensure both Vibe commands are in `terminal.integrated.commandsToSkipShell`. |
+| Status bar button not visible | Verify vibe.enabled is true in workspace settings and layout extension is activated. |
 | default Chat panel appears | It is not OpenCode. Verify the local layout extension is enabled and activated. |
 | preview appears late/in the wrong group | Wait for the actual tab; arrange after readiness, not merely after command dispatch. |
 | no CLI found in agent PATH | Check the native user's installation before concluding it is missing. |

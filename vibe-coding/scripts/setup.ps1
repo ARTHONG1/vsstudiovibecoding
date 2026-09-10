@@ -92,7 +92,7 @@ Set-Key $profiles 'Vibe PowerShell' @{path=(Join-Path $env:WINDIR 'System32\Wind
 Set-Key $settings 'terminal.integrated.profiles.windows' $profiles
 Set-Key $settings 'terminal.integrated.defaultProfile.windows' 'Vibe PowerShell'
 $skip = @($settings.'terminal.integrated.commandsToSkipShell' | Where-Object { $_ -and $_ -notin @('-vibe.toggleTerminal','-vibe.restoreLayout') })
-Set-Key $settings 'terminal.integrated.commandsToSkipShell' @($skip + @('vibe.toggleTerminal','vibe.restoreLayout') | Select-Object -Unique)
+Set-Key $settings 'terminal.integrated.commandsToSkipShell' @($skip + @('vibe.toggleTerminal','vibe.restoreLayout','vibe.togglePreview') | Select-Object -Unique)
 Set-Key $settings 'workbench.panel.opensMaximized' 'never'
 Set-Key $settings 'workbench.panel.defaultLocation' 'right'
 Set-Key $settings 'terminal.integrated.enablePersistentSessions' $true
@@ -109,11 +109,6 @@ $argv = Read-Object $argvPath
 Set-Key $argv 'locale' 'ko'
 Save-Json $argvPath $argv
 $keys = @($keys | Where-Object { $_ -and $_.command -notin @('vibe.toggleTerminal','vibe.restoreLayout') })
-foreach ($state in @($false,$true)) {
-  $condition = if ($state) {'panelMaximized'} else {'!panelMaximized'}
-  $keys += @{key='f12';command='vibe.toggleTerminal';when=('config.vibe.enabled && '+$condition);args=@{maximized=$state}}
-  $keys += @{key='ctrl+alt+v';command='vibe.restoreLayout';when=('config.vibe.enabled && '+$condition);args=@{maximized=$state}}
-}
 Save-Json $keybindingsPath $keys
 $wsSettings = $workspace.settings
 if (!$wsSettings) { $wsSettings = [pscustomobject]@{} }
@@ -146,7 +141,7 @@ if (Test-Path -LiteralPath $shortcutPath) { Copy-Item -LiteralPath $shortcutPath
 $shell = New-Object -ComObject WScript.Shell
 $link = $shell.CreateShortcut($shortcutPath)
 $link.TargetPath = $CodePath
-$link.Arguments = '--new-window --skip-release-notes --user-data-dir "' + $userDir + '" --extensions-dir "' + $extensionsDir + '" "' + $workspacePath + '"'
+$link.Arguments = '--new-window --skip-release-notes --locale ko --user-data-dir "' + $userDir + '" --extensions-dir "' + $extensionsDir + '" "' + $workspacePath + '"'
 $link.WorkingDirectory = $ProjectPath
 $link.IconLocation = $CodePath + ',0'
 $link.Save()

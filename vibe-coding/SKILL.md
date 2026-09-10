@@ -1,13 +1,13 @@
 ---
 name: vibe-coding
-description: Use when a user asks an AI agent to set up, open, or repair an isolated Windows VS Code workspace with Preview, Code, OpenCode, and an F12 terminal toggle, including an existing project.
+description: Use when a user asks an AI agent to set up, open, or repair an isolated Windows VS Code workspace with Preview, Code, OpenCode, and a 3-mode viewport toggle (Split / Terminal Full / Preview Full), including an existing project.
 metadata:
   short-description: AI가 직접 설치·조작·검증하는 Windows 바이브 코딩 환경
 ---
 
 # Agent-operated Vibe Coding
 
-Deliver a working Windows VS Code window: **Preview | Code | OpenCode**, with **F12 → full terminal → F12 → three columns**. The agent performs setup and UI verification; do not give the user a manual installation checklist. Scripts are agent tools, not the deliverable the user must execute.
+Deliver a working Windows VS Code window: **Preview | Code | OpenCode**, with **3대 뷰포트 모드: [3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체]**. VS Code 순정 F12(정의로 이동)를 100% 보존하며 하단 상태바 및 에디터 툴바 버튼으로 전환합니다. Computer Use를 위한 무노이즈 미리보기 뷰포트를 제공하고, Playwright/Browser-Use를 위해 로컬 서버 엔드포인트(http://127.0.0.1:3000)를 상시 개방합니다. The agent performs setup and UI verification; do not give the user a manual installation checklist. Scripts are agent tools, not the deliverable the user must execute.
 
 ## Scope and preservation
 
@@ -30,7 +30,7 @@ Deliver a working Windows VS Code window: **Preview | Code | OpenCode**, with **
 ## Bundled implementation
 
 - `scripts/setup.ps1`: plan/apply, discovery, configuration merge, backup, extension packaging/install, project workspace and shortcut. `Get-Help`/script parameters show inputs. PowerShell 5.1 compatible; no policy changes.
-- `assets/workspace-extension/`: local VS Code extension source; owns startup arrangement, preview readiness, terminal lifecycle and F12. Use this tested implementation rather than recreating loose toggle commands.
+- `assets/workspace-extension/`: local VS Code extension source; owns startup arrangement, preview readiness, terminal lifecycle and status bar toggle button. Use this tested implementation rather than recreating loose toggle commands.
 - `assets/sample.html`: only for explicit sample creation.
 
 Repeat invocation reuses the isolated installation and project workspace. Never reinstall everything simply because the user opens a second project. Diagnostics and backups stay under the isolated VibeCoding root. If a version-dependent command fails, inspect installed extension/VS Code commands and update the implementation; do not invent command IDs.

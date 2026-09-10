@@ -2,7 +2,7 @@
     "name":  "vibe-workspace",
     "displayName":  "Vibe Coding Workspace",
     "publisher":  "local-vibe",
-    "version":  "1.1.0",
+    "version":  "1.2.1",
     "engines":  {
                     "vscode":  "^1.94.0"
                 },
@@ -15,15 +15,35 @@
                               ],
     "contributes":  {
                         "commands":  [
-                                         {
-                                             "command":  "vibe.restoreLayout",
-                                             "title":  "Vibe Coding: Restore Preview | Code | OpenCode"
-                                         },
-                                         {
-                                             "command":  "vibe.toggleTerminal",
-                                             "title":  "Vibe Coding: Toggle Full Terminal (F12)"
-                                         }
-                                     ],
+                                        {
+                                            "command":  "vibe.restoreLayout",
+                                            "title":  "Vibe Coding: Restore Preview | Code | OpenCode"
+                                        },
+                                        {
+                                            "command":  "vibe.toggleTerminal",
+                                            "title":  "Vibe Coding: Toggle Terminal (Full / 3-Columns)",
+                                            "icon":  "$(screen-full)"
+                                        },
+                                        {
+                                            "command":  "vibe.togglePreview",
+                                            "title":  "Vibe Coding: Toggle Preview (Full / 3-Columns)",
+                                            "icon":  "$(browser)"
+                                        }
+                                    ],
+                        "menus":  {
+                                      "editor/title":  [
+                                                           {
+                                                               "command":  "vibe.toggleTerminal",
+                                                               "group":  "navigation",
+                                                               "when":  "config.vibe.enabled"
+                                                           },
+                                                           {
+                                                               "command":  "vibe.togglePreview",
+                                                               "group":  "navigation",
+                                                               "when":  "config.vibe.enabled"
+                                                           }
+                                                       ]
+                                  },
                         "configuration":  {
                                               "title":  "Vibe Coding",
                                               "properties":  {
