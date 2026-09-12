@@ -5,37 +5,147 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vibe Coding</title>
   <style>
-    :root { color-scheme: dark; font-family: "Segoe UI", "Malgun Gothic", sans-serif; }
+    :root {
+      color-scheme: dark;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
+    }
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 32px 24px; background: #10151e; color: #e7edf5; }
-    .tag { color: #79dab4; font-size: 12px; letter-spacing: 2px; }
-    h1 { font-size: 34px; letter-spacing: -1px; margin: 14px 0; }
-    p { color: #aab8ca; font-size: 14px; line-height: 1.8; }
-    section { border-top: 1px solid #293546; padding: 18px 0; }
-    h2 { font-size: 16px; margin: 0 0 8px; }
-    kbd { background: #253346; border: 1px solid #526478; border-radius: 6px; padding: 3px 8px; color: white; }
-    button { background: #80dfba; color: #0a2119; padding: 12px 16px; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; }
-    #counter { display: block; margin-top: 12px; font-size: 14px; color: #80dfba; }
+    body {
+      margin: 0;
+      padding: 32px 24px;
+      background: #10151e;
+      color: #e7edf5;
+      line-height: 1.6;
+    }
+    .tag {
+      color: #79dab4;
+      font-size: 11px;
+      letter-spacing: 2px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    h1 {
+      font-size: 32px;
+      letter-spacing: -1px;
+      margin: 8px 0 16px 0;
+      color: #ffffff;
+    }
+    p.sub {
+      color: #9ab0c7;
+      font-size: 14px;
+      margin: 0 0 24px 0;
+    }
+    .card {
+      background: #161e2b;
+      border: 1px solid #26354a;
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+    }
+    .card h2 {
+      font-size: 15px;
+      margin: 0 0 8px 0;
+      color: #80dfba;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card p {
+      margin: 0;
+      font-size: 13px;
+      color: #cad8e6;
+    }
+    .card ul {
+      margin: 6px 0 0 0;
+      padding-left: 18px;
+      font-size: 13px;
+      color: #aabfcf;
+    }
+    .card li { margin-bottom: 4px; }
+    kbd {
+      background: #253346;
+      border: 1px solid #526478;
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: #ffffff;
+      font-size: 11px;
+      font-family: inherit;
+    }
+    .badge {
+      display: inline-block;
+      background: #1c2e28;
+      color: #79dab4;
+      border: 1px solid #2f5647;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .action-area {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid #233144;
+    }
+    button {
+      background: #80dfba;
+      color: #0a2119;
+      padding: 10px 18px;
+      border: 0;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: #9be6cb; }
+    #counter {
+      display: block;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #79dab4;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
-  <div class="tag">PREVIEW · CODE · OPENCODE</div>
+  <div class="tag">Preview · Code · OpenCode</div>
   <h1>Vibe Coding</h1>
-  <p>코드를 바꾸고, 결과를 바로 확인하세요.</p>
-  <section>
-    <h2>왼쪽 · 미리보기</h2>
-    <p>가운데에서 이 파일을 수정하면 여기에 반영됩니다.</p>
-  </section>
-  <section>
-    <h2>가운데 · 코드</h2>
-    <p><strong>index.html</strong>의 문구나 색상을 바꿔 보세요.</p>
-  </section>
-  <section>
-    <h2>오른쪽 · OpenCode</h2>
-    <p>원하는 작업을 입력해 AI와 코딩하세요.<br><kbd>F12</kbd> 전체 터미널 ↔ 3열 화면<br><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>V</kbd> 화면 배치 복원</p>
-  </section>
-  <button id="testButton" type="button">미리보기 작동 확인</button>
-  <output id="counter">클릭 횟수: 0</output>
+  <p class="sub">코드를 바꾸고 결과를 바로 확인하세요. AI 에이전트와 함께 완벽한 3대 뷰포트 환경에서 개발합니다.</p>
+
+  <div class="card">
+    <h2>🖥️ 3대 뷰포트 모드 (하단 상태바 버튼)</h2>
+    <p>화면 맨 아래 오른쪽 구석의 전용 버튼으로 언제든 원하는 모드로 즉시 전환할 수 있습니다:</p>
+    <ul>
+      <li><span class="badge">[ 🗖 터미널 전체 ]</span> AI와 대규모 프롬프트 작성 및 빌드 로그 점검</li>
+      <li><span class="badge">[ 🌐 미리보기 전체 ]</span> 에디터 노이즈 없는 1:1 고해상도 웹 UI 검수 (Computer Use 최적화)</li>
+      <li><span class="badge">[ ⊞ 3열 복원 ]</span> 언제든 원래의 3열 분할 환경으로 즉시 복귀</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>🛠️ 진짜 브라우저 (Chrome/Edge) 원클릭 연동</h2>
+    <p>가운데 코드 에디터 우측 상단 툴바의 <kbd>↗ 외부 브라우저</kbd> 아이콘을 누르면, 시스템 기본 브라우저가 열리며 <strong>순정 F12 개발자 도구(Network, Application/쿠키)</strong>를 활용한 심층 검수가 가능합니다.</p>
+  </div>
+
+  <div class="card">
+    <h2>⌨️ 순정 단축키 100% 보존</h2>
+    <ul>
+      <li><kbd>F12</kbd>: 순정 <strong>[함수/변수 정의로 이동]</strong> 정상 동작 (화면 가로채기 없음)</li>
+      <li><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd>: 명령 팔레트에서 <em>Vibe Coding</em> 검색 시 모든 제어 가능</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>🤖 OpenCode 터미널 팁</h2>
+    <p>오른쪽 터미널 입력창에서 <kbd>Ctrl</kbd> + <kbd>P</kbd> 입력 후 <kbd>/model</kbd> ➔ <kbd>Ctrl</kbd> + <kbd>A</kbd>를 누르면 내 ChatGPT / Codex 계정 또는 다른 AI 모델로 즉시 변경할 수 있습니다.</p>
+  </div>
+
+  <div class="action-area">
+    <button id="testButton" type="button">미리보기 작동 확인</button>
+    <output id="counter">클릭 횟수: 0</output>
+  </div>
+
   <script>
     let count = 0;
     document.getElementById('testButton').addEventListener('click', () => {
