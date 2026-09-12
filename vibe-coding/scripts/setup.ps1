@@ -7,13 +7,17 @@ param(
   [string]$CodePath,
   [string]$OpenCodePath,
   [string]$DesktopPath = [Environment]::GetFolderPath('Desktop'),
-  [string]$SkillRoot = (Split-Path -Parent $PSScriptRoot),
+  [string]$SkillRoot,
   [switch]$CreateSample,
   [switch]$Apply,
   [switch]$Launch,
   [switch]$RegisterContextMenu
 )
 $ErrorActionPreference = 'Stop'
+if (!$SkillRoot) {
+  $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+  $SkillRoot = Split-Path -Parent $scriptDir
+}
 function Find-Executable([string[]]$Candidates) {
   foreach ($candidate in $Candidates) { if ($candidate -and (Test-Path -LiteralPath $candidate -PathType Leaf)) { return [IO.Path]::GetFullPath($candidate) } }
   return $null
@@ -76,7 +80,7 @@ $name = (Split-Path -Leaf $ProjectPath) -replace '[<>:"/\\|?*]', '_'
 $workspaceDir = Join-Path $Root 'Workspaces'
 $workspacePath = Join-Path $workspaceDir ($name + '-' + $id + '.code-workspace')
 $shortcutPath = Join-Path $DesktopPath ('Vibe Coding - ' + $name + '-' + $id + '.lnk')
-$plan = [ordered]@{ project=$ProjectPath; entry=$entryPath; previewUrl=$PreviewUrl; root=$Root; code=$CodePath; openCode=$OpenCodePath; workspace=$workspacePath; shortcut=$shortcutPath; missing=$missing; applied=$false }
+$plan = [ordered]@{ project=$ProjectPath; entry=$entryPath; previewUrl=$PreviewUrl; root=$Root; code=$CodePath; openCode=$OpenCodePath; workspace=$workspacePath; shortcut=$shortcutPath; registerContextMenu=[bool]$RegisterContextMenu; missing=$missing; applied=$false }
 if (!$Apply) { $plan | ConvertTo-Json -Depth 5; return }
 if ($missing.Count) { throw ('Install/discover prerequisites first: ' + ($missing -join ', ')) }
 $version = & $OpenCodePath --version
@@ -175,20 +179,22 @@ $link.Arguments = '--new-window --skip-release-notes --locale ko --user-data-dir
 $link.WorkingDirectory = $ProjectPath
 $link.IconLocation = $CodePath + ',0'
 $link.Save()
-try {
-  $regScript = Join-Path $SkillRoot 'scripts\setup.ps1'
-  $cmdStr = 'powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -Command "& ''' + $regScript + ''' -ProjectPath ''%V'' -Apply -Launch"'
-  $bgCmdStr = 'powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -Command "& ''' + $regScript + ''' -ProjectPath ''%W'' -Apply -Launch"'
-  $regDirs = @("HKCU:\Software\Classes\Directory\shell\VibeCoding", "HKCU:\Software\Classes\Directory\Background\shell\VibeCoding")
-  foreach ($regPath in $regDirs) {
-    New-Item -Path $regPath -Force | Out-Null
-    Set-ItemProperty -Path $regPath -Name "(Default)" -Value "Vibe Coding으로 열기" -Force
-    Set-ItemProperty -Path $regPath -Name "Icon" -Value "$CodePath,0" -Force
-    New-Item -Path "$regPath\command" -Force | Out-Null
-    $val = if ($regPath -like "*Background*") { $bgCmdStr } else { $cmdStr }
-    Set-ItemProperty -Path "$regPath\command" -Name "(Default)" -Value $val -Force
-  }
-} catch {}
+if ($RegisterContextMenu) {
+  try {
+    $regScript = Join-Path $SkillRoot 'scripts\setup.ps1'
+    $cmdStr = 'powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -Command "& ''' + $regScript + ''' -ProjectPath ''%V'' -Apply -Launch"'
+    $bgCmdStr = 'powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -Command "& ''' + $regScript + ''' -ProjectPath ''%W'' -Apply -Launch"'
+    $regDirs = @("HKCU:\Software\Classes\Directory\shell\VibeCoding", "HKCU:\Software\Classes\Directory\Background\shell\VibeCoding")
+    foreach ($regPath in $regDirs) {
+      New-Item -Path $regPath -Force | Out-Null
+      Set-ItemProperty -Path $regPath -Name "(Default)" -Value "Vibe Coding으로 열기" -Force
+      Set-ItemProperty -Path $regPath -Name "Icon" -Value "$CodePath,0" -Force
+      New-Item -Path "$regPath\command" -Force | Out-Null
+      $val = if ($regPath -like "*Background*") { $bgCmdStr } else { $cmdStr }
+      Set-ItemProperty -Path "$regPath\command" -Name "(Default)" -Value $val -Force
+    }
+  } catch {}
+}
 if ($Launch -and (Test-Path -LiteralPath $shortcutPath)) {
   Start-Process $shortcutPath
 }
