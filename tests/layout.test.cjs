@@ -15,10 +15,14 @@ test('restore reuses a preview after its title becomes the page title', async ()
     window: { createOutputChannel:()=>({appendLine:line=>events.push(JSON.parse(line))}),
       tabGroups:{all:[group]}, terminals,
       showTextDocument:async()=>{}, showErrorMessage:()=>{},
+      createStatusBarItem:()=>({show(){},dispose(){}}),
       createTerminal:opts=>{const t={creationOptions:opts,show(){}};terminals.push(t);return t;},
       onDidCloseTerminal:()=>({dispose(){}}) },
     commands:{executeCommand:async()=>{},registerCommand:(name,fn)=>{commands.set(name,fn);return {dispose(){}};}},
-    Uri:{joinPath:()=>({fsPath:'C:/project/index.html'})}, ViewColumn:{Two:2},TerminalLocation:{Panel:1}
+    Uri:{joinPath:()=>({fsPath:'C:/project/index.html'}),parse:()=>({})},
+    ViewColumn:{Two:2},TerminalLocation:{Panel:1},
+    StatusBarAlignment:{Left:1,Right:2},
+    env:{openExternal:async()=>true}
   };
   const module = {exports:{}};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../vibe-coding/assets/workspace-extension/extension/extension.js'),'utf8'), {
