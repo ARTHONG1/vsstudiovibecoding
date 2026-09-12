@@ -4,7 +4,7 @@
 
 VS Code를 **미리보기 | 코드 | OpenCode** 3열로 배치하며, 상태바와 에디터 툴바의 전용 버튼으로 **3대 뷰포트 모드 ([3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체])**를 원클릭 전환합니다. VS Code 순정 `F12`(함수 정의로 이동)를 100% 온전히 보존하며, 초보자를 위한 제로 컨피그 자동 감지와 윈도우 우클릭 메뉴를 지원합니다.
 
-**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://arthong1.github.io/vsstudiovibecoding/downloads/vibe-coding-1.2.0.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
+**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v1.3.0/vibe-coding-1.3.0.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
 
 ## 가장 쉬운 시작
 
@@ -70,7 +70,7 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, OpenCode CLI,
 | OpenCode를 찾지 못함 | npm 래퍼와 실제 EXE 위치를 구분. “native 사용자 설치 경로에서 opencode.exe와 --version을 확인해줘.” |
 | 오른쪽이 너무 좁음 | 패널 경계선을 왼쪽으로 이동. “OpenCode 입력창이 잘 보이도록 너비를 조정해줘.” |
 | 상태바 버튼이 안 보임 | 화면 우측 하단(포트 번호 바로 왼쪽) 확인. 창 다시 로드(`Ctrl+Shift+P` → `Reload Window`) 실행. |
-| 미리보기 복원 시간 초과 | v1.2.0에는 제목 변경 수정 포함. “업데이트 후 저장하지 않은 파일을 보존하고 전용 창을 다시 열어 검증해줘.” |
+| 미리보기 복원 시간 초과 | v1.3.0에는 3대 뷰포트 모드 및 상태바 토글 포함. “업데이트 후 저장하지 않은 파일을 보존하고 전용 창을 다시 열어 검증해줘.” |
 | 실행 정책/조직 정책 오류 | 정책을 끄거나 우회하지 않음. 에이전트가 허용된 실행 경로를 확인; 관리 조직 정책이면 관리자 문의. |
 | 빈 index.html 또는 경로 불일치 | 앱 가상화 가능성. “실제 Windows 사용자와 에이전트의 파일 해시·경로를 비교해줘.” |
 | React/Vite 미리보기 연결 실패 | 기존 개발 서버가 실행 중인지와 실제 localhost URL 확인. HTML 샘플로 덮어쓰지 않음. |
