@@ -121,12 +121,13 @@ Set-Key $profiles 'Vibe PowerShell' @{path=(Join-Path $env:WINDIR 'System32\Wind
 Set-Key $settings 'terminal.integrated.profiles.windows' $profiles
 Set-Key $settings 'terminal.integrated.defaultProfile.windows' 'Vibe PowerShell'
 $skip = @($settings.'terminal.integrated.commandsToSkipShell' | Where-Object { $_ -and $_ -notin @('-vibe.toggleTerminal','-vibe.restoreLayout') })
-Set-Key $settings 'terminal.integrated.commandsToSkipShell' @($skip + @('vibe.toggleTerminal','vibe.restoreLayout','vibe.togglePreview') | Select-Object -Unique)
+Set-Key $settings 'terminal.integrated.commandsToSkipShell' @($skip + @('vibe.toggleTerminal','vibe.restoreLayout','vibe.togglePreview','vibe.openExternalBrowser') | Select-Object -Unique)
 Set-Key $settings 'workbench.panel.opensMaximized' 'never'
 Set-Key $settings 'workbench.panel.defaultLocation' 'right'
 Set-Key $settings 'terminal.integrated.enablePersistentSessions' $true
 Set-Key $settings 'terminal.integrated.tabs.enabled' $false
 Set-Key $settings 'livePreview.openPreviewTarget' 'Embedded Preview'
+Set-Key $settings 'livePreview.debugOnExternalPreview' $true
 Set-Key $settings 'livePreview.autoRefreshPreview' 'On All Changes in Editor'
 Set-Key $settings 'workbench.startupEditor' 'none'
 Set-Key $settings 'locale' 'ko'

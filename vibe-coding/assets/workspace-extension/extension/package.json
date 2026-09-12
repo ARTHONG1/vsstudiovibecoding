@@ -2,7 +2,7 @@
     "name":  "vibe-workspace",
     "displayName":  "Vibe Coding Workspace",
     "publisher":  "local-vibe",
-    "version":  "1.2.1",
+    "version":  "1.3.0",
     "engines":  {
                     "vscode":  "^1.94.0"
                 },
@@ -28,6 +28,11 @@
                                             "command":  "vibe.togglePreview",
                                             "title":  "Vibe Coding: Toggle Preview (Full / 3-Columns)",
                                             "icon":  "$(browser)"
+                                        },
+                                        {
+                                            "command":  "vibe.openExternalBrowser",
+                                            "title":  "Vibe Coding: Open in External Browser (Chrome/Edge)",
+                                            "icon":  "$(link-external)"
                                         }
                                     ],
                         "menus":  {
@@ -39,6 +44,11 @@
                                                            },
                                                            {
                                                                "command":  "vibe.togglePreview",
+                                                               "group":  "navigation",
+                                                               "when":  "config.vibe.enabled"
+                                                           },
+                                                           {
+                                                               "command":  "vibe.openExternalBrowser",
                                                                "group":  "navigation",
                                                                "when":  "config.vibe.enabled"
                                                            }

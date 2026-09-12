@@ -172,6 +172,12 @@ function activate(context) {
       previewUrl: config.get('previewUrl', '') || 'http://127.0.0.1:3000'
     });
   }
+  async function openExternalBrowser() {
+    const config = vscode.workspace.getConfiguration('vibe');
+    const previewUrl = config.get('previewUrl', '') || 'http://127.0.0.1:3000';
+    await vscode.env.openExternal(vscode.Uri.parse(previewUrl));
+    record('external-browser-opened', { url: previewUrl });
+  }
   async function guarded(action) {
     if (busy) return;
     busy = true;
@@ -183,6 +189,7 @@ function activate(context) {
     vscode.commands.registerCommand('vibe.restoreLayout', options => guarded(() => restore(options))),
     vscode.commands.registerCommand('vibe.toggleTerminal', options => guarded(() => toggle(options))),
     vscode.commands.registerCommand('vibe.togglePreview', () => guarded(() => togglePreview())),
+    vscode.commands.registerCommand('vibe.openExternalBrowser', () => guarded(() => openExternalBrowser())),
     vscode.window.onDidCloseTerminal(t => { if (t === terminal) terminal = undefined; })
   );
   record('activated');
