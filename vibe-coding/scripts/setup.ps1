@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [string]$ProjectPath,
-  [string]$EntryFile = 'index.html',
+  [string]$EntryFile,
   [string]$PreviewUrl,
   [string]$Root = (Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'VibeCoding'),
   [string]$CodePath,
@@ -9,7 +9,9 @@ param(
   [string]$DesktopPath = [Environment]::GetFolderPath('Desktop'),
   [string]$SkillRoot = (Split-Path -Parent $PSScriptRoot),
   [switch]$CreateSample,
-  [switch]$Apply
+  [switch]$Apply,
+  [switch]$Launch,
+  [switch]$RegisterContextMenu
 )
 $ErrorActionPreference = 'Stop'
 function Find-Executable([string[]]$Candidates) {
@@ -23,9 +25,27 @@ $Root = [IO.Path]::GetFullPath($Root)
 if ($CreateSample) { $ProjectPath = Join-Path $Root 'SampleProject' }
 $ProjectPath = [IO.Path]::GetFullPath($ProjectPath)
 if (!$CreateSample -and !(Test-Path -LiteralPath $ProjectPath -PathType Container)) { throw "Project does not exist: $ProjectPath" }
+if (!$EntryFile) {
+  $candidates = @('index.html', 'public\index.html', 'src\index.html', 'src\App.tsx', 'src\App.jsx', 'src\App.vue', 'src\main.ts', 'src\main.js', 'app\page.tsx')
+  foreach ($c in $candidates) {
+    if (Test-Path -LiteralPath (Join-Path $ProjectPath $c) -PathType Leaf) {
+      $EntryFile = $c
+      break
+    }
+  }
+  if (!$EntryFile) { $EntryFile = 'index.html' }
+}
 $entryPath = [IO.Path]::GetFullPath((Join-Path $ProjectPath $EntryFile))
 if (!$entryPath.StartsWith($ProjectPath.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'EntryFile must stay within the project.' }
 if (!$CreateSample -and !(Test-Path -LiteralPath $entryPath -PathType Leaf)) { throw "Entry file does not exist: $entryPath" }
+if (!$PreviewUrl -and (Test-Path -LiteralPath (Join-Path $ProjectPath 'package.json') -PathType Leaf)) {
+  try {
+    $pkgText = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $ProjectPath 'package.json')
+    if ($pkgText -match '"vite"') { $PreviewUrl = 'http://localhost:5173' }
+    elseif ($pkgText -match '"next"' -or $pkgText -match '"react-scripts"') { $PreviewUrl = 'http://localhost:3000' }
+    elseif ($pkgText -match '"astro"') { $PreviewUrl = 'http://localhost:4321' }
+  } catch {}
+}
 if ($PreviewUrl) {
   $url = [uri]$PreviewUrl
   if ($url.Scheme -notin @('http','https') -or $url.Host -notin @('localhost','127.0.0.1','::1','[::1]')) { throw 'PreviewUrl must be a localhost HTTP(S) development server.' }
@@ -37,6 +57,15 @@ if (!$CodePath) {
 if (!$OpenCodePath) {
   $command = Get-Command opencode.exe -ErrorAction SilentlyContinue
   $OpenCodePath = Find-Executable @($(if ($command) {$command.Source}), (Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'npm\node_modules\opencode-ai\bin\opencode.exe'), (Join-Path $env:USERPROFILE '.opencode\bin\opencode.exe'), (Join-Path $env:USERPROFILE 'scoop\shims\opencode.exe'))
+}
+if (!$OpenCodePath -and $Apply) {
+  $npm = Get-Command npm.cmd -ErrorAction SilentlyContinue
+  if (!$npm) { $npm = Get-Command npm -ErrorAction SilentlyContinue }
+  if ($npm) {
+    & $npm.Source install -g opencode-ai
+    $command = Get-Command opencode.exe -ErrorAction SilentlyContinue
+    $OpenCodePath = Find-Executable @($(if ($command) {$command.Source}), (Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'npm\node_modules\opencode-ai\bin\opencode.exe'), (Join-Path $env:USERPROFILE '.opencode\bin\opencode.exe'), (Join-Path $env:USERPROFILE 'scoop\shims\opencode.exe'))
+  }
 }
 $missing = @()
 if (!$CodePath -or !(Test-Path -LiteralPath $CodePath -PathType Leaf)) { $missing += 'VS Code executable' }
@@ -145,6 +174,23 @@ $link.Arguments = '--new-window --skip-release-notes --locale ko --user-data-dir
 $link.WorkingDirectory = $ProjectPath
 $link.IconLocation = $CodePath + ',0'
 $link.Save()
+try {
+  $regScript = Join-Path $SkillRoot 'scripts\setup.ps1'
+  $cmdStr = 'powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -Command "& ''' + $regScript + ''' -ProjectPath ''%V'' -Apply -Launch"'
+  $bgCmdStr = 'powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -Command "& ''' + $regScript + ''' -ProjectPath ''%W'' -Apply -Launch"'
+  $regDirs = @("HKCU:\Software\Classes\Directory\shell\VibeCoding", "HKCU:\Software\Classes\Directory\Background\shell\VibeCoding")
+  foreach ($regPath in $regDirs) {
+    New-Item -Path $regPath -Force | Out-Null
+    Set-ItemProperty -Path $regPath -Name "(Default)" -Value "Vibe Coding으로 열기" -Force
+    Set-ItemProperty -Path $regPath -Name "Icon" -Value "$CodePath,0" -Force
+    New-Item -Path "$regPath\command" -Force | Out-Null
+    $val = if ($regPath -like "*Background*") { $bgCmdStr } else { $cmdStr }
+    Set-ItemProperty -Path "$regPath\command" -Name "(Default)" -Value $val -Force
+  }
+} catch {}
+if ($Launch -and (Test-Path -LiteralPath $shortcutPath)) {
+  Start-Process $shortcutPath
+}
 $plan.applied=$true
 $plan['backup']=$backup
 $plan['openCodeVersion']=($version -join ' ')

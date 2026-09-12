@@ -84,7 +84,7 @@
   <header>
     <span class="badge">Windows 전용 Vibe Coding 환경</span>
     <h1>Vibe Coding 시작 가이드</h1>
-    <p>AI에게 설치부터 화면 검증까지 맡기는 <strong>미리보기 | 코드 | OpenCode</strong> 3열 코딩 환경</p>
+    <p>AI에게 설치부터 화면 검증까지 맡기는 <strong>3대 뷰포트 (3열 분할 ↔ 터미널 전체 ↔ 미리보기 전체)</strong> 코딩 환경</p>
     <div>
       <a href="https://github.com/ARTHONG1/vsstudiovibecoding" role="button" class="secondary">GitHub 저장소 보기</a>
     </div>
@@ -99,26 +99,37 @@
         <pre><code>https://github.com/ARTHONG1/vsstudiovibecoding 의 vibe-coding 폴더를
 내 AI 도구의 스킬 폴더에 설치하고 SKILL.md를 읽어 실행해줘.
 Windows에서 별도 샘플 프로젝트를 만들고 VS Code, OpenCode CLI,
-필수 확장, 미리보기 | 코드 | OpenCode 3열 화면과 F12 전환까지 설정해줘.
-기존 설정과 파일은 보존하고 실제 화면, 버튼, F12 왕복,
+필수 확장, 미리보기 | 코드 | OpenCode 3열 화면과 상태바 토글 버튼까지 설정해줘.
+기존 설정과 파일은 보존하고 실제 화면, 버튼, 3대 모드 전환,
 바로가기 재실행을 검증해줘. 보안 승인과 로그인이 필요하면
 정확히 어떤 버튼을 내가 눌러야 하는지 알려줘.</code></pre>
       </div>
     </section>
 
     <section>
-      <h2>📌 핵심 구성 및 단축키</h2>
+      <h2>📌 핵심 구성 및 3대 뷰포트 모드</h2>
       <div class="grid">
         <div class="step-card">
-          <h3>🖥️ 3열 분할 화면</h3>
-          <p><strong>[왼쪽]</strong> 실시간 웹 미리보기 (Live Preview)<br>
-             <strong>[가운데]</strong> 소스 코드 편집기<br>
-             <strong>[오른쪽]</strong> OpenCode 터미널 (AI 에이전트)</p>
+          <h3>🖥️ 3대 뷰포트 모드</h3>
+          <p><strong>[3열 분할]</strong> 미리보기(50%) | 코드(50%) | 우측 OpenCode<br>
+             <strong>[터미널 전체]</strong> AI와 대규모 프롬프트 및 빌드 로그 점검 (100%)<br>
+             <strong>[미리보기 전체]</strong> 순수 1:1 고해상도 웹 UI 검수 및 Computer Use (100%)</p>
         </div>
         <div class="step-card">
-          <h3>⌨️ 편리한 단축키</h3>
-          <p><strong>F12</strong>: 3열 화면 ↔ 전체 터미널 토글<br>
-             <strong>Ctrl + Alt + V</strong>: 화면 배치가 흐트러졌을 때 원래 3열로 즉시 복원</p>
+          <h3>🖱️ 원클릭 UI & 단축키</h3>
+          <p><strong>상태바 버튼</strong>: 화면 우측 하단 <code>[ 🗖 터미널 전체 ]</code>, <code>[ 🌐 미리보기 전체 ]</code><br>
+             <strong>에디터 툴바</strong>: 코드 상단 툴바 아이콘으로도 동일하게 전환 가능<br>
+             <strong>F12 순정 보존</strong>: 기본 '함수/변수 정의로 이동' 기능을 100% 온전히 보존</p>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="step-card">
+          <h3>📁 다중 프로젝트 & 우클릭 메뉴</h3>
+          <p>탐색기에서 아무 폴더나 <strong>우클릭 ➔ [Vibe Coding으로 열기]</strong>를 누르면 해당 프로젝트 전용 3열 환경이 즉시 실행됩니다. 프로젝트별 독립 해시 워크스페이스가 적용되어 서로 간섭하지 않습니다.</p>
+        </div>
+        <div class="step-card">
+          <h3>🤖 AI 에이전트 최적화 (Dual Engine)</h3>
+          <p>화면 전환 모드와 무관하게 <strong>로컬 개발 서버(http://127.0.0.1:3000)</strong>가 상시 개방되어, <strong>Playwright</strong>와 <strong>Browser-Use</strong>가 백그라운드에서 CDP로 초고속 DOM 무결성 검증을 수행합니다.</p>
         </div>
       </div>
     </section>
@@ -141,23 +152,23 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, OpenCode CLI,
 
       <div class="step-card">
         <h4>3. OpenCode AI 모델 연결</h4>
-        <p>오른쪽 OpenCode 터미널에서 <code>/connect</code>를 입력하여 사용할 AI 모델(OpenCode Zen, OpenAI 등)을 연결하세요.</p>
+        <p>오른쪽 OpenCode 터미널에서 <code>Ctrl + P</code> ➔ <code>/model</code> ➔ <code>Ctrl + A</code> (Connect Provider)를 눌러 내 ChatGPT / Codex 계정 또는 API 키를 손쉽게 연결할 수 있습니다.</p>
       </div>
     </section>
 
     <section>
       <h2>❓ 자주 묻는 질문 & 문제 해결</h2>
       <details>
-        <summary><strong>VS Code가 열렸는데 3열로 안 나뉘고 빈 창만 뜹니다.</strong></summary>
-        <p>상단에 "Restricted Mode"가 떠 있는지 확인하세요. 작업 공간 신뢰(Trust Workspace)를 승인하지 않으면 확장 기능이 동작하지 않습니다. 신뢰 승인 후 <strong>Ctrl + Alt + V</strong>를 누르면 3열 배치가 완성됩니다.</p>
+        <summary><strong>F12 단축키가 원래 기능으로 동작하나요?</strong></summary>
+        <p>네! 기존 버전과 달리 F12를 가로채지 않고 VS Code 본래의 <strong>[함수/변수 정의로 이동(Go to Definition)]</strong>으로 100% 정상 작동합니다. 화면 전환은 화면 우측 하단의 전용 상태바 버튼과 툴바 아이콘으로 직관적으로 조작하실 수 있습니다.</p>
       </details>
       <details>
-        <summary><strong>F12를 눌렀는데 반응이 없거나 다른 기능이 동작합니다.</strong></summary>
-        <p>노트북의 경우 <strong>Fn + F12</strong>를 눌러야 할 수 있습니다. 또한 반드시 바탕화면에 생성된 <strong>Vibe Coding - [프로젝트명]</strong> 전용 바로가기로 실행해야 단축키 설정이 적용됩니다.</p>
+        <summary><strong>상태바 버튼이 안 보여요. 어디에 있나요?</strong></summary>
+        <p>화면 맨 아래 오른쪽 구석(알림 종 아이콘과 포트 번호 바로 왼쪽)에 <code>[ 🗖 터미널 전체 ]</code>와 <code>[ 🌐 미리보기 전체 ]</code> 버튼이 항상 노출됩니다. 혹시 보이지 않는다면 <code>Ctrl + Shift + P</code> ➔ <code>Reload Window (창 다시 로드)</code>를 한 번 실행해 주세요.</p>
       </details>
       <details>
-        <summary><strong>내 기존 프로젝트에 적용하고 싶습니다.</strong></summary>
-        <p>AI에게 <code>"내 프로젝트 경로(C:...)의 index.html을 대상으로 vibe-coding 환경을 적용해줘"</code>라고 요청하면 기존 파일은 유지하면서 전용 바로가기를 생성해 줍니다.</p>
+        <summary><strong>새로운 프로젝트마다 어떻게 적용하나요?</strong></summary>
+        <p>윈도우 탐색기에서 원하는 프로젝트 폴더를 <strong>마우스 우클릭 ➔ [Vibe Coding으로 열기]</strong>를 누르거나, AI 에이전트(Codex)에게 <code>"내 프로젝트 C:MyProject를 바이브 코딩으로 열어줘"</code>라고 말하면 끝납니다. 스킬이 진입 파일과 프레임워크 포트를 자동으로 감지하여 전용 3열 창을 띄워줍니다.</p>
       </details>
     </section>
   </main>
