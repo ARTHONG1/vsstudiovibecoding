@@ -111,7 +111,7 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, OpenCode CLI,
 
 설치 스크립트는 OpenCode CLI가 없을 경우 시스템의 `npm`을 확인하여 `npm install -g opencode-ai`로 자동 설치를 시도합니다. 시스템에 `npm`이 없거나 VS Code 자체가 없는 경우 에이전트가 공식 안내([VS Code](https://code.visualstudio.com/docs/setup/windows), [OpenCode](https://opencode.ai/docs/))에 따라 설치를 진행합니다. 프레임워크 서버 시작도 프로젝트별로 처리합니다.
 
-`node --test tests/*.test.cjs`로 회귀 테스트, `node scripts/check.cjs`로 패키지·문서 링크 검사, Windows의 `powershell -File scripts/build-release.ps1`로 배포 ZIP을 만듭니다.
+ `npm test`로 회귀 테스트, `npm run check`로 패키지·문서 링크 검사, Windows의 `powershell -File scripts/build-release.ps1`로 배포 ZIP을 만듭니다.
 
 ## 검증 기록
 

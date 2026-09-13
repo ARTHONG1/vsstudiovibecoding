@@ -31,7 +31,7 @@ Run the Node.js built-in test runner to verify extension lifecycle and command l
 
 ```bash
 npm test
-# or: node --test tests/*.test.cjs
+# or: node --test
 ```
 
 **What it checks:**
@@ -68,4 +68,3 @@ Follow the 7-step checklist defined in `vibe-coding/references/verification.md`:
 | **OpenCode CLI** | 1.18.30 | PASS |
 | **Live Preview** | 0.4.20 | PASS |
 | **Node.js** | 20.x, 22.x, 24.x | PASS |
-
