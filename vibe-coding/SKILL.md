@@ -7,7 +7,7 @@ metadata:
 
 # Agent-operated Vibe Coding
 
-Deliver a working Windows VS Code window: **Preview | Code | OpenCode**, with **3대 뷰포트 모드: [3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체]**. VS Code 순정 F12(정의로 이동)를 100% 보존하며 하단 상태바 및 에디터 툴바 버튼으로 전환합니다. Computer Use를 위한 무노이즈 미리보기 뷰포트를 제공하고, Playwright/Browser-Use를 위해 로컬 서버 엔드포인트(http://127.0.0.1:3000)를 상시 개방합니다. The agent performs setup and UI verification; do not give the user a manual installation checklist. Scripts are agent tools, not the deliverable the user must execute.
+Deliver a working Windows VS Code window: **Preview | Code | OpenCode**, with **3대 뷰포트 모드: [3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체]**. VS Code 순정 F12(정의로 이동)를 100% 보존하며 하단 상태바 및 에디터 툴바 버튼으로 전환합니다. Computer Use를 위한 무노이즈 미리보기 뷰포트를 제공하고, Playwright/Browser-Use를 위해 프로젝트의 실제 로컬 개발 서버(Live Preview 또는 Vite 5173, Next.js 3000 등) 엔드포인트를 유지합니다. The agent performs setup and UI verification; do not give the user a manual installation checklist. Scripts are agent tools, not the deliverable the user must execute.
 진짜 브라우저 검수(DevTools, 쿠키, 결제 연동)가 필요한 경우 에디터 상단 툴바의 [ ↗ 외부 브라우저 ]를 통해 1클릭으로 시스템 Chrome/Edge와 연동됩니다.
 
 ## Scope and preservation
