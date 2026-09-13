@@ -157,6 +157,12 @@ Set-Key $settings 'workbench.startupEditor' 'none'
 Set-Key $settings 'locale' 'ko'
 Set-Key $settings 'files.autoSave' 'afterDelay'
 Set-Key $settings 'files.autoSaveDelay' 500
+Set-Key $settings 'vibe.enabled' $true
+Set-Key $settings 'vibe.codexPath' $(if ($CodexPath) {$CodexPath} else {''})
+Set-Key $settings 'vibe.opencodePath' $(if ($OpenCodePath) {$OpenCodePath} else {''})
+Set-Key $settings 'vibe.entryFile' $EntryFile
+Set-Key $settings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
+Set-Key $settings 'chat.commandCenter.enabled' $false
 Save-Json $settingsPath $settings
 $argvPath = Join-Path $userDir 'argv.json'
 $argv = Read-Object $argvPath
@@ -176,6 +182,18 @@ $otherFolders = @($workspace.folders | Where-Object { $_ -and $_.path -ne $Proje
 Set-Key $workspace 'folders' (@(@{path=$ProjectPath}) + $otherFolders)
 Set-Key $workspace 'settings' $wsSettings
 Save-Json $workspacePath $workspace
+try {
+  $projectVscode = Join-Path $ProjectPath '.vscode'
+  $projectSettingsPath = Join-Path $projectVscode 'settings.json'
+  New-Item -ItemType Directory -Force -Path $projectVscode -ErrorAction SilentlyContinue | Out-Null
+  $projectSettings = Read-Object $projectSettingsPath
+  Set-Key $projectSettings 'vibe.enabled' $true
+  Set-Key $projectSettings 'vibe.codexPath' $(if ($CodexPath) {$CodexPath} else {''})
+  Set-Key $projectSettings 'vibe.opencodePath' $(if ($OpenCodePath) {$OpenCodePath} else {''})
+  Set-Key $projectSettings 'vibe.entryFile' $EntryFile
+  Set-Key $projectSettings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
+  Save-Json $projectSettingsPath $projectSettings
+} catch {}
 $packageSource = Join-Path $SkillRoot 'assets\workspace-extension'
 $manifest = Get-Content -Raw -Encoding UTF8 (Join-Path $packageSource 'extension\package.json') | ConvertFrom-Json
 $packagePath = Join-Path $backup ('vibe-workspace-' + $manifest.version + '.vsix')
@@ -201,7 +219,7 @@ if (Test-Path -LiteralPath $shortcutPath) { Copy-Item -LiteralPath $shortcutPath
 $shell = New-Object -ComObject WScript.Shell
 $link = $shell.CreateShortcut($shortcutPath)
 $link.TargetPath = $CodePath
-$link.Arguments = '--new-window --skip-release-notes --locale ko --user-data-dir "' + $userDir + '" --extensions-dir "' + $extensionsDir + '" "' + $workspacePath + '"'
+$link.Arguments = '--new-window --skip-release-notes --locale ko --user-data-dir "' + $userDir + '" --extensions-dir "' + $extensionsDir + '" "' + $ProjectPath + '"'
 $link.WorkingDirectory = $ProjectPath
 $link.IconLocation = $CodePath + ',0'
 $link.Save()
