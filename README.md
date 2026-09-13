@@ -1,5 +1,10 @@
 # Vibe Coding
 
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Windows-0078D6.svg?logo=windows)](https://github.com/ARTHONG1/vsstudiovibecoding)
+[![CI](https://github.com/ARTHONG1/vsstudiovibecoding/actions/workflows/ci.yml/badge.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/actions)
+
 **AI에게 설치부터 화면 검증까지 맡기는 Windows용 바이브 코딩 스킬.**
 
 VS Code를 **미리보기 | 코드 | OpenCode** 3열로 배치하며, 상태바와 에디터 툴바의 전용 버튼으로 **3대 뷰포트 모드 ([3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체])**를 원클릭 전환합니다. VS Code 순정 `F12`(함수 정의로 이동)를 100% 온전히 보존하며, 초보자를 위한 제로 컨피그 자동 감지와 윈도우 우클릭 메뉴를 지원합니다.
