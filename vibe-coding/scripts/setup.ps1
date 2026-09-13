@@ -158,6 +158,7 @@ Set-Key $settings 'workbench.startupEditor' 'none'
 Set-Key $settings 'locale' 'ko'
 Set-Key $settings 'files.autoSave' 'afterDelay'
 Set-Key $settings 'files.autoSaveDelay' 500
+Set-Key $settings 'security.workspace.trust.enabled' $false
 Set-Key $settings 'vibe.enabled' $true
 Set-Key $settings 'vibe.codexPath' $(if ($CodexPath) {$CodexPath} else {''})
 Set-Key $settings 'vibe.opencodePath' $(if ($OpenCodePath) {$OpenCodePath} else {''})
