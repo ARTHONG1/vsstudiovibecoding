@@ -102,31 +102,40 @@ function activate(context) {
     let previewTab = previewTabRef;
     let previewGroup = previewTab && vscode.window.tabGroups.all.find(g => g.tabs.includes(previewTab));
     if (!previewGroup) {
-      if (previewUrl) {
-        const parsed = new URL(previewUrl);
-        if (!['http:', 'https:'].includes(parsed.protocol) || !['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname)) throw new Error('Preview URL must be a local development server.');
-        await exec('simpleBrowser.show', previewUrl);
-      } else {
-        await exec('livePreview.start.internalPreview.atFile', uri);
-      }
-      // The built-in browser opens asynchronously after Live Preview's command returns.
-      for (let attempt = 0; attempt < 100; attempt++) {
-        previewGroup = vscode.window.tabGroups.all.find(g => {
-          previewTab = g.tabs.find(t => /127\.0\.0\.1|localhost/.test(t.label) || (previewUrl && t.label === 'Simple Browser'));
-          return !!previewTab;
-        });
-        if (previewGroup) break;
-        await new Promise(resolve => setTimeout(resolve, 100));
+      try {
+        if (previewUrl) {
+          const parsed = new URL(previewUrl);
+          if (['http:', 'https:'].includes(parsed.protocol)) {
+            await exec('simpleBrowser.show', previewUrl);
+          } else {
+            await exec('livePreview.start.internalPreview.atFile', uri);
+          }
+        } else {
+          await exec('livePreview.start.internalPreview.atFile', uri);
+        }
+        for (let attempt = 0; attempt < 50; attempt++) {
+          previewGroup = vscode.window.tabGroups.all.find(g => {
+            previewTab = g.tabs.find(t => /127\.0\.0\.1|localhost/.test(t.label) || (previewUrl && t.label === 'Simple Browser'));
+            return !!previewTab;
+          });
+          if (previewGroup) break;
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } catch (e) {
+        output.appendLine('Preview start fallback: ' + e.message);
       }
     }
-    if (!previewGroup) throw new Error('Live Preview did not open a browser tab within 10 seconds.');
-    previewTabRef = previewTab;
-    const focusName = ['First', 'Second', 'Third', 'Fourth'][previewGroup.viewColumn - 1];
-    if (!focusName) throw new Error('Preview opened outside supported editor groups; restore layout and retry.');
-    await exec('workbench.action.focus' + focusName + 'EditorGroup');
-    for (let i = 0; i < previewGroup.tabs.length && !previewTab.isActive; i++) await exec('workbench.action.nextEditorInGroup');
-    if (!previewTab.isActive) throw new Error('Could not activate the preview tab; layout was not changed.');
-    await exec('moveActiveEditor', { to: 'first', by: 'group' });
+    if (previewGroup && previewTab) {
+      previewTabRef = previewTab;
+      const focusName = ['First', 'Second', 'Third', 'Fourth'][previewGroup.viewColumn - 1];
+      if (focusName) {
+        await exec('workbench.action.focus' + focusName + 'EditorGroup');
+        for (let i = 0; i < previewGroup.tabs.length && !previewTab.isActive; i++) await exec('workbench.action.nextEditorInGroup');
+        if (previewTab.isActive) {
+          await exec('moveActiveEditor', { to: 'first', by: 'group' });
+        }
+      }
+    }
     await vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Two, preview: false });
     await exec('vscode.setEditorLayout', { orientation: 0, groups: [{ size: 0.5 }, { size: 0.5 }] });
     ensureTerminal().show(true);

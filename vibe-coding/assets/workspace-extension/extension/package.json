@@ -2,17 +2,14 @@
     "name":  "vibe-workspace",
     "displayName":  "Vibe Coding Workspace",
     "publisher":  "local-vibe",
-    "version":  "2.1.0",
+    "version":  "2.1.1",
     "engines":  {
                     "vscode":  "^1.94.0"
                 },
     "main":  "./extension.js",
     "activationEvents":  [
-                             "onStartupFinished"
+                             "*"
                          ],
-    "extensionDependencies":  [
-                                  "ms-vscode.live-server"
-                              ],
     "contributes":  {
                         "commands":  [
                                         {
