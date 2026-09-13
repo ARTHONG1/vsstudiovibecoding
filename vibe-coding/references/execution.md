@@ -32,6 +32,7 @@ Existing settings must be parseable JSON for the bundled merger. If JSONC/commen
 For framework previews, PreviewUrl alone does not manage a server. Before claiming restart support, the agent must configure and test the project's existing server task/start mechanism, preserving existing tasks and observing its readiness on relaunch. If that cannot be done, explicitly report the external-server dependency and do not claim a self-starting setup. The bundled sample/static preview is the fully automated default; arbitrary framework startup is project-specific agent work.
 
 Verify software availability using current official sources when installation is needed: VS Code at https://code.visualstudio.com/ and OpenCode at https://opencode.ai/. Prefer supported user-scope installers; do not assume administrator rights or winget. When `-Apply` is executed and OpenCode is not found, the setup helper automatically attempts to install `opencode-ai` globally via `npm` if Node.js/npm is present on the system. If npm is missing or installation fails, the agent must install OpenCode through currently verified official instructions. Framework dependencies and server startup remain project-specific agent work.
+The core 3-column engine directly operates the OpenCode CLI (`opencode.exe`) in terminal; the optional `sst-dev.opencode` extension provides secondary syntax highlighting and is non-blocking.
 
 ## Known failure distinctions
 

@@ -164,12 +164,17 @@ $cli = Join-Path (Split-Path -Parent $CodePath) 'bin\code.cmd'
 if (!(Test-Path -LiteralPath $cli)) { throw 'VS Code CLI was not found beside Code.exe.' }
 $installed = @(& $cli --user-data-dir $userDir --extensions-dir $extensionsDir --list-extensions --show-versions)
 if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect installed extensions.' }
-foreach ($extension in @('MS-CEINTL.vscode-language-pack-ko','ms-vscode.live-server','sst-dev.opencode',$packagePath)) {
+foreach ($extension in @('MS-CEINTL.vscode-language-pack-ko','ms-vscode.live-server',$packagePath)) {
   if ($extension -eq $packagePath) { if (('local-vibe.vibe-workspace@'+$manifest.version) -in $installed) { continue } }
   elseif (@($installed | Where-Object { $_ -like ($extension+'@*') }).Count) { continue }
   & $cli --user-data-dir $userDir --extensions-dir $extensionsDir --install-extension $extension --force
   if ($LASTEXITCODE -ne 0) { throw "Extension installation failed: $extension. Configuration backup: $backup" }
 }
+try {
+  if (!(@($installed | Where-Object { $_ -like 'sst-dev.opencode@*' }).Count)) {
+    & $cli --user-data-dir $userDir --extensions-dir $extensionsDir --install-extension 'sst-dev.opencode' --force 2>$null
+  }
+} catch {}
 if (!(Test-Path -LiteralPath $DesktopPath -PathType Container)) { throw 'Desktop directory not found; provide the real DesktopPath.' }
 if (Test-Path -LiteralPath $shortcutPath) { Copy-Item -LiteralPath $shortcutPath -Destination $backup }
 $shell = New-Object -ComObject WScript.Shell
