@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run checks & tests
+        run: |
+          npm run check
+          npm test
+
+      - name: Build release zip package
+        shell: powershell
+        run: powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/vibe-coding-*.zip
+          generate_release_notes: true
+
