@@ -23,6 +23,7 @@ const requiredFiles = [
   'README.md',
   'TESTING.md',
   'package.json',
+  '.github/workflows/ci.yml',
   'vibe-coding/SKILL.md',
   'vibe-coding/scripts/setup.ps1',
   'vibe-coding/references/execution.md',
