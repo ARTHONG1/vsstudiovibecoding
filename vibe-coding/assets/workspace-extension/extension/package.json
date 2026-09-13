@@ -2,7 +2,7 @@
     "name":  "vibe-workspace",
     "displayName":  "Vibe Coding Workspace",
     "publisher":  "local-vibe",
-    "version":  "2.0.0",
+    "version":  "2.1.0",
     "engines":  {
                     "vscode":  "^1.94.0"
                 },
@@ -33,6 +33,11 @@
                                             "command":  "vibe.openExternalBrowser",
                                             "title":  "Vibe Coding: Open in External Browser (Chrome/Edge)",
                                             "icon":  "$(link-external)"
+                                        },
+                                        {
+                                            "command":  "vibe.pasteImage",
+                                            "title":  "Vibe Coding: Paste Clipboard Image (Alt+V)",
+                                            "icon":  "$(file-media)"
                                         }
                                     ],
                         "menus":  {
@@ -51,9 +56,22 @@
                                                                "command":  "vibe.openExternalBrowser",
                                                                "group":  "navigation",
                                                                "when":  "config.vibe.enabled"
+                                                           },
+                                                           {
+                                                               "command":  "vibe.pasteImage",
+                                                               "group":  "navigation",
+                                                               "when":  "config.vibe.enabled"
                                                            }
                                                        ]
                                   },
+                        "keybindings": [
+                                           {
+                                               "command": "vibe.pasteImage",
+                                               "key": "alt+v",
+                                               "mac": "alt+v",
+                                               "when": "config.vibe.enabled"
+                                           }
+                                       ],
                         "configuration":  {
                                               "title":  "Vibe Coding",
                                               "properties":  {

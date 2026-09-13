@@ -2,6 +2,7 @@
 const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 function activate(context) {
   if (!vscode.workspace.getConfiguration('vibe').get('enabled')) return;
@@ -189,6 +190,28 @@ function activate(context) {
     await vscode.env.openExternal(vscode.Uri.parse(previewUrl));
     record('external-browser-opened', { url: previewUrl });
   }
+  async function pasteImage() {
+    const terminal = ensureTerminal();
+    terminal.show();
+    const projectPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    const imgDir = path.join(projectPath, '.vibe', 'images');
+    try { fs.mkdirSync(imgDir, { recursive: true }); } catch {}
+    const filename = `clip_${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+    const destPath = path.join(imgDir, filename);
+    const psScript = `Add-Type -AssemblyName System.Windows.Forms; \$img = [System.Windows.Forms.Clipboard]::GetImage(); if (\$img) { \$img.Save('${destPath.replace(/'/g, "''")}', [System.Drawing.Imaging.ImageFormat]::Png); Write-Output 'OK'; } else { Write-Output 'EMPTY'; }`;
+    try {
+      const res = execSync(`powershell -NoProfile -Command "${psScript}"`, { encoding: 'utf8', timeout: 3000 }).trim();
+      if (res.includes('OK')) {
+        terminal.sendText(`"${destPath}" `, false);
+        record('image-pasted', { path: destPath });
+        vscode.window.showInformationMessage(`클립보드 이미지가 터미널에 첨부되었습니다: ${filename}`);
+      } else {
+        await exec('workbench.action.terminal.paste');
+      }
+    } catch (err) {
+      await exec('workbench.action.terminal.paste');
+    }
+  }
   async function guarded(action) {
     if (busy) return;
     busy = true;
@@ -201,6 +224,7 @@ function activate(context) {
     vscode.commands.registerCommand('vibe.toggleTerminal', options => guarded(() => toggle(options))),
     vscode.commands.registerCommand('vibe.togglePreview', () => guarded(() => togglePreview())),
     vscode.commands.registerCommand('vibe.openExternalBrowser', () => guarded(() => openExternalBrowser())),
+    vscode.commands.registerCommand('vibe.pasteImage', () => guarded(() => pasteImage())),
     vscode.window.onDidCloseTerminal(t => { if (t === terminal) terminal = undefined; })
   );
   record('activated');

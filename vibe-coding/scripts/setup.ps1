@@ -145,11 +145,12 @@ Set-Key $profiles 'Vibe PowerShell' @{path=(Join-Path $env:WINDIR 'System32\Wind
 Set-Key $settings 'terminal.integrated.profiles.windows' $profiles
 Set-Key $settings 'terminal.integrated.defaultProfile.windows' 'Vibe PowerShell'
 $skip = @($settings.'terminal.integrated.commandsToSkipShell' | Where-Object { $_ -and $_ -notin @('-vibe.toggleTerminal','-vibe.restoreLayout') })
-Set-Key $settings 'terminal.integrated.commandsToSkipShell' @($skip + @('vibe.toggleTerminal','vibe.restoreLayout','vibe.togglePreview','vibe.openExternalBrowser') | Select-Object -Unique)
+Set-Key $settings 'terminal.integrated.commandsToSkipShell' @($skip + @('vibe.toggleTerminal','vibe.restoreLayout','vibe.togglePreview','vibe.openExternalBrowser','vibe.pasteImage') | Select-Object -Unique)
 Set-Key $settings 'workbench.panel.opensMaximized' 'never'
 Set-Key $settings 'workbench.panel.defaultLocation' 'right'
 Set-Key $settings 'terminal.integrated.enablePersistentSessions' $true
 Set-Key $settings 'terminal.integrated.tabs.enabled' $false
+Set-Key $settings 'terminal.integrated.copyOnSelection' $true
 Set-Key $settings 'livePreview.openPreviewTarget' 'Embedded Preview'
 Set-Key $settings 'livePreview.debugOnExternalPreview' $true
 Set-Key $settings 'livePreview.autoRefreshPreview' 'On All Changes in Editor'
@@ -168,7 +169,9 @@ $argvPath = Join-Path $userDir 'argv.json'
 $argv = Read-Object $argvPath
 Set-Key $argv 'locale' 'ko'
 Save-Json $argvPath $argv
-$keys = @($keys | Where-Object { $_ -and $_.command -notin @('vibe.toggleTerminal','vibe.restoreLayout') })
+$keys = @($keys | Where-Object { $_ -and $_.command -notin @('vibe.toggleTerminal','vibe.restoreLayout','workbench.action.terminal.paste','workbench.action.terminal.copySelection') })
+$keys += @{ key='ctrl+v'; command='workbench.action.terminal.paste'; when='terminalFocus' }
+$keys += @{ key='ctrl+c'; command='workbench.action.terminal.copySelection'; when='terminalFocus && terminalHasSelection' }
 Save-Json $keybindingsPath $keys
 $wsSettings = $workspace.settings
 if (!$wsSettings) { $wsSettings = [pscustomobject]@{} }

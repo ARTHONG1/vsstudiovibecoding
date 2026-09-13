@@ -1,6 +1,6 @@
 # Vibe Coding
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6.svg?logo=windows)](https://github.com/ARTHONG1/vsstudiovibecoding)
 [![CI](https://github.com/ARTHONG1/vsstudiovibecoding/actions/workflows/ci.yml/badge.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/actions)
@@ -9,7 +9,7 @@
 
 VS Code를 **미리보기 | 코드 | Codex** 3열로 배치하며, 상태바와 에디터 툴바의 전용 버튼으로 **3대 뷰포트 모드 ([3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체])**를 원클릭 전환합니다. 3열에 OpenAI 공식 Codex CLI를 구동하여 OpenCodex 멀티 모델 및 Computer Use 자율 화면 제어를 지원하며, VS Code 순정 `F12`(정의로 이동)를 100% 보존합니다.
 
-**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.0.0/vibe-coding-2.0.0.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
+**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.1.0/vibe-coding-2.1.0.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
 
 ## 가장 쉬운 시작
 
@@ -63,6 +63,7 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
 5. 에디터에서 `F12`를 눌렀을 때 터미널이 가로채지 않고 순정 **[함수/변수 정의로 이동]**이 정상 작동함을 확인합니다.
 6. 생성된 **Vibe Coding - 프로젝트명-식별자** 바탕화면 바로가기 또는 윈도우 탐색기 폴더 우클릭 **[ Vibe Coding으로 열기 ]**로 다시 열어도 완벽히 복원돼야 합니다.
 7. 코드 에디터 우측 상단 툴바의 **[ ↗ 외부 브라우저에서 열기 ]** 클릭 시 시스템 기본 브라우저(Chrome/Edge)가 뜨며 순정 F12 개발자 도구(Network, Application/쿠키) 및 실시간 디버깅이 연결됨을 확인합니다.
+8. 터미널에서 `Ctrl+V`로 클립보드 텍스트가 즉시 붙여넣어지고 마우스 선택 시 자동 복사되며, `Alt+V`(또는 상단 📷 아이콘)로 클립보드 캡처 이미지가 파일로 자동 저장되어 터미널에 경로가 즉시 입력됨을 확인합니다.
 
 설치 성공 로그만으로 완료로 판단하지 않습니다. 화면 도구가 없으면 화면 검증은 미완료로 표시합니다. Codex 입력창 표시와 실제 인증된 AI 응답도 구분합니다.
 
@@ -75,7 +76,7 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
 | Codex를 찾지 못함 | 공식 Codex CLI 설치 확인 또는 npm fallback 확인. “codex.exe의 경로와 --version을 확인해줘.” |
 | 오른쪽이 너무 좁음 | 패널 경계선을 왼쪽으로 이동. “OpenCode 입력창이 잘 보이도록 너비를 조정해줘.” |
 | 상태바 버튼이 안 보임 | 화면 우측 하단(포트 번호 바로 왼쪽) 확인. 창 다시 로드(`Ctrl+Shift+P` → `Reload Window`) 실행. |
-| 미리보기 복원 시간 초과 | v2.0.0에는 3대 뷰포트 모드 및 Codex 도킹 포함. “업데이트 후 저장하지 않은 파일을 보존하고 전용 창을 다시 열어 검증해줘.” |
+| 미리보기 복원 시간 초과 | v2.1.0에는 3대 뷰포트 모드, 터미널 복사/붙여넣기, 클립보드 이미지(Alt+V) 첨부 포함. “업데이트 후 저장하지 않은 파일을 보존하고 전용 창을 다시 열어 검증해줘.” |
 | 실행 정책/조직 정책 오류 | 정책을 끄거나 우회하지 않음. 에이전트가 허용된 실행 경로를 확인; 관리 조직 정책이면 관리자 문의. |
 | 빈 index.html 또는 경로 불일치 | 앱 가상화 가능성. “실제 Windows 사용자와 에이전트의 파일 해시·경로를 비교해줘.” |
 | React/Vite 미리보기 연결 실패 | 기존 개발 서버가 실행 중인지와 실제 localhost URL 확인. HTML 샘플로 덮어쓰지 않음. |
