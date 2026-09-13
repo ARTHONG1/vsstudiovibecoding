@@ -38,5 +38,5 @@ test('restore reuses a preview after its title becomes the page title', async ()
   assert.equal(terminals.length,1);
   await commands.get('vibe.toggleTerminal')({maximized:false});
   await commands.get('vibe.toggleTerminal')({maximized:true});
-  assert.deepEqual(events.slice(-2).map(e=>e.event),['terminal-full','terminal-restored']);
+  assert.deepEqual(events.slice(-2).map(e=>e.event),['terminal-full','layout-ready']);
 });

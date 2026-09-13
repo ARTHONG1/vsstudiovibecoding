@@ -150,47 +150,38 @@ function activate(context) {
     });
   }
   async function toggle(options) {
+    if (currentMode === 'terminal') {
+      return restore();
+    }
     if (currentMode === 'preview') {
       await exec('workbench.action.toggleMaximizeEditorGroup');
     }
-    if (currentMode === 'terminal') {
-      await exec('workbench.action.toggleMaximizedPanel');
-      await exec('workbench.action.positionPanelRight');
-      await exec('workbench.action.evenEditorWidths');
-      currentMode = 'split';
-    } else {
-      ensureTerminal().show();
-      await exec('workbench.action.positionPanelBottom');
-      await exec('workbench.action.toggleMaximizedPanel');
-      currentMode = 'terminal';
-    }
+    ensureTerminal().show();
+    await exec('workbench.action.positionPanelBottom');
+    await exec('workbench.action.toggleMaximizedPanel');
+    currentMode = 'terminal';
     updateStatusBars();
-    record(currentMode === 'terminal' ? 'terminal-full' : 'terminal-restored', { mode: currentMode });
+    record('terminal-full', { mode: currentMode });
   }
   async function togglePreview() {
-    const config = vscode.workspace.getConfiguration('vibe');
-    const uri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, config.get('entryFile', 'index.html'));
+    if (currentMode === 'preview') {
+      return restore();
+    }
     if (currentMode === 'terminal') {
       await exec('workbench.action.toggleMaximizedPanel');
     }
-    if (currentMode === 'preview') {
-      await exec('workbench.action.toggleMaximizeEditorGroup');
-      await exec('vscode.setEditorLayout', { orientation: 0, groups: [{ size: 0.5 }, { size: 0.5 }] });
-      await vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Two, preview: false });
-      await exec('workbench.action.evenEditorWidths');
-      await exec('workbench.action.positionPanelRight');
-      ensureTerminal().show(true);
-      currentMode = 'split';
-    } else {
-      await exec('workbench.action.closePanel');
-      await exec('workbench.action.focusFirstEditorGroup');
-      await exec('workbench.action.toggleMaximizeEditorGroup');
-      currentMode = 'preview';
+    let isAlive = previewTabRef && vscode.window.tabGroups.all.some(g => g.tabs.includes(previewTabRef));
+    if (!isAlive) {
+      await restore();
     }
+    await exec('workbench.action.closePanel');
+    await exec('workbench.action.focusFirstEditorGroup');
+    await exec('workbench.action.toggleMaximizeEditorGroup');
+    currentMode = 'preview';
     updateStatusBars();
     record(currentMode === 'preview' ? 'preview-full' : 'layout-ready', {
       mode: currentMode,
-      previewUrl: config.get('previewUrl', '') || 'http://127.0.0.1:3000'
+      previewUrl: vscode.workspace.getConfiguration('vibe').get('previewUrl', '') || 'http://127.0.0.1:3000'
     });
   }
   async function openExternalBrowser() {
