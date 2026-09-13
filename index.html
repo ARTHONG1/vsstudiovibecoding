@@ -84,7 +84,7 @@
   <header>
     <span class="badge">Windows 전용 Vibe Coding 환경</span>
     <h1>Vibe Coding 시작 가이드</h1>
-    <p>AI에게 설치부터 화면 검증까지 맡기는 <strong>3대 뷰포트 (3열 분할 ↔ 터미널 전체 ↔ 미리보기 전체)</strong> 코딩 환경</p>
+    <p>AI에게 설치부터 화면 검증까지 맡기는 <strong>Preview | Code | Codex</strong> 3열 바이브 코딩 환경</p>
     <div>
       <a href="https://github.com/ARTHONG1/vsstudiovibecoding" role="button" class="secondary">GitHub 저장소 보기</a>
     </div>
@@ -98,8 +98,8 @@
       <div style="position: relative;">
         <pre><code>https://github.com/ARTHONG1/vsstudiovibecoding 의 vibe-coding 폴더를
 내 AI 도구의 스킬 폴더에 설치하고 SKILL.md를 읽어 실행해줘.
-Windows에서 별도 샘플 프로젝트를 만들고 VS Code, OpenCode CLI,
-필수 확장, 미리보기 | 코드 | OpenCode 3열 화면과 상태바 토글 버튼까지 설정해줘.
+Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
+필수 확장, 미리보기 | 코드 | Codex 3열 화면과 상태바 토글 버튼까지 설정해줘.
 기존 설정과 파일은 보존하고 실제 화면, 버튼, 3대 모드 전환,
 바로가기 재실행을 검증해줘. 보안 승인과 로그인이 필요하면
 정확히 어떤 버튼을 내가 눌러야 하는지 알려줘.</code></pre>
@@ -111,9 +111,9 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, OpenCode CLI,
       <div class="grid">
         <div class="step-card">
           <h3>🖥️ 3대 뷰포트 모드</h3>
-          <p><strong>[3열 분할]</strong> 미리보기(50%) | 코드(50%) | 우측 OpenCode<br>
-             <strong>[터미널 전체]</strong> AI와 대규모 프롬프트 및 빌드 로그 점검 (100%)<br>
-             <strong>[미리보기 전체]</strong> 순수 1:1 고해상도 웹 UI 검수 및 Computer Use (100%)</p>
+          <p><strong>[3열 분할]</strong> 미리보기(50%) | 코드(50%) | 우측 공식 Codex CLI<br>
+             <strong>[터미널 전체]</strong> Codex와 대규모 프롬프트 및 빌드 로그 점검 (100%)<br>
+             <strong>[미리보기 전체]</strong> 순수 1:1 고해상도 웹 UI 검수 및 Computer Use 자율 조작 (100%)</p>
         </div>
         <div class="step-card">
           <h3>🖱️ 원클릭 UI & 단축키</h3>
@@ -128,8 +128,8 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, OpenCode CLI,
           <p>탐색기에서 아무 폴더나 <strong>우클릭 ➔ [Vibe Coding으로 열기]</strong>를 누르면 해당 프로젝트 전용 3열 환경이 즉시 실행됩니다. 프로젝트별 독립 해시 워크스페이스가 적용되어 서로 간섭하지 않습니다.</p>
         </div>
         <div class="step-card">
-          <h3>🤖 AI 에이전트 최적화 (Dual Engine)</h3>
-          <p>화면 전환 모드와 무관하게 <strong>프로젝트의 실제 로컬 개발 서버(Live Preview 또는 Vite 5173, Next.js 3000 등)</strong>가 상시 유지되어, <strong>Playwright</strong>와 <strong>Browser-Use</strong>가 백그라운드에서 CDP로 초고속 DOM 무결성 검증을 수행합니다.</p>
+          <h3>🤖 공식 Codex & OpenCodex 시너지</h3>
+          <p>3열 터미널에 OpenAI 공식 Codex가 직접 구동되며, OpenCodex 프록시와 자동 연결되어 Gemini, Claude, Solar 등 멀티 모델을 자유롭게 활용하고 Computer Use로 웹 화면을 자율 조작합니다.</p>
         </div>
       </div>
     </section>
@@ -151,8 +151,8 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, OpenCode CLI,
       </div>
 
       <div class="step-card">
-        <h4>3. OpenCode AI 모델 연결</h4>
-        <p>오른쪽 OpenCode 터미널에서 <code>/connect</code>를 입력하여 내 ChatGPT / Codex 계정 또는 API 키를 연결하고, <code>/models</code>를 입력하여 원하는 AI 모델로 즉시 변경할 수 있습니다.</p>
+        <h4>3. AI 모델 확인 및 변경</h4>
+        <p>오른쪽 3열 터미널에서 공식 Codex가 실행됩니다. OpenCodex가 설치되어 있다면 평소처럼 <code>/model</code> 또는 환경설정을 통해 멀티 모델을 즉시 전환할 수 있습니다.</p>
       </div>
     </section>
 

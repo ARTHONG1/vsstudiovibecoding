@@ -31,12 +31,12 @@ function activate(context) {
       previewBtn.tooltip = '웹앱 미리보기를 전체화면으로 전환합니다 (Vibe Coding)';
     } else if (currentMode === 'preview') {
       terminalBtn.text = '$(screen-full) 터미널 전체';
-      terminalBtn.tooltip = 'OpenCode 터미널을 전체화면으로 전환합니다 (Vibe Coding)';
+      terminalBtn.tooltip = 'Codex 터미널을 전체화면으로 전환합니다 (Vibe Coding)';
       previewBtn.text = '$(layout-sidebar-right) 3열 복원';
       previewBtn.tooltip = '미리보기 | 코드 | 터미널 3열 화면으로 복원합니다 (Vibe Coding)';
     } else {
       terminalBtn.text = '$(screen-full) 터미널 전체';
-      terminalBtn.tooltip = 'OpenCode 터미널을 전체화면으로 전환합니다 (Vibe Coding)';
+      terminalBtn.tooltip = 'Codex 터미널을 전체화면으로 전환합니다 (Vibe Coding)';
       previewBtn.text = '$(browser) 미리보기 전체';
       previewBtn.tooltip = '웹앱 미리보기를 전체화면으로 전환합니다 (Vibe Coding)';
     }
@@ -56,15 +56,26 @@ function activate(context) {
       const projectPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
       terminal = vscode.window.terminals.find(t => t.creationOptions.env?.VIBE_PROJECT === projectPath && t.exitStatus === undefined);
       if (!terminal) {
-        const executable = vscode.workspace.getConfiguration('vibe').get('opencodePath');
-        if (!executable || !fs.existsSync(executable)) throw new Error('OpenCode executable was not found: ' + executable);
+        const config = vscode.workspace.getConfiguration('vibe');
+        const executable = config.get('codexPath') || config.get('opencodePath');
+        if (!executable || !fs.existsSync(executable)) throw new Error('AI Agent (Codex) executable was not found: ' + executable);
+        const isCodex = /codex/i.test(executable);
+        const terminalName = isCodex ? 'Codex' : 'OpenCode';
         terminal = vscode.window.createTerminal({
-          name: 'OpenCode', shellPath: executable, shellArgs: [],
+          name: terminalName,
+          shellPath: executable,
+          shellArgs: [],
           cwd: vscode.workspace.workspaceFolders[0].uri.fsPath,
           location: vscode.TerminalLocation.Panel,
-          env: { OPENCODE_CALLER: 'vscode', VIBE_PROJECT: projectPath, LANG: 'ko_KR.UTF-8', PYTHONIOENCODING: 'utf-8' }
+          env: {
+            CODEX_CALLER: 'vscode',
+            OPENCODE_CALLER: 'vscode',
+            VIBE_PROJECT: projectPath,
+            LANG: 'ko_KR.UTF-8',
+            PYTHONIOENCODING: 'utf-8'
+          }
         });
-        record('terminal-created');
+        record('terminal-created', { agent: terminalName });
       }
     }
     return terminal;

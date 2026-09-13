@@ -5,6 +5,7 @@ param(
   [string]$PreviewUrl,
   [string]$Root = (Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'VibeCoding'),
   [string]$CodePath,
+  [string]$CodexPath,
   [string]$OpenCodePath,
   [string]$DesktopPath = [Environment]::GetFolderPath('Desktop'),
   [string]$SkillRoot,
@@ -58,33 +59,52 @@ if (!$CodePath) {
   $CodePath = Find-Executable @((Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'Programs\Microsoft VS Code\Code.exe'), (Join-Path $env:ProgramFiles 'Microsoft VS Code\Code.exe'))
   if (!$CodePath) { $command = Get-Command code.cmd -ErrorAction SilentlyContinue; if ($command) { $CodePath = Find-Executable @((Join-Path (Split-Path (Split-Path $command.Source)) 'Code.exe')) } }
 }
+if (!$CodexPath) {
+  $cmd = Get-Command codex.exe -ErrorAction SilentlyContinue
+  if (!$cmd) { $cmd = Get-Command codex.cmd -ErrorAction SilentlyContinue }
+  if (!$cmd) { $cmd = Get-Command codex -ErrorAction SilentlyContinue }
+  $localApp = [Environment]::GetFolderPath('LocalApplicationData')
+  $appData = [Environment]::GetFolderPath('ApplicationData')
+  $codexBin = Join-Path $localApp 'OpenAI\Codex\bin'
+  $deepExe = if (Test-Path -LiteralPath $codexBin) { (Get-ChildItem -Path $codexBin -Filter 'codex.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName) } else { $null }
+  $CodexPath = Find-Executable @(
+    $(if ($cmd) { $cmd.Source }),
+    $deepExe,
+    (Join-Path $appData 'npm\codex.cmd'),
+    (Join-Path $env:ProgramFiles 'OpenAI\Codex\codex.exe')
+  )
+}
 if (!$OpenCodePath) {
   $command = Get-Command opencode.exe -ErrorAction SilentlyContinue
   $OpenCodePath = Find-Executable @($(if ($command) {$command.Source}), (Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'npm\node_modules\opencode-ai\bin\opencode.exe'), (Join-Path $env:USERPROFILE '.opencode\bin\opencode.exe'), (Join-Path $env:USERPROFILE 'scoop\shims\opencode.exe'))
 }
-if (!$OpenCodePath -and $Apply) {
+$agentExe = if ($CodexPath) { $CodexPath } else { $OpenCodePath }
+$agentName = if ($CodexPath) { 'Codex' } else { 'OpenCode' }
+if (!$agentExe -and $Apply) {
   $npm = Get-Command npm.cmd -ErrorAction SilentlyContinue
   if (!$npm) { $npm = Get-Command npm -ErrorAction SilentlyContinue }
   if ($npm) {
     & $npm.Source install -g opencode-ai
     $command = Get-Command opencode.exe -ErrorAction SilentlyContinue
     $OpenCodePath = Find-Executable @($(if ($command) {$command.Source}), (Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'npm\node_modules\opencode-ai\bin\opencode.exe'), (Join-Path $env:USERPROFILE '.opencode\bin\opencode.exe'), (Join-Path $env:USERPROFILE 'scoop\shims\opencode.exe'))
+    $agentExe = $OpenCodePath
+    $agentName = 'OpenCode'
   }
 }
 $missing = @()
 if (!$CodePath -or !(Test-Path -LiteralPath $CodePath -PathType Leaf)) { $missing += 'VS Code executable' }
-if (!$OpenCodePath -or !(Test-Path -LiteralPath $OpenCodePath -PathType Leaf)) { $missing += 'OpenCode executable (not just the extension)' }
+if (!$agentExe -or !(Test-Path -LiteralPath $agentExe -PathType Leaf)) { $missing += 'AI Agent executable (Codex or OpenCode)' }
 $sha = [Security.Cryptography.SHA256]::Create()
 try { $id = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($ProjectPath.ToLowerInvariant())))).Replace('-','').Substring(0,10).ToLowerInvariant() } finally { $sha.Dispose() }
 $name = (Split-Path -Leaf $ProjectPath) -replace '[<>:"/\\|?*]', '_'
 $workspaceDir = Join-Path $Root 'Workspaces'
 $workspacePath = Join-Path $workspaceDir ($name + '-' + $id + '.code-workspace')
 $shortcutPath = Join-Path $DesktopPath ('Vibe Coding - ' + $name + '-' + $id + '.lnk')
-$plan = [ordered]@{ project=$ProjectPath; entry=$entryPath; previewUrl=$PreviewUrl; root=$Root; code=$CodePath; openCode=$OpenCodePath; workspace=$workspacePath; shortcut=$shortcutPath; registerContextMenu=[bool]$RegisterContextMenu; missing=$missing; applied=$false }
+$plan = [ordered]@{ project=$ProjectPath; entry=$entryPath; previewUrl=$PreviewUrl; root=$Root; code=$CodePath; agent=$agentName; codex=$CodexPath; openCode=$OpenCodePath; workspace=$workspacePath; shortcut=$shortcutPath; registerContextMenu=[bool]$RegisterContextMenu; missing=$missing; applied=$false }
 if (!$Apply) { $plan | ConvertTo-Json -Depth 5; return }
 if ($missing.Count) { throw ('Install/discover prerequisites first: ' + ($missing -join ', ')) }
-$version = & $OpenCodePath --version
-if ($LASTEXITCODE -ne 0) { throw 'OpenCode --version failed.' }
+$version = & $agentExe --version
+if ($LASTEXITCODE -ne 0) { throw "$agentName --version failed." }
 $userDir = Join-Path $Root 'VSCodeUserData'
 $extensionsDir = Join-Path $Root 'VSCodeExtensions'
 $backup = Join-Path $Root ('Backups\setup-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
@@ -147,7 +167,8 @@ Save-Json $keybindingsPath $keys
 $wsSettings = $workspace.settings
 if (!$wsSettings) { $wsSettings = [pscustomobject]@{} }
 Set-Key $wsSettings 'vibe.enabled' $true
-Set-Key $wsSettings 'vibe.opencodePath' $OpenCodePath
+Set-Key $wsSettings 'vibe.codexPath' $(if ($CodexPath) {$CodexPath} else {''})
+Set-Key $wsSettings 'vibe.opencodePath' $(if ($OpenCodePath) {$OpenCodePath} else {''})
 Set-Key $wsSettings 'vibe.entryFile' $EntryFile
 Set-Key $wsSettings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
 Set-Key $wsSettings 'window.title' 'Vibe Coding - ${activeEditorShort}${separator}${rootName}'

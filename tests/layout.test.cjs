@@ -9,7 +9,7 @@ test('restore reuses a preview after its title becomes the page title', async ()
   const commands = new Map(), events = [], terminals = [];
   const tab = { label: '127.0.0.1:3000', isActive: true };
   const group = { viewColumn: 1, tabs: [tab] };
-  const config = { enabled: true, entryFile: 'index.html', opencodePath: 'C:/tools/opencode.exe' };
+  const config = { enabled: true, entryFile: 'index.html', codexPath: 'C:/tools/codex.exe', opencodePath: 'C:/tools/opencode.exe' };
   const vscode = {
     workspace: { getConfiguration: () => ({get:(k,d)=>config[k] ?? d}), workspaceFolders: [{uri:{fsPath:'C:/project'}}] },
     window: { createOutputChannel:()=>({appendLine:line=>events.push(JSON.parse(line))}),

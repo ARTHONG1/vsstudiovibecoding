@@ -2,7 +2,7 @@
     "name":  "vibe-workspace",
     "displayName":  "Vibe Coding Workspace",
     "publisher":  "local-vibe",
-    "version":  "1.3.0",
+    "version":  "2.0.0",
     "engines":  {
                     "vscode":  "^1.94.0"
                 },
@@ -17,7 +17,7 @@
                         "commands":  [
                                         {
                                             "command":  "vibe.restoreLayout",
-                                            "title":  "Vibe Coding: Restore Preview | Code | OpenCode"
+                                            "title":  "Vibe Coding: Restore Preview | Code | Codex"
                                         },
                                         {
                                             "command":  "vibe.toggleTerminal",
@@ -61,6 +61,10 @@
                                                                                       "type":  "boolean",
                                                                                       "default":  false
                                                                                   },
+                                                                "vibe.codexPath":  {
+                                                                                          "type":  "string",
+                                                                                          "default":  ""
+                                                                                      },
                                                                  "vibe.opencodePath":  {
                                                                                            "type":  "string",
                                                                                            "default":  ""

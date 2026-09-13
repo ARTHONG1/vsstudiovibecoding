@@ -9,7 +9,7 @@ function createMockVSCode(config = {}) {
   let openedUrl = null;
   const tab = { label: '127.0.0.1:3000', isActive: true };
   const group = { viewColumn: 1, tabs: [tab] };
-  const fullConfig = { enabled: true, entryFile: 'index.html', opencodePath: 'C:/tools/opencode.exe', ...config };
+  const fullConfig = { enabled: true, entryFile: 'index.html', codexPath: 'C:/tools/codex.exe', opencodePath: 'C:/tools/opencode.exe', ...config };
 
   const vscode = {
     workspace: {
@@ -123,4 +123,3 @@ test('openExternalBrowser opens system default browser with dev server URL', asy
   assert.equal(lastEvent.event, 'external-browser-opened');
   assert.equal(lastEvent.url, 'http://localhost:5173');
 });
-
