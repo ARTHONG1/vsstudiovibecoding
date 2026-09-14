@@ -2,16 +2,40 @@
 const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 const { execSync } = require('child_process');
+
+function checkPortReachable(urlStr) {
+  return new Promise(resolve => {
+    try {
+      const u = new URL(urlStr);
+      const port = Number(u.port) || (u.protocol === 'https:' ? 443 : 80);
+      const host = (u.hostname === 'localhost') ? '127.0.0.1' : (u.hostname || '127.0.0.1');
+      const req = http.get({ hostname: host, port, path: u.pathname || '/', timeout: 600 }, () => resolve(true));
+      req.on('error', () => {
+        if (host === '127.0.0.1') {
+          const fb = http.get({ hostname: 'localhost', port, path: u.pathname || '/', timeout: 400 }, () => resolve(true));
+          fb.on('error', () => resolve(false));
+          fb.on('timeout', () => { fb.destroy(); resolve(false); });
+        } else {
+          resolve(false);
+        }
+      });
+      req.on('timeout', () => { req.destroy(); resolve(false); });
+    } catch {
+      resolve(false);
+    }
+  });
+}
 
 function activate(context) {
   if (!vscode.workspace.getConfiguration('vibe').get('enabled')) return;
   const output = vscode.window.createOutputChannel('Vibe Coding');
   context.subscriptions.push(output);
-  let terminal;
-  let previewTabRef;
-  let currentMode = 'split'; // 'split' | 'terminal' | 'preview'
-  let busy = false;
+ let terminal;
+ let previewTabRef;
+  let currentMode = context.workspaceState?.get?.('vibeMode', 'split') || 'split'; // 'split' | 'terminal' | 'preview'
+ let busy = false;
   const exec = (command, ...args) => vscode.commands.executeCommand(command, ...args);
 
   const terminalBtn = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1001);
@@ -23,6 +47,12 @@ function activate(context) {
   previewBtn.name = 'Vibe Coding Preview Toggle';
   previewBtn.command = 'vibe.togglePreview';
   context.subscriptions.push(previewBtn);
+
+  function setMode(mode) {
+    currentMode = mode;
+    try { context.workspaceState?.update?.('vibeMode', mode); } catch {}
+    updateStatusBars();
+  }
 
   function updateStatusBars() {
     if (currentMode === 'terminal') {
@@ -81,19 +111,36 @@ function activate(context) {
     }
     return terminal;
   }
-  async function restore(options) {
-    if (currentMode === 'terminal') {
-      await exec('workbench.action.toggleMaximizedPanel');
+ async function restore(options) {
+   if (currentMode === 'terminal') {
+      try { await exec('workbench.action.toggleMaximizedPanel'); } catch {}
       currentMode = 'split';
     }
     if (currentMode === 'preview') {
-      await exec('workbench.action.toggleMaximizeEditorGroup');
+      try { await exec('workbench.action.toggleMaximizeEditorGroup'); } catch {}
       currentMode = 'split';
     }
     await exec('workbench.action.closeSidebar');
     await exec('workbench.action.closeAuxiliaryBar');
     await exec('workbench.action.positionPanelRight');
     await exec('vscode.setEditorLayout', { orientation: 0, groups: [{ size: 0.5 }, { size: 0.5 }] });
+    await exec('workbench.action.evenEditorWidths');
+
+    try {
+      for (const g of vscode.window.tabGroups.all) {
+        for (const t of [...g.tabs]) {
+          const isFailed = t.label === 'Failed to Load Page' || t.label.includes('ERR_');
+          const isStaleBrowser = t.input?.viewType === 'simpleBrowser.view' ||
+                                 t.input?.viewType?.includes('preview') ||
+                                 /127\.0\.0\.1|localhost|Simple Browser/.test(t.label) ||
+                                 (!t.input?.uri && !t.isDirty);
+          if (isFailed || (isStaleBrowser && t !== previewTabRef)) {
+            vscode.window.tabGroups.close(t);
+          }
+        }
+      }
+    } catch {}
+
     const config = vscode.workspace.getConfiguration('vibe');
     const uri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, config.get('entryFile', 'index.html'));
     await vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Two, preview: false });
@@ -104,8 +151,47 @@ function activate(context) {
     if (!previewGroup) {
       try {
         if (previewUrl) {
-          const parsed = new URL(previewUrl);
-          if (['http:', 'https:'].includes(parsed.protocol)) {
+          let reachable = await checkPortReachable(previewUrl);
+          if (!reachable) {
+            const projectPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+            if (projectPath) {
+              const pkgPath = path.join(projectPath, 'package.json');
+              if (fs.existsSync(pkgPath)) {
+                try {
+                  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+                  const scriptName = pkg.scripts?.dev ? 'dev' : pkg.scripts?.start ? 'start' : null;
+                  if (scriptName) {
+                    let devTerm = vscode.window.terminals.find(t => t.name === 'Vibe Dev Server');
+                    if (!devTerm) {
+                      devTerm = vscode.window.createTerminal({
+                        name: 'Vibe Dev Server',
+                        cwd: projectPath,
+                        location: vscode.TerminalLocation.Panel
+                      });
+                      devTerm.sendText('npm run ' + scriptName);
+                    }
+                    for (let i = 0; i < 50; i++) {
+                      await new Promise(r => setTimeout(r, 250));
+                      reachable = await checkPortReachable(previewUrl);
+                      if (reachable) break;
+                    }
+                  }
+                } catch (e) {
+                  output.appendLine('Failed to auto-start dev server: ' + e.message);
+                }
+              }
+            }
+          }
+          try {
+            for (const g of vscode.window.tabGroups.all) {
+              for (const t of [...g.tabs]) {
+                if (t.label === 'Failed to Load Page' || (!t.input?.uri && !t.isDirty)) {
+                  vscode.window.tabGroups.close(t);
+                }
+              }
+            }
+          } catch {}
+          if (reachable) {
             await exec('simpleBrowser.show', previewUrl);
           } else {
             await exec('livePreview.start.internalPreview.atFile', uri);
@@ -140,8 +226,7 @@ function activate(context) {
     await exec('vscode.setEditorLayout', { orientation: 0, groups: [{ size: 0.5 }, { size: 0.5 }] });
     ensureTerminal().show(true);
     await exec('workbench.action.evenEditorWidths');
-    currentMode = 'split';
-    updateStatusBars();
+    setMode('split');
     record('layout-ready', {
       mode: 'split',
       previewUrl: previewUrl || 'http://127.0.0.1:3000',
@@ -154,13 +239,12 @@ function activate(context) {
       return restore();
     }
     if (currentMode === 'preview') {
-      await exec('workbench.action.toggleMaximizeEditorGroup');
+      try { await exec('workbench.action.toggleMaximizeEditorGroup'); } catch {}
     }
     ensureTerminal().show();
     await exec('workbench.action.positionPanelBottom');
     await exec('workbench.action.toggleMaximizedPanel');
-    currentMode = 'terminal';
-    updateStatusBars();
+    setMode('terminal');
     record('terminal-full', { mode: currentMode });
   }
   async function togglePreview() {
@@ -168,7 +252,7 @@ function activate(context) {
       return restore();
     }
     if (currentMode === 'terminal') {
-      await exec('workbench.action.toggleMaximizedPanel');
+      try { await exec('workbench.action.toggleMaximizedPanel'); } catch {}
     }
     let isAlive = previewTabRef && vscode.window.tabGroups.all.some(g => g.tabs.includes(previewTabRef));
     if (!isAlive) {
@@ -177,8 +261,7 @@ function activate(context) {
     await exec('workbench.action.closePanel');
     await exec('workbench.action.focusFirstEditorGroup');
     await exec('workbench.action.toggleMaximizeEditorGroup');
-    currentMode = 'preview';
-    updateStatusBars();
+    setMode('preview');
     record(currentMode === 'preview' ? 'preview-full' : 'layout-ready', {
       mode: currentMode,
       previewUrl: vscode.workspace.getConfiguration('vibe').get('previewUrl', '') || 'http://127.0.0.1:3000'
