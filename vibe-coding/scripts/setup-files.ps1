@@ -15,20 +15,33 @@ function Backup-VibeFile([string]$Path, [string]$Directory) {
 }
 
 function Test-VibeExtensionContent([string]$SourceDir, [string]$InstalledDir) {
+  if (!(Test-Path -LiteralPath $SourceDir -PathType Container)) { return $false }
   if (!(Test-Path -LiteralPath $InstalledDir -PathType Container)) { return $false }
-  foreach ($file in Get-ChildItem -LiteralPath $SourceDir -File -Recurse) {
-    $relative = $file.FullName.Substring($SourceDir.TrimEnd('\').Length).TrimStart('\')
-    $target = Join-Path $InstalledDir $relative
+  $sourceCanonical = (Get-Item -LiteralPath $SourceDir).FullName.TrimEnd('\', '/')
+  $installedCanonical = (Get-Item -LiteralPath $InstalledDir).FullName.TrimEnd('\', '/')
+  $sourceUri = New-Object Uri ($sourceCanonical + '/')
+  foreach ($file in Get-ChildItem -LiteralPath $sourceCanonical -File -Recurse) {
+    $fileCanonical = (Get-Item -LiteralPath $file.FullName).FullName
+    $fileUri = New-Object Uri $fileCanonical
+    $relative = [Uri]::UnescapeDataString($sourceUri.MakeRelativeUri($fileUri).ToString()).Replace('/', '\')
+    $target = Join-Path $installedCanonical $relative
     if (!(Test-Path -LiteralPath $target -PathType Leaf)) { return $false }
     if ($relative -eq 'package.json') {
       try {
-        $expected = [IO.File]::ReadAllText($file.FullName) | ConvertFrom-Json
+        $expected = [IO.File]::ReadAllText($fileCanonical) | ConvertFrom-Json
         $actual = [IO.File]::ReadAllText($target) | ConvertFrom-Json
-        $expected.PSObject.Properties.Remove('__metadata')
-        $actual.PSObject.Properties.Remove('__metadata')
-        if (($expected | ConvertTo-Json -Depth 100 -Compress) -cne ($actual | ConvertTo-Json -Depth 100 -Compress)) { return $false }
+        if ($expected.PSObject.Properties['__metadata']) { $expected.PSObject.Properties.Remove('__metadata') }
+        if ($actual.PSObject.Properties['__metadata']) { $actual.PSObject.Properties.Remove('__metadata') }
+        $expectedProps = @($expected.PSObject.Properties | Select-Object -ExpandProperty Name | Sort-Object)
+        $actualProps = @($actual.PSObject.Properties | Select-Object -ExpandProperty Name | Sort-Object)
+        if (($expectedProps -join ',') -ne ($actualProps -join ',')) { return $false }
+        foreach ($prop in $expectedProps) {
+          $expVal = $expected.$prop | ConvertTo-Json -Depth 100 -Compress
+          $actVal = $actual.$prop | ConvertTo-Json -Depth 100 -Compress
+          if ($expVal -ne $actVal) { return $false }
+        }
       } catch { return $false }
-    } elseif ((Get-VibeContentHash $file.FullName) -ne (Get-VibeContentHash $target)) { return $false }
+    } elseif ((Get-VibeContentHash $fileCanonical) -ne (Get-VibeContentHash $target)) { return $false }
   }
   return $true
 }
