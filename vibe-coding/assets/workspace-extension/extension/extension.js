@@ -173,8 +173,11 @@ function activate(context) {
                   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
                   const scriptName = pkg.scripts?.dev ? 'dev' : pkg.scripts?.start ? 'start' : null;
                   if (scriptName) {
-                    let devTerm = vscode.window.terminals.find(t => t.name === 'Vibe Dev Server');
+                    let devTerm = vscode.window.terminals.find(t => t.name === 'Vibe Dev Server' && t.exitStatus === undefined);
                     if (!devTerm) {
+                      for (const t of vscode.window.terminals) {
+                        if (t.name === 'Vibe Dev Server') try { t.dispose(); } catch {}
+                      }
                       devTerm = vscode.window.createTerminal({
                         name: 'Vibe Dev Server',
                         cwd: projectPath,

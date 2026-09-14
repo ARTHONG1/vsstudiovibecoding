@@ -108,6 +108,11 @@ if ($missing.Count) { throw ('Install/discover prerequisites first: ' + ($missin
 $version = & $agentExe --version
 if ($LASTEXITCODE -ne 0) { throw "$agentName --version failed." }
 $userDir = Join-Path $Root 'VSCodeUserData'
+$lockFile = Join-Path $userDir 'code.lock'
+if (Test-Path -LiteralPath $lockFile) {
+  $runningCode = Get-Process Code -ErrorAction SilentlyContinue
+  if (!$runningCode) { Remove-Item -LiteralPath $lockFile -Force -ErrorAction SilentlyContinue }
+}
 $extensionsDir = Join-Path $Root 'VSCodeExtensions'
 $backup = Join-Path $Root ('Backups\setup-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
 $utf8 = New-Object Text.UTF8Encoding($false)
