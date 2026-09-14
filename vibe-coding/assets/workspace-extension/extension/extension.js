@@ -138,6 +138,9 @@ function activate(context) {
     await exec('vscode.setEditorLayout', { orientation: 0, groups: [{ size: 0.5 }, { size: 0.5 }] });
     await exec('workbench.action.evenEditorWidths');
 
+    const config = vscode.workspace.getConfiguration('vibe');
+    const entryFileName = path.basename(config.get('entryFile', 'index.html'));
+
     try {
       for (const g of vscode.window.tabGroups.all) {
         for (const t of [...g.tabs]) {
@@ -154,7 +157,6 @@ function activate(context) {
       }
     } catch {}
 
-    const config = vscode.workspace.getConfiguration('vibe');
     const uri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, config.get('entryFile', 'index.html'));
     await vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Two, preview: false });
 
