@@ -8,7 +8,13 @@ The agent owns these checks. Record pass/fail/blocked and the actual observation
 4. **Preview:** on the sample, click the test button and observe the counter change. For an existing project, use a harmless existing interaction or a temporary reversible local change, then restore it. Never submit business forms as a test. Verify the dev server is reachable when used.
 5. **3-Mode toggle round trip:** Test clicking `터미널 전체` to verify transition to full terminal (Codex) and return to 3 columns. Test clicking `미리보기 전체` to verify transition to clean full preview (100% viewport for Computer Use / human QA) and return to 3 columns with even editor widths. Verify project local development server endpoint remains reachable for Playwright and Browser-Use. Verify pressing F12 in code editor preserves native Go to Definition.
 6. **Recovery and repeated use:** invoke layout restoration and ensure one usable preview and one Codex terminal. Repeated invocation must not accumulate tabs, terminals, shortcuts, or overwrite user code.
-7. **Restart:** close the affected workspace normally and relaunch its shortcut. Observe three columns and working OpenCode again. Preserve unsaved buffers; do not discard changes or terminate unrelated Code windows.
+7. **Cold boot & restart resilience:** terminate lingering background dev servers and close the workspace. Launch the generated desktop shortcut from a cold state. Visually verify that:
+   - Development server auto-starts in the background if required (Vite, Next.js, Astro, etc.).
+   - Zero `ERR_CONNECTION_REFUSED (-102)` or `Failed to Load Page` errors appear.
+   - Zero duplicate preview tabs accumulate (Column 1 contains exactly one active preview tab).
+   - Column 2 contains the project entry file exclusively with no accidental duplicate file tabs in Column 1.
+   - Column 3 contains OpenAI Codex CLI terminal visible on the right with a responsive prompt.
+   - Status bar action buttons and editor title buttons are present and responsive. Preserve unsaved buffers; do not discard changes or terminate unrelated Code windows.
 
 If a tool reports user interruption, follow its stop rule. On a later user-authorized continuation, reobserve before input. If a desktop tool is unavailable or a mandatory user authentication action remains, mark that exact check pending. A background log saying `layout-ready` is supporting evidence, not visual proof.
 

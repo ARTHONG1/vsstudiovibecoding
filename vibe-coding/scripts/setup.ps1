@@ -15,6 +15,7 @@ param(
   [switch]$RegisterContextMenu
 )
 $ErrorActionPreference = 'Stop'
+try { [Console]::InputEncoding = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 if (!$SkillRoot) {
   $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
   $SkillRoot = Split-Path -Parent $scriptDir
@@ -56,7 +57,8 @@ if ($PreviewUrl) {
   if ($url.Scheme -notin @('http','https') -or $url.Host -notin @('localhost','127.0.0.1','::1','[::1]')) { throw 'PreviewUrl must be a localhost HTTP(S) development server.' }
 }
 if (!$CodePath) {
-  $CodePath = Find-Executable @((Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'Programs\Microsoft VS Code\Code.exe'), (Join-Path $env:ProgramFiles 'Microsoft VS Code\Code.exe'))
+  $x86Prog = [Environment]::GetFolderPath('ProgramFilesX86')
+  $CodePath = Find-Executable @((Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'Programs\Microsoft VS Code\Code.exe'), (Join-Path $env:ProgramFiles 'Microsoft VS Code\Code.exe'), $(if ($x86Prog) { Join-Path $x86Prog 'Microsoft VS Code\Code.exe' }))
   if (!$CodePath) { $command = Get-Command code.cmd -ErrorAction SilentlyContinue; if ($command) { $CodePath = Find-Executable @((Join-Path (Split-Path (Split-Path $command.Source)) 'Code.exe')) } }
 }
 if (!$CodexPath) {

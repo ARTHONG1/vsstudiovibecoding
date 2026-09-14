@@ -3,6 +3,7 @@ const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const https = require('https');
 const { execSync } = require('child_process');
 
 function checkPortReachable(urlStr) {
@@ -10,11 +11,18 @@ function checkPortReachable(urlStr) {
     try {
       const u = new URL(urlStr);
       const port = Number(u.port) || (u.protocol === 'https:' ? 443 : 80);
+      const client = u.protocol === 'https:' ? https : http;
       const host = (u.hostname === 'localhost') ? '127.0.0.1' : (u.hostname || '127.0.0.1');
-      const req = http.get({ hostname: host, port, path: u.pathname || '/', timeout: 600 }, () => resolve(true));
+      const req = client.get({ hostname: host, port, path: u.pathname || '/', timeout: 600 }, res => {
+        res.resume();
+        resolve(true);
+      });
       req.on('error', () => {
         if (host === '127.0.0.1') {
-          const fb = http.get({ hostname: 'localhost', port, path: u.pathname || '/', timeout: 400 }, () => resolve(true));
+          const fb = client.get({ hostname: 'localhost', port, path: u.pathname || '/', timeout: 400 }, res => {
+            res.resume();
+            resolve(true);
+          });
           fb.on('error', () => resolve(false));
           fb.on('timeout', () => { fb.destroy(); resolve(false); });
         } else {
@@ -137,7 +145,8 @@ function activate(context) {
                                  t.input?.viewType?.includes('preview') ||
                                  /127\.0\.0\.1|localhost|Simple Browser/.test(t.label) ||
                                  (!t.input?.uri && !t.isDirty);
-          if (isFailed || (isStaleBrowser && t !== previewTabRef)) {
+          const isWrongColumnEntry = g.viewColumn === vscode.ViewColumn.One && t.input?.uri && t.input.uri.fsPath.endsWith(entryFileName) && !t.isDirty;
+          if (isFailed || (isStaleBrowser && t !== previewTabRef) || isWrongColumnEntry) {
             vscode.window.tabGroups.close(t);
           }
         }
