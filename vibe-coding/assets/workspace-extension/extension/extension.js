@@ -224,6 +224,7 @@ function activate(context) {
     }
     await vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Two, preview: false });
     await exec('vscode.setEditorLayout', { orientation: 0, groups: [{ size: 0.5 }, { size: 0.5 }] });
+    await exec('workbench.action.focusPanel');
     ensureTerminal().show(false);
     try { await exec('workbench.action.terminal.focus'); } catch {}
     await exec('workbench.action.evenEditorWidths');
