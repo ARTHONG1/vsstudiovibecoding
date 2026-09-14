@@ -55,10 +55,11 @@ try {
     success(`Version aligned: v${rootPkg.version}`);
   }
 
-  if (!readmeText.includes(`vibe-coding-${rootPkg.version}.zip`)) {
-    error(`README.md does not reference the current release zip: vibe-coding-${rootPkg.version}.zip`);
+  const expectedDownloadUrl = `/releases/download/v${rootPkg.version}/vibe-coding-${rootPkg.version}.zip`;
+  if (!readmeText.includes(expectedDownloadUrl)) {
+    error(`README.md does not reference the exact release download URL: ${expectedDownloadUrl}`);
   } else {
-    success('README.md references current release version.');
+    success(`README.md correctly references release tag and download asset: ${expectedDownloadUrl}`);
   }
 } catch (e) {
   error('Failed to parse versions: ' + e.message);
