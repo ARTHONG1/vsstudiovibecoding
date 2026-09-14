@@ -257,6 +257,7 @@ if ($Launch -and (Test-Path -LiteralPath $shortcutPath)) {
 }
 $plan.applied=$true
 $plan['backup']=$backup
+$plan['agentVersion']=($version -join ' ')
 $plan['openCodeVersion']=($version -join ' ')
 $plan['uiVerification']='PENDING: agent must launch shortcut and complete references/verification.md'
 $plan | ConvertTo-Json -Depth 5
