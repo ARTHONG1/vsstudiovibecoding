@@ -150,7 +150,7 @@ $startup = '[Console]::InputEncoding = [Console]::OutputEncoding = New-Object Sy
 $tokens=$null; $errors=$null
 [void][Management.Automation.Language.Parser]::ParseInput($startup,[ref]$tokens,[ref]$errors)
 if ($errors.Count) { throw 'Invalid terminal startup command.' }
-Set-Key $profiles 'Vibe PowerShell' @{path=(Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe');args=@('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-NoExit','-Command',$startup)}
+Set-Key $profiles 'Vibe PowerShell' @{path=(Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe');args=@('-NoLogo','-NoProfile','-NoExit','-Command',$startup)}
 Set-Key $settings 'terminal.integrated.profiles.windows' $profiles
 Set-Key $settings 'terminal.integrated.defaultProfile.windows' 'Vibe PowerShell'
 $skip = @($settings.'terminal.integrated.commandsToSkipShell' | Where-Object { $_ -and $_ -notin @('-vibe.toggleTerminal','-vibe.restoreLayout') })
