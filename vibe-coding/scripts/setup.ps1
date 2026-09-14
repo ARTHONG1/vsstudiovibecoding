@@ -100,7 +100,7 @@ $sha = [Security.Cryptography.SHA256]::Create()
 try { $id = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($ProjectPath.ToLowerInvariant())))).Replace('-','').Substring(0,10).ToLowerInvariant() } finally { $sha.Dispose() }
 $name = (Split-Path -Leaf $ProjectPath) -replace '[<>:"/\\|?*]', '_'
 $workspaceDir = Join-Path $Root 'Workspaces'
-$workspacePath = Join-Path $workspaceDir ($name + '-' + $id + '.code-workspace')
+$workspacePath = Join-Path $workspaceDir ('vibe-' + $id + '.code-workspace')
 $shortcutPath = Join-Path $DesktopPath ('Vibe Coding - ' + $name + '-' + $id + '.lnk')
 $plan = [ordered]@{ project=$ProjectPath; entry=$entryPath; previewUrl=$PreviewUrl; root=$Root; code=$CodePath; agent=$agentName; codex=$CodexPath; openCode=$OpenCodePath; workspace=$workspacePath; shortcut=$shortcutPath; registerContextMenu=[bool]$RegisterContextMenu; missing=$missing; applied=$false }
 if (!$Apply) { $plan | ConvertTo-Json -Depth 5; return }
@@ -148,7 +148,7 @@ $startup = '[Console]::InputEncoding = [Console]::OutputEncoding = New-Object Sy
 $tokens=$null; $errors=$null
 [void][Management.Automation.Language.Parser]::ParseInput($startup,[ref]$tokens,[ref]$errors)
 if ($errors.Count) { throw 'Invalid terminal startup command.' }
-Set-Key $profiles 'Vibe PowerShell' @{path=(Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe');args=@('-NoLogo','-NoProfile','-NoExit','-Command',$startup)}
+Set-Key $profiles 'Vibe PowerShell' @{path=(Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe');args=@('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-NoExit','-Command',$startup)}
 Set-Key $settings 'terminal.integrated.profiles.windows' $profiles
 Set-Key $settings 'terminal.integrated.defaultProfile.windows' 'Vibe PowerShell'
 $skip = @($settings.'terminal.integrated.commandsToSkipShell' | Where-Object { $_ -and $_ -notin @('-vibe.toggleTerminal','-vibe.restoreLayout') })
@@ -230,7 +230,7 @@ if (Test-Path -LiteralPath $shortcutPath) { Copy-Item -LiteralPath $shortcutPath
 $shell = New-Object -ComObject WScript.Shell
 $link = $shell.CreateShortcut($shortcutPath)
 $link.TargetPath = $CodePath
-$link.Arguments = '--new-window --skip-release-notes --locale ko --user-data-dir "' + $userDir + '" --extensions-dir "' + $extensionsDir + '" "' + $ProjectPath + '"'
+$link.Arguments = '--new-window --skip-release-notes --locale ko --user-data-dir "' + $userDir + '" --extensions-dir "' + $extensionsDir + '" "' + $workspacePath + '"'
 $link.WorkingDirectory = $ProjectPath
 $link.IconLocation = $CodePath + ',0'
 $link.Save()

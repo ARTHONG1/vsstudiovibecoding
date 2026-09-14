@@ -183,7 +183,8 @@ function activate(context) {
                         cwd: projectPath,
                         location: vscode.TerminalLocation.Panel
                       });
-                      devTerm.sendText('npm run ' + scriptName);
+                      const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+                      devTerm.sendText(npmCmd + ' run ' + scriptName);
                     }
                     for (let i = 0; i < 50; i++) {
                       await new Promise(r => setTimeout(r, 250));
