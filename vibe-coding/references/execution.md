@@ -10,6 +10,10 @@ If the host lacks a direct native-context process tool, Windows `Win32_Process.C
 
 Run setup and launch from the verified native context. If virtualized artifacts already exist, back up and migrate only the VibeCoding configuration/assets needed, explicitly preserve existing physical files, and verify from both contexts. Do not copy an entire user profile, tokens, or extension storage.
 
+The bundled setup creates a temporary visibility marker and compares SHA256 hashes and user SID through `scripts/native-files.ps1`. It checks the actual installed layout extension before creating a shortcut. A mismatch, WMI failure or timeout is a blocking diagnostic, not permission to bypass a restriction. Use an available permitted native-context tool; if none works, report installation blocked and retain the evidence. Do not assume that an absolute path, administrator shell or normal child process escapes MSIX redirection.
+
+Version equality is not sufficient: `scripts/setup-files.ps1` compares installed extension content with the skill source (allowing VS Code installation metadata). A same-version stale installation must be updated and verified. If installation does not converge, stop before creating/replacing the shortcut. Preserve unsaved VS Code Backups and lock files; deleting them cannot repair files hidden by virtualization.
+
 ## Inputs and agent usage
 
 Run from the skill's directory or use an absolute script path. Discover real values; these are examples, not paths to copy:
@@ -29,10 +33,9 @@ Optional `-Root`, `-CodePath`, `-OpenCodePath`, `-DesktopPath` override discover
 
 Existing settings must be parseable JSON for the bundled merger. If JSONC/comments are present, preserve the original and use a JSONC-aware parser or targeted edit before continuing; do not overwrite settings with defaults. Existing user keybindings are 100% preserved. Native VS Code F12 (Go to Definition) is completely untouched. Screen toggling is operated via the dedicated Status Bar button (or Command Palette vibe.toggleTerminal).
 
-For framework previews, PreviewUrl alone does not manage a server. Before claiming restart support, the agent must configure and test the project's existing server task/start mechanism, preserving existing tasks and observing its readiness on relaunch. If that cannot be done, explicitly report the external-server dependency and do not claim a self-starting setup. The bundled sample/static preview is the fully automated default; arbitrary framework startup is project-specific agent work.
+For framework previews, inspect package.json and the real server output. The extension attempts npm dev/start when the URL is unavailable, but default-port detection is only a guess and not proof of correct startup. Before claiming restart support, verify the actual project's server task/start mechanism and URL on relaunch. Do not accept a fallback showing unprocessed framework source as a successful preview. Preserve existing tasks; report an unresolved server dependency explicitly.
 
-Verify software availability using current official sources when installation is needed: VS Code at https://code.visualstudio.com/ and OpenCode at https://opencode.ai/. Prefer supported user-scope installers; do not assume administrator rights or winget. When `-Apply` is executed and OpenCode is not found, the setup helper automatically attempts to install `opencode-ai` globally via `npm` if Node.js/npm is present on the system. If npm is missing or installation fails, the agent must install OpenCode through currently verified official instructions. Framework dependencies and server startup remain project-specific agent work.
-The core 3-column engine directly operates the OpenCode CLI (`opencode.exe`) in terminal; the optional `sst-dev.opencode` extension provides secondary syntax highlighting and is non-blocking.
+Discover the requested Codex CLI and verify its --version before apply. The legacy helper can select OpenCode if Codex is absent, so inspect the plan and resolve Codex first when Codex was requested. Do not infer authentication, model access, or computer control from a successful --version. Use current official instructions for missing software; do not assume administrator rights or winget.
 
 ## Known failure distinctions
 
@@ -41,7 +44,7 @@ The core 3-column engine directly operates the OpenCode CLI (`opencode.exe`) in 
 | keybindings starts with `{` | Back up; normalize to an array and merge managed bindings. |
 | terminal starts with a syntax error | Use the bundled UTF-8 startup command; parse before running. |
 | Status bar button not visible | Verify vibe.enabled is true in workspace settings and layout extension is activated. |
-| default Chat panel appears | It is not OpenCode. Verify the local layout extension is enabled and activated. |
+| default Chat panel appears | It is not the configured Codex terminal. Verify the local layout extension is enabled and activated. |
 | preview appears late/in the wrong group | Wait for the actual tab; arrange after readiness, not merely after command dispatch. |
 | no CLI found in agent PATH | Check the native user's installation before concluding it is missing. |
 | blank files in user launch but files exist for agent | Investigate virtualization, not repeated reinstalling or trust disabling. |

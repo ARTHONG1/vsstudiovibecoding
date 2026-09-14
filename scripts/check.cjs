@@ -26,6 +26,8 @@ const requiredFiles = [
   '.github/workflows/ci.yml',
   'vibe-coding/SKILL.md',
   'vibe-coding/scripts/setup.ps1',
+  'vibe-coding/scripts/native-files.ps1',
+  'vibe-coding/scripts/setup-files.ps1',
   'vibe-coding/references/execution.md',
   'vibe-coding/references/verification.md',
   'vibe-coding/assets/sample.html',

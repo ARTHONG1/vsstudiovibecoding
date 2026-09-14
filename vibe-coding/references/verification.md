@@ -8,7 +8,7 @@ The agent owns these checks. Record pass/fail/blocked and the actual observation
 4. **Preview:** on the sample, click the test button and observe the counter change. For an existing project, use a harmless existing interaction or a temporary reversible local change, then restore it. Never submit business forms as a test. Verify the dev server is reachable when used.
 5. **3-Mode toggle round trip:** Test clicking `터미널 전체` to verify transition to full terminal (Codex) and return to 3 columns. Test clicking `미리보기 전체` to verify transition to clean full preview (100% viewport for Computer Use / human QA) and return to 3 columns with even editor widths. Verify project local development server endpoint remains reachable for Playwright and Browser-Use. Verify pressing F12 in code editor preserves native Go to Definition.
 6. **Recovery and repeated use:** invoke layout restoration and ensure one usable preview and one Codex terminal. Repeated invocation must not accumulate tabs, terminals, shortcuts, or overwrite user code.
-7. **Cold boot & restart resilience:** terminate lingering background dev servers and close the workspace. Launch the generated desktop shortcut from a cold state. Visually verify that:
+7. **Restart resilience:** close the target workspace normally while preserving unsaved buffers. Reopen the exact generated shortcut through Explorer. Separately test a stopped-server scenario only when you can identify and safely stop this project's server; do not terminate unrelated node or Code processes. Record ordinary relaunch, stopped-server relaunch, and OS reboot as separate checks, not one generic cold-boot claim. Visually verify that:
    - Development server auto-starts in the background if required (Vite, Next.js, Astro, etc.).
    - Zero `ERR_CONNECTION_REFUSED (-102)` or `Failed to Load Page` errors appear.
    - Zero duplicate preview tabs accumulate (Column 1 contains exactly one active preview tab).
@@ -22,4 +22,4 @@ If a tool reports user interruption, follow its stop rule. On a later user-autho
 
 Before claiming portability, test the packaged skill in a new agent context with no conversation history, using a disposable project. Include paths with spaces/non-ASCII, an existing index.html that must survive, an already configured machine, missing prerequisites, unavailable UI tools, and a packaged-app virtualization mismatch. Use plan-only evaluation for cases where real machine changes are not authorized.
 
-Report the tested OS/VS Code/OpenCode versions and distinguish scenario review from actual execution on another computer. One machine's success is not a guarantee across all Windows environments.
+Report the tested OS/VS Code/Codex versions and distinguish scenario review from actual execution on another computer. One machine's success is not a guarantee across all Windows environments.

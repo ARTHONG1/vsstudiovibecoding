@@ -105,18 +105,16 @@ $shortcutPath = Join-Path $DesktopPath ('Vibe Coding - ' + $name + '-' + $id + '
 $plan = [ordered]@{ project=$ProjectPath; entry=$entryPath; previewUrl=$PreviewUrl; root=$Root; code=$CodePath; agent=$agentName; codex=$CodexPath; openCode=$OpenCodePath; workspace=$workspacePath; shortcut=$shortcutPath; registerContextMenu=[bool]$RegisterContextMenu; missing=$missing; applied=$false }
 if (!$Apply) { $plan | ConvertTo-Json -Depth 5; return }
 if ($missing.Count) { throw ('Install/discover prerequisites first: ' + ($missing -join ', ')) }
+. ([scriptblock]::Create([IO.File]::ReadAllText((Join-Path $SkillRoot 'scripts\native-files.ps1'))))
+. ([scriptblock]::Create([IO.File]::ReadAllText((Join-Path $SkillRoot 'scripts\setup-files.ps1'))))
+New-Item -ItemType Directory -Force -Path $Root | Out-Null
+$visibilityProbe = Join-Path $Root ('.visibility-' + [guid]::NewGuid().ToString() + '.txt')
+[IO.File]::WriteAllText($visibilityProbe, [guid]::NewGuid().ToString())
+try { Assert-VibeNativeFiles @($visibilityProbe, $CodePath, $agentExe) }
+finally { Remove-Item -LiteralPath $visibilityProbe -Force }
 $version = & $agentExe --version
 if ($LASTEXITCODE -ne 0) { throw "$agentName --version failed." }
 $userDir = Join-Path $Root 'VSCodeUserData'
-$lockFile = Join-Path $userDir 'code.lock'
-if (Test-Path -LiteralPath $lockFile) {
-  $runningCode = Get-Process Code -ErrorAction SilentlyContinue
-  if (!$runningCode) {
-    Remove-Item -LiteralPath $lockFile -Force -ErrorAction SilentlyContinue
-    $staleBackups = Join-Path $userDir 'Backups'
-    if (Test-Path -LiteralPath $staleBackups) { Remove-Item -LiteralPath $staleBackups -Recurse -Force -ErrorAction SilentlyContinue }
-  }
-}
 $extensionsDir = Join-Path $Root 'VSCodeExtensions'
 $backup = Join-Path $Root ('Backups\setup-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
 $utf8 = New-Object Text.UTF8Encoding($false)
@@ -128,7 +126,7 @@ function Read-Object([string]$Path) {
 }
 function Set-Key($Object, [string]$Key, $Value) { $Object | Add-Member -Force NoteProperty $Key $Value }
 function Save-Json([string]$Path, $Value) {
-  if (Test-Path -LiteralPath $Path) { Copy-Item -LiteralPath $Path -Destination (Join-Path $backup ([IO.Path]::GetFileName($Path))) }
+  Backup-VibeFile $Path $backup | Out-Null
   [IO.File]::WriteAllText($Path, (ConvertTo-Json -InputObject $Value -Depth 30), $utf8)
 }
 $settingsPath = Join-Path $userDir 'User\settings.json'
@@ -167,10 +165,8 @@ Set-Key $settings 'livePreview.debugOnExternalPreview' $true
 Set-Key $settings 'livePreview.autoRefreshPreview' 'On All Changes in Editor'
 Set-Key $settings 'workbench.startupEditor' 'none'
 Set-Key $settings 'locale' 'ko'
-Set-Key $settings 'files.hotExit' 'off'
 Set-Key $settings 'files.autoSave' 'afterDelay'
 Set-Key $settings 'files.autoSaveDelay' 500
-Set-Key $settings 'security.workspace.trust.enabled' $false
 Set-Key $settings 'vibe.enabled' $true
 Set-Key $settings 'vibe.codexPath' $(if ($CodexPath) {$CodexPath} else {''})
 Set-Key $settings 'vibe.opencodePath' $(if ($OpenCodePath) {$OpenCodePath} else {''})
@@ -212,25 +208,38 @@ try {
 } catch {}
 $packageSource = Join-Path $SkillRoot 'assets\workspace-extension'
 $manifest = Get-Content -Raw -Encoding UTF8 (Join-Path $packageSource 'extension\package.json') | ConvertFrom-Json
+$installedLayout = Join-Path $extensionsDir ($manifest.publisher + '.' + $manifest.name + '-' + $manifest.version)
 $packagePath = Join-Path $backup ('vibe-workspace-' + $manifest.version + '.vsix')
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 [IO.Compression.ZipFile]::CreateFromDirectory($packageSource, $packagePath)
 $cli = Join-Path (Split-Path -Parent $CodePath) 'bin\code.cmd'
 if (!(Test-Path -LiteralPath $cli)) { throw 'VS Code CLI was not found beside Code.exe.' }
-$installed = @(& $cli --user-data-dir $userDir --extensions-dir $extensionsDir --list-extensions --show-versions)
+function Invoke-VibeCode {
+  # Windows PowerShell can turn a harmless native stderr warning into a
+  # terminating error. Decide success from the CLI exit code instead.
+  $ErrorActionPreference = 'Continue'
+  & $cli @args
+  if ($LASTEXITCODE -ne 0) { throw "VS Code CLI failed with exit code $LASTEXITCODE" }
+}
+$installed = @(Invoke-VibeCode --user-data-dir $userDir --extensions-dir $extensionsDir --list-extensions --show-versions)
 if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect installed extensions.' }
 foreach ($extension in @('MS-CEINTL.vscode-language-pack-ko','ms-vscode.live-server',$packagePath)) {
-  if ($extension -eq $packagePath) { if (('local-vibe.vibe-workspace@'+$manifest.version) -in $installed) { continue } }
+  if ($extension -eq $packagePath) { if (('local-vibe.vibe-workspace@'+$manifest.version) -in $installed -and (Test-VibeExtensionContent (Join-Path $packageSource 'extension') $installedLayout)) { continue } }
   elseif (@($installed | Where-Object { $_ -like ($extension+'@*') }).Count) { continue }
-  & $cli --user-data-dir $userDir --extensions-dir $extensionsDir --install-extension $extension --force
+  Invoke-VibeCode --user-data-dir $userDir --extensions-dir $extensionsDir --install-extension $extension --force
   if ($LASTEXITCODE -ne 0) { throw "Extension installation failed: $extension. Configuration backup: $backup" }
 }
 try {
   if (!(@($installed | Where-Object { $_ -like 'sst-dev.opencode@*' }).Count)) {
-    & $cli --user-data-dir $userDir --extensions-dir $extensionsDir --install-extension 'sst-dev.opencode' --force 2>$null
+    Invoke-VibeCode --user-data-dir $userDir --extensions-dir $extensionsDir --install-extension 'sst-dev.opencode' --force 2>$null
   }
 } catch {}
 if (!(Test-Path -LiteralPath $DesktopPath -PathType Container)) { throw 'Desktop directory not found; provide the real DesktopPath.' }
+if (!(Test-VibeExtensionContent (Join-Path $packageSource 'extension') $installedLayout)) {
+  throw 'Installed layout extension differs from the skill source. Preserve the existing installation and inspect the CLI result before creating a shortcut.'
+}
+$installedFiles = @(Get-ChildItem -LiteralPath $installedLayout -File -Recurse | Select-Object -ExpandProperty FullName)
+Assert-VibeNativeFiles (@($workspacePath, $entryPath, $settingsPath) + $installedFiles)
 if (Test-Path -LiteralPath $shortcutPath) { Copy-Item -LiteralPath $shortcutPath -Destination $backup }
 $shell = New-Object -ComObject WScript.Shell
 $link = $shell.CreateShortcut($shortcutPath)
