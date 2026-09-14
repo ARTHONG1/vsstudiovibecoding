@@ -60,3 +60,15 @@ test('setup.ps1 auto-detects framework dev server port from package.json', () =>
   }
 });
 
+test('setup.ps1 preserves existing project and does not touch project .vscode/settings.json', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vibe-test-clean-project-'));
+  try {
+    fs.writeFileSync(path.join(tempDir, 'index.html'), '<html><body>clean</body></html>');
+    const output = runPowerShell(`-ProjectPath "${tempDir}"`);
+    const plan = JSON.parse(output);
+    assert.equal(plan.applied, false);
+    assert.equal(fs.existsSync(path.join(tempDir, '.vscode')), false, '.vscode folder must not be created');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
