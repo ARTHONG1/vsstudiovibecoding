@@ -111,7 +111,11 @@ $userDir = Join-Path $Root 'VSCodeUserData'
 $lockFile = Join-Path $userDir 'code.lock'
 if (Test-Path -LiteralPath $lockFile) {
   $runningCode = Get-Process Code -ErrorAction SilentlyContinue
-  if (!$runningCode) { Remove-Item -LiteralPath $lockFile -Force -ErrorAction SilentlyContinue }
+  if (!$runningCode) {
+    Remove-Item -LiteralPath $lockFile -Force -ErrorAction SilentlyContinue
+    $staleBackups = Join-Path $userDir 'Backups'
+    if (Test-Path -LiteralPath $staleBackups) { Remove-Item -LiteralPath $staleBackups -Recurse -Force -ErrorAction SilentlyContinue }
+  }
 }
 $extensionsDir = Join-Path $Root 'VSCodeExtensions'
 $backup = Join-Path $Root ('Backups\setup-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
@@ -163,6 +167,7 @@ Set-Key $settings 'livePreview.debugOnExternalPreview' $true
 Set-Key $settings 'livePreview.autoRefreshPreview' 'On All Changes in Editor'
 Set-Key $settings 'workbench.startupEditor' 'none'
 Set-Key $settings 'locale' 'ko'
+Set-Key $settings 'files.hotExit' 'off'
 Set-Key $settings 'files.autoSave' 'afterDelay'
 Set-Key $settings 'files.autoSaveDelay' 500
 Set-Key $settings 'security.workspace.trust.enabled' $false

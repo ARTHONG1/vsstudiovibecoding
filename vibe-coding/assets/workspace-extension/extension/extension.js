@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 
 function checkPortReachable(urlStr) {
   return new Promise(resolve => {
@@ -40,8 +40,9 @@ function activate(context) {
   if (!vscode.workspace.getConfiguration('vibe').get('enabled')) return;
   const output = vscode.window.createOutputChannel('Vibe Coding');
   context.subscriptions.push(output);
- let terminal;
- let previewTabRef;
+  let terminal;
+  let devProcess;
+  let previewTabRef;
   let currentMode = context.workspaceState?.get?.('vibeMode', 'split') || 'split'; // 'split' | 'terminal' | 'preview'
  let busy = false;
   const exec = (command, ...args) => vscode.commands.executeCommand(command, ...args);
@@ -172,22 +173,14 @@ function activate(context) {
                 try {
                   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
                   const scriptName = pkg.scripts?.dev ? 'dev' : pkg.scripts?.start ? 'start' : null;
-                  if (scriptName) {
-                    let devTerm = vscode.window.terminals.find(t => t.name === 'Vibe Dev Server' && t.exitStatus === undefined);
-                    if (!devTerm) {
-                      for (const t of vscode.window.terminals) {
-                        if (t.name === 'Vibe Dev Server') try { t.dispose(); } catch {}
-                      }
-                      devTerm = vscode.window.createTerminal({
-                        name: 'Vibe Dev Server',
-                        cwd: projectPath,
-                        location: vscode.TerminalLocation.Panel
-                      });
-                      const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-                      devTerm.sendText(npmCmd + ' run ' + scriptName);
-                    }
+                  if (scriptName && !devProcess) {
+                    const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+                    devProcess = spawn(npmCmd, ['run', scriptName], { cwd: projectPath, shell: true, env: process.env });
+                    devProcess.stdout?.on('data', d => output.append(d.toString()));
+                    devProcess.stderr?.on('data', d => output.append(d.toString()));
+                    devProcess.on('exit', () => { devProcess = null; });
                     for (let i = 0; i < 50; i++) {
-                      await new Promise(r => setTimeout(r, 250));
+                      await new Promise(r => setTimeout(r, 200));
                       reachable = await checkPortReachable(previewUrl);
                       if (reachable) break;
                     }
@@ -327,7 +320,8 @@ function activate(context) {
     vscode.commands.registerCommand('vibe.togglePreview', () => guarded(() => togglePreview())),
     vscode.commands.registerCommand('vibe.openExternalBrowser', () => guarded(() => openExternalBrowser())),
     vscode.commands.registerCommand('vibe.pasteImage', () => guarded(() => pasteImage())),
-    vscode.window.onDidCloseTerminal(t => { if (t === terminal) terminal = undefined; })
+    vscode.window.onDidCloseTerminal(t => { if (t === terminal) terminal = undefined; }),
+    { dispose: () => { if (devProcess) { try { devProcess.kill(); } catch {} devProcess = null; } } }
   );
   record('activated');
   return guarded(restore);
