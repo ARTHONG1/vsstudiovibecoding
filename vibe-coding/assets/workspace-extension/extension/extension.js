@@ -122,7 +122,10 @@ function activate(context) {
     }
     await exec('workbench.action.closeSidebar');
     await exec('workbench.action.closeAuxiliaryBar');
+    await exec('workbench.action.focusPanel');
     await exec('workbench.action.positionPanelRight');
+    ensureTerminal().show(false);
+    try { await exec('workbench.action.terminal.focus'); } catch {}
     await exec('vscode.setEditorLayout', { orientation: 0, groups: [{ size: 0.5 }, { size: 0.5 }] });
     await exec('workbench.action.evenEditorWidths');
 
@@ -243,8 +246,9 @@ function activate(context) {
     if (currentMode === 'preview') {
       try { await exec('workbench.action.toggleMaximizeEditorGroup'); } catch {}
     }
-    ensureTerminal().show();
-    await exec('workbench.action.positionPanelBottom');
+    await exec('workbench.action.focusPanel');
+    ensureTerminal().show(false);
+    try { await exec('workbench.action.terminal.focus'); } catch {}
     await exec('workbench.action.toggleMaximizedPanel');
     setMode('terminal');
     record('terminal-full', { mode: currentMode });
