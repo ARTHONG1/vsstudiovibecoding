@@ -6,7 +6,7 @@ const path = require('node:path');
 
 // The VS Code boundary is mocked; the shipped extension's real restore runs.
 test('restore reuses a preview after its title becomes the page title', async () => {
-  const commands = new Map(), events = [], terminals = [];
+  const commands = new Map(), events = [], terminals = [], statusIds = [];
   const tab = { label: '127.0.0.1:3000', isActive: true };
   const group = { viewColumn: 1, tabs: [tab] };
   const config = { enabled: true, entryFile: 'index.html', codexPath: 'C:/tools/codex.exe', opencodePath: 'C:/tools/opencode.exe' };
@@ -15,7 +15,7 @@ test('restore reuses a preview after its title becomes the page title', async ()
     window: { createOutputChannel:()=>({appendLine:line=>events.push(JSON.parse(line))}),
       tabGroups:{all:[group]}, terminals,
       showTextDocument:async()=>{}, showErrorMessage:()=>{},
-      createStatusBarItem:()=>({show(){},dispose(){}}),
+      createStatusBarItem:(id)=>{statusIds.push(id);return {show(){},dispose(){}};},
       createTerminal:opts=>{const t={creationOptions:opts,show(){}};terminals.push(t);return t;},
       onDidCloseTerminal:()=>({dispose(){}}) },
     commands:{executeCommand:async()=>{},registerCommand:(name,fn)=>{commands.set(name,fn);return {dispose(){}};}},
@@ -30,6 +30,7 @@ test('restore reuses a preview after its title becomes the page title', async ()
     setTimeout:fn=>{fn();},URL
   });
   await module.exports.activate({subscriptions:[],globalStorageUri:{fsPath:'C:/test'}});
+  assert.deepEqual(statusIds, ['vibe.terminalToggle', 'vibe.previewToggle']);
   tab.label='나의 페이지';
   await commands.get('vibe.restoreLayout')({maximized:false});
   await commands.get('vibe.restoreLayout')({maximized:false});

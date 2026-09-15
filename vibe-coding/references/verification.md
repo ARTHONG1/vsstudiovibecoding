@@ -23,3 +23,7 @@ If a tool reports user interruption, follow its stop rule. On a later user-autho
 Before claiming portability, test the packaged skill in a new agent context with no conversation history, using a disposable project. Include paths with spaces/non-ASCII, an existing index.html that must survive, an already configured machine, missing prerequisites, unavailable UI tools, and a packaged-app virtualization mismatch. Use plan-only evaluation for cases where real machine changes are not authorized.
 
 Report the tested OS/VS Code/Codex versions and distinguish scenario review from actual execution on another computer. One machine's success is not a guarantee across all Windows environments.
+
+## Status bar visibility
+
+Verify both Terminal Full and Preview Full buttons visually. A layout-ready log is not evidence that status bar items are visible. If missing, open the status bar context menu and inspect the Vibe toggle entries; restore hidden entries when repairing a reported missing-button problem. Register each button with a distinct stable status bar ID so visibility preferences remain independent. Respect intentional hiding; do not reset the whole VS Code state database. Verify again after window reload.

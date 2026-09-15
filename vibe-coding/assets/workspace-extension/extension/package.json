@@ -2,7 +2,7 @@
     "name": "vibe-workspace",
     "displayName": "Vibe Coding Workspace",
     "publisher": "local-vibe",
-    "version": "2.2.1",
+    "version": "2.2.2",
     "engines": {
         "vscode": "^1.94.0"
     },

@@ -47,12 +47,12 @@ function activate(context) {
  let busy = false;
   const exec = (command, ...args) => vscode.commands.executeCommand(command, ...args);
 
-  const terminalBtn = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1001);
+  const terminalBtn = vscode.window.createStatusBarItem('vibe.terminalToggle', vscode.StatusBarAlignment.Right, 1001);
   terminalBtn.name = 'Vibe Coding Terminal Toggle';
   terminalBtn.command = 'vibe.toggleTerminal';
   context.subscriptions.push(terminalBtn);
 
-  const previewBtn = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);
+  const previewBtn = vscode.window.createStatusBarItem('vibe.previewToggle', vscode.StatusBarAlignment.Right, 1000);
   previewBtn.name = 'Vibe Coding Preview Toggle';
   previewBtn.command = 'vibe.togglePreview';
   context.subscriptions.push(previewBtn);
