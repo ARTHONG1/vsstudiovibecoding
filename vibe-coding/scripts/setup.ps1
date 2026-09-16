@@ -58,7 +58,14 @@ if ($PreviewUrl) {
 }
 if (!$CodePath) {
   $x86Prog = [Environment]::GetFolderPath('ProgramFilesX86')
-  $CodePath = Find-Executable @((Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'Programs\Microsoft VS Code\Code.exe'), (Join-Path $env:ProgramFiles 'Microsoft VS Code\Code.exe'), $(if ($x86Prog) { Join-Path $x86Prog 'Microsoft VS Code\Code.exe' }))
+  $localApp = [Environment]::GetFolderPath('LocalApplicationData')
+  $userProfile = if ($env:USERPROFILE) { $env:USERPROFILE } else { [Environment]::GetFolderPath('UserProfile') }
+  $CodePath = Find-Executable @(
+    (Join-Path $localApp 'Programs\Microsoft VS Code\Code.exe'),
+    (Join-Path $userProfile 'AppData\Local\Programs\Microsoft VS Code\Code.exe'),
+    (Join-Path $env:ProgramFiles 'Microsoft VS Code\Code.exe'),
+    $(if ($x86Prog) { Join-Path $x86Prog 'Microsoft VS Code\Code.exe' })
+  )
   if (!$CodePath) { $command = Get-Command code.cmd -ErrorAction SilentlyContinue; if ($command) { $CodePath = Find-Executable @((Join-Path (Split-Path (Split-Path $command.Source)) 'Code.exe')) } }
 }
 if (!$CodexPath) {
@@ -67,12 +74,17 @@ if (!$CodexPath) {
   if (!$cmd) { $cmd = Get-Command codex -ErrorAction SilentlyContinue }
   $localApp = [Environment]::GetFolderPath('LocalApplicationData')
   $appData = [Environment]::GetFolderPath('ApplicationData')
+  $userProfile = if ($env:USERPROFILE) { $env:USERPROFILE } else { [Environment]::GetFolderPath('UserProfile') }
   $codexBin = Join-Path $localApp 'OpenAI\Codex\bin'
   $deepExe = if (Test-Path -LiteralPath $codexBin) { (Get-ChildItem -Path $codexBin -Filter 'codex.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName) } else { $null }
+  if (!$deepExe -and (Test-Path -LiteralPath (Join-Path $userProfile 'AppData\Local\OpenAI\Codex\bin'))) {
+    $deepExe = (Get-ChildItem -Path (Join-Path $userProfile 'AppData\Local\OpenAI\Codex\bin') -Filter 'codex.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName)
+  }
   $CodexPath = Find-Executable @(
     $(if ($cmd) { $cmd.Source }),
     $deepExe,
     (Join-Path $appData 'npm\codex.cmd'),
+    (Join-Path $userProfile 'AppData\Roaming\npm\codex.cmd'),
     (Join-Path $env:ProgramFiles 'OpenAI\Codex\codex.exe')
   )
 }
@@ -173,6 +185,7 @@ Set-Key $settings 'vibe.opencodePath' $(if ($OpenCodePath) {$OpenCodePath} else 
 Set-Key $settings 'vibe.entryFile' $EntryFile
 Set-Key $settings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
 Set-Key $settings 'chat.commandCenter.enabled' $false
+Set-Key $settings 'task.allowAutomaticTasks' 'on'
 Save-Json $settingsPath $settings
 $argvPath = Join-Path $userDir 'argv.json'
 $argv = Read-Object $argvPath
@@ -189,6 +202,7 @@ Set-Key $wsSettings 'vibe.codexPath' $(if ($CodexPath) {$CodexPath} else {''})
 Set-Key $wsSettings 'vibe.opencodePath' $(if ($OpenCodePath) {$OpenCodePath} else {''})
 Set-Key $wsSettings 'vibe.entryFile' $EntryFile
 Set-Key $wsSettings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
+Set-Key $wsSettings 'task.allowAutomaticTasks' 'on'
 Set-Key $wsSettings 'window.title' 'Vibe Coding - ${activeEditorShort}${separator}${rootName}'
 $otherFolders = @($workspace.folders | Where-Object { $_ -and $_.path -ne $ProjectPath })
 Set-Key $workspace 'folders' (@(@{path=$ProjectPath}) + $otherFolders)

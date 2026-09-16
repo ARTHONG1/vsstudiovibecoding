@@ -2,7 +2,7 @@
     "name": "vibe-workspace",
     "displayName": "Vibe Coding Workspace",
     "publisher": "local-vibe",
-    "version": "2.2.2",
+    "version": "2.3.4",
     "engines": {
         "vscode": "^1.94.0"
     },
@@ -25,6 +25,16 @@
                 "command": "vibe.togglePreview",
                 "title": "Vibe Coding: Toggle Preview (Full / 3-Columns)",
                 "icon": "$(browser)"
+            },
+            {
+                "command": "vibe.restoreCheckpoint",
+                "title": "Vibe Coding: Time Machine (되돌리기 타임머신)",
+                "icon": "$(history)"
+            },
+            {
+                "command": "vibe.createCheckpoint",
+                "title": "Vibe Coding: Save Checkpoint (현재 시점 스냅샷 저장)",
+                "icon": "$(save)"
             },
             {
                 "command": "vibe.openExternalBrowser",
@@ -50,6 +60,11 @@
                     "when": "config.vibe.enabled"
                 },
                 {
+                    "command": "vibe.restoreCheckpoint",
+                    "group": "navigation",
+                    "when": "config.vibe.enabled"
+                },
+                {
                     "command": "vibe.openExternalBrowser",
                     "group": "navigation",
                     "when": "config.vibe.enabled"
@@ -62,6 +77,12 @@
             ]
         },
         "keybindings": [
+            {
+                "command": "vibe.restoreCheckpoint",
+                "key": "alt+z",
+                "mac": "alt+z",
+                "when": "config.vibe.enabled"
+            },
             {
                 "command": "vibe.pasteImage",
                 "key": "alt+v",

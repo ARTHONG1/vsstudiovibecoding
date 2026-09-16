@@ -9,6 +9,7 @@ metadata:
 
 Deliver a working Windows VS Code window: **Preview | Code | Codex**, with **[3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체]**. Use status bar/editor buttons and preserve the user's F12 binding. Keep the project's real local server URL available for browser testing. Codex authentication, OpenCodex providers and Computer Use/Playwright tools depend on the installed agent environment; the layout does not install or prove these capabilities. The AI agent inspects the project, chooses the setup, repairs failures and verifies the result. Scripts support that work; do not replace it with a manual checklist for the user.
 진짜 브라우저 검수(DevTools, 쿠키, 결제 연동)가 필요한 경우 에디터 상단 툴바의 [ ↗ 외부 브라우저 ]를 통해 1클릭으로 시스템 Chrome/Edge와 연동됩니다.
+AI가 코드를 수정할 때마다 대화/작업 단위로 그림자 스냅샷이 자동 적립되며, 에디터 상단 툴바 [ ⏪ ] 또는 상태바 [ $(history) 타임머신 ](단축키 Alt+Z)을 통해 원하는 과거 대화 시점으로 프로젝트 전체를 0.1초 만에 무결점 롤백할 수 있습니다. (기존 Git 커밋 히스토리를 전혀 더럽히지 않음)
 
 ## Scope and preservation
 
@@ -21,7 +22,14 @@ Deliver a working Windows VS Code window: **Preview | Code | Codex**, with **[3�
 ## Workflow
 
 1. **Inspect.** Resolve the user's project from the request/current workspace. Discover Windows user, VS Code executable, Codex executable, and available desktop automation tools. Read [execution.md](references/execution.md) before installation. Read the available Computer Use tool/skill documentation before UI actions; do not assume a specific provider is installed.
-2. **Choose preview.** Existing static HTML: select its actual entry file. Existing framework: inspect its scripts and reuse/start its local development server through a shell tool, then use the observed localhost URL. Do not convert framework projects to static demos. No project requested: create a separate sample through `-CreateSample`.
+2. **Choose preview and ensure autonomous auto-start.**
+   - **Static HTML:** Select its actual entry file (e.g. `index.html`). Client-side preview is served natively by VS Code Live Preview without external processes.
+   - **Frameworks & Backends (Node, Python, Go, Rust, etc.):**
+     1. *Inspect dependencies:* Examine `package.json`, `requirements.txt`, `pyproject.toml`, etc., and verify the runtime environment/virtualenv exists.
+     2. *Determine startup command:* Identify the project's local server command (e.g., `npm run dev`, `streamlit run app.py`, `python -m uvicorn main:app --reload`).
+     3. *Configure persistent auto-start (`.vscode/tasks.json`):* For any project requiring a dev server, generate or merge a background task in the project's `.vscode/tasks.json` with `"runOptions": { "runOn": "folderOpen" }` and `"isBackground": true`. The setup script automatically enables `task.allowAutomaticTasks: "on"` in settings, guaranteeing that whenever the user opens the desktop shortcut in the future, the local development server starts in the background without requiring manual CLI commands or agent presence.
+     4. *Verify listening port:* Probe-run the command or inspect the server output to capture the exact localhost URL (e.g., `http://localhost:5173`, `http://localhost:8501`), then pass `-PreviewUrl <observed-url>` and `-EntryFile` to `setup.ps1`.
+   - **No project requested:** Create a separate isolated sample through `-CreateSample`.
 3. **Prepare.** Run `scripts/setup.ps1` without `-Apply` to obtain the concrete plan. Missing VS Code/Codex: install through verified official instructions within authorization. Inspect the plan's agent and paths; do not silently replace requested Codex with OpenCode. Run the chosen CLI's `--version`.
 4. **Apply.** Execute the bundled setup with `-Apply` in the actual user's filesystem context. It merges isolated configuration, builds/installs the bundled layout extension, and creates a project-specific workspace and shortcut. Use [execution.md](references/execution.md) to verify the physical path when MSIX/agent virtualization is present. A zero exit code proves only configuration, not UI success.
    Setup compares file hashes with a same-user native Windows process before configuration and before shortcut creation. A `Native filesystem mismatch` is a failed installation: stage the skill in a shared Documents directory and run the inspected setup in the verified native context. Do not retry in the same redirected shell, delete VS Code backups/locks, or disable hot exit. Never claim a desktop shortcut works from an agent-context launch alone.

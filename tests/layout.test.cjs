@@ -30,7 +30,7 @@ test('restore reuses a preview after its title becomes the page title', async ()
     setTimeout:fn=>{fn();},URL
   });
   await module.exports.activate({subscriptions:[],globalStorageUri:{fsPath:'C:/test'}});
-  assert.deepEqual(statusIds, ['vibe.terminalToggle', 'vibe.previewToggle']);
+  assert.deepEqual(statusIds, ['vibe.terminalToggle', 'vibe.previewToggle', 'vibe.timeMachine']);
   tab.label='나의 페이지';
   await commands.get('vibe.restoreLayout')({maximized:false});
   await commands.get('vibe.restoreLayout')({maximized:false});

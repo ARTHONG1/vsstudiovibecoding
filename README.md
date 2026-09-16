@@ -1,6 +1,6 @@
 # Vibe Coding
 
-[![Version](https://img.shields.io/badge/version-2.2.2-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
+[![Version](https://img.shields.io/badge/version-2.3.4-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6.svg?logo=windows)](https://github.com/ARTHONG1/vsstudiovibecoding)
 [![CI](https://github.com/ARTHONG1/vsstudiovibecoding/actions/workflows/ci.yml/badge.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/actions)
@@ -9,7 +9,7 @@
 
 VS Code를 **미리보기 | 코드 | Codex** 3열로 배치하며, 상태바와 에디터 툴바의 전용 버튼으로 **3대 뷰포트 모드 ([3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체])**를 원클릭 전환합니다. 3열에 OpenAI 공식 Codex CLI를 구동하여 OpenCodex 멀티 모델 및 Computer Use 자율 화면 제어를 지원하며, VS Code 순정 `F12`(정의로 이동)를 100% 보존합니다.
 
-**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.2.2/vibe-coding-2.2.2.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
+**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.3.4/vibe-coding-2.3.4.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
 
 ## 가장 쉬운 시작
 
@@ -83,6 +83,14 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
 | AI 응답이 없음 | OpenCode의 제공자 연결·한도·네트워크 확인. GitHub 로그인만으로 연결되지 않음. |
 
 문제 신고에는 OS, 버전, 기대/실제 동작, 민감정보를 가린 오류만 포함하세요. 전체 로그나 사용자 경로·API 키를 그대로 게시하지 마세요.
+
+## ⏪ Vibe 타임머신 (대화 단위 무오염 롤백)
+
+AI가 코드를 수정하다가 기존 기능을 망가뜨렸을 때, Firebase Studio나 Google AI Studio처럼 **대화 턴 단위로 원하는 과거 시점을 선택해 0.1초 만에 프로젝트 전체를 복원**합니다.
+
+- **순정 Git 히스토리 100% 무오염**: git commit이나 git stash를 쓰지 않고, Git 저수준 배관 명령어(commit-tree)로 분리된 그림자 스냅샷을 생성하므로 사용자의 main 브랜치 커밋 로그를 단 1글자도 더럽히지 않습니다.
+- **스마트 대화 제목 추출**: 중간의 "응", "진행해" 같은 단순 확인 단답을 자동 필터링하고, 사용자가 실제로 Codex에게 요청했던 핵심 지시 내용(예: *"점수판 텍스트를 한글로 점수라고 표시해줘"*)을 스냅샷 제목으로 1대화당 딱 1개씩 깔끔하게 기록합니다.
+- **원클릭 복원 & Redo**: 에디터 상단 툴바의 **[ ⏪ ]** 아이콘이나 하단 상태바의 **[ $(history) 타임머신 ]** (단축키 Alt + Z)을 누르면 즉시 복원 메뉴가 뜨며, 방금 실행한 롤백을 다시 취소(Redo)하는 안전망도 제공합니다.
 
 ## 저장 위치·업데이트·되돌리기
 

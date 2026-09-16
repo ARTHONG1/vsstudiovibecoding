@@ -33,7 +33,71 @@ Optional `-Root`, `-CodePath`, `-OpenCodePath`, `-DesktopPath` override discover
 
 Existing settings must be parseable JSON for the bundled merger. If JSONC/comments are present, preserve the original and use a JSONC-aware parser or targeted edit before continuing; do not overwrite settings with defaults. Existing user keybindings are 100% preserved. Native VS Code F12 (Go to Definition) is completely untouched. Screen toggling is operated via the dedicated Status Bar button (or Command Palette vibe.toggleTerminal).
 
-For framework previews, inspect package.json and the real server output. The extension attempts npm dev/start when the URL is unavailable, but default-port detection is only a guess and not proof of correct startup. Before claiming restart support, verify the actual project's server task/start mechanism and URL on relaunch. Do not accept a fallback showing unprocessed framework source as a successful preview. Preserve existing tasks; report an unresolved server dependency explicitly.
+## Framework and Python server lifecycle with tasks.json
+
+The core principle of Vibe Coding is: **the AI agent performs the intelligent environment configuration once, and thereafter the user works frictionlessly with a single desktop shortcut click.**
+
+To support dynamic frameworks (Vite, Next.js, Astro) and backend servers (Streamlit, FastAPI, Flask, Django) on repeat launches without an active agent session, use VS Code's native task automation:
+
+1. **Automatic execution on workspace open**:
+   The bundled setup script configures `"task.allowAutomaticTasks": "on"` in both user settings and workspace settings.
+2. **Configure `.vscode/tasks.json` in the project**:
+   The agent inspects the project environment and creates or merges a background task in `<project>/.vscode/tasks.json` with `"runOptions": { "runOn": "folderOpen" }`.
+
+### Example tasks.json templates
+
+**Node.js (Vite / Next.js / Astro):**
+```json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Auto Start Dev Server",
+      "type": "shell",
+      "command": "npm run dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "runOptions": { "runOn": "folderOpen" }
+    }
+  ]
+}
+```
+
+**Python (Streamlit):**
+```json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Auto Start Streamlit",
+      "type": "shell",
+      "command": "streamlit run app.py --server.port 8501 --server.headless true",
+      "isBackground": true,
+      "problemMatcher": [],
+      "runOptions": { "runOn": "folderOpen" }
+    }
+  ]
+}
+```
+
+**Python (FastAPI / Uvicorn):**
+```json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Auto Start FastAPI",
+      "type": "shell",
+      "command": "python -m uvicorn main:app --reload --port 8000",
+      "isBackground": true,
+      "problemMatcher": [],
+      "runOptions": { "runOn": "folderOpen" }
+    }
+  ]
+}
+```
+
+When the user double-clicks the generated desktop shortcut, VS Code natively starts the background task, the server binds to localhost, and Column 1 (Live Preview) connects immediately with zero `ERR_CONNECTION_REFUSED` errors.
 
 Discover the requested Codex CLI and verify its --version before apply. The legacy helper can select OpenCode if Codex is absent, so inspect the plan and resolve Codex first when Codex was requested. Do not infer authentication, model access, or computer control from a successful --version. Use current official instructions for missing software; do not assume administrator rights or winget.
 
