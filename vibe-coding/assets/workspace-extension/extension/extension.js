@@ -38,7 +38,7 @@ function checkPortReachable(urlStr) {
 }
 
 function activate(context) {
-  if (!vscode.workspace.getConfiguration('vibe').get('enabled')) return;
+  if (vscode.workspace.getConfiguration('vibe').get('enabled') === false) return;
   const output = vscode.window.createOutputChannel('Vibe Coding');
   context.subscriptions.push(output);
   let terminal;
@@ -59,6 +59,20 @@ function activate(context) {
   previewBtn.name = 'Vibe Coding Preview Toggle';
   previewBtn.command = 'vibe.togglePreview';
   context.subscriptions.push(previewBtn);
+
+  const timeMachineBtn = vscode.window.createStatusBarItem('vibe.timeMachine', vscode.StatusBarAlignment.Right, 999);
+  timeMachineBtn.name = 'Vibe Coding Time Machine';
+  timeMachineBtn.text = '$(history) 타임머신';
+  timeMachineBtn.tooltip = '원하는 과거 대화/작업 시점으로 롤백합니다 (Vibe 타임머신)';
+  timeMachineBtn.command = 'vibe.restoreCheckpoint';
+  context.subscriptions.push(timeMachineBtn);
+
+  const mobileBtn = vscode.window.createStatusBarItem('vibe.mobileRemoteToggle', vscode.StatusBarAlignment.Right, 998);
+  mobileBtn.name = 'Vibe Coding Mobile Remote';
+  mobileBtn.text = '$(device-mobile) 모바일';
+  mobileBtn.tooltip = '스마트폰으로 AI 원격 제어 및 모바일 화면 미리보기 (Vibe Coding)';
+  mobileBtn.command = 'vibe.openMobileRemote';
+  context.subscriptions.push(mobileBtn);
 
   function setMode(mode) {
     currentMode = mode;
@@ -83,26 +97,12 @@ function activate(context) {
       previewBtn.text = '$(browser) 미리보기 전체';
       previewBtn.tooltip = '웹앱 미리보기를 전체화면으로 전환합니다 (Vibe Coding)';
     }
-  terminalBtn.show();
-  previewBtn.show();
-}
-updateStatusBars();
-
-  const timeMachineBtn = vscode.window.createStatusBarItem('vibe.timeMachine', vscode.StatusBarAlignment.Right, 999);
-  timeMachineBtn.name = 'Vibe Coding Time Machine';
-  timeMachineBtn.text = '$(history) 타임머신';
-  timeMachineBtn.tooltip = '원하는 과거 대화/작업 시점으로 롤백합니다 (Vibe 타임머신)';
-  timeMachineBtn.command = 'vibe.restoreCheckpoint';
-  timeMachineBtn.show();
-  context.subscriptions.push(timeMachineBtn);
-
-  const mobileBtn = vscode.window.createStatusBarItem('vibe.mobileRemoteToggle', vscode.StatusBarAlignment.Right, 998);
-  mobileBtn.name = 'Vibe Coding Mobile Remote';
-  mobileBtn.text = '$(device-mobile) 모바일';
-  mobileBtn.tooltip = '스마트폰으로 AI 원격 제어 및 모바일 화면 미리보기 (Vibe Coding)';
-  mobileBtn.command = 'vibe.openMobileRemote';
-  mobileBtn.show();
-  context.subscriptions.push(mobileBtn);
+    terminalBtn.show();
+    previewBtn.show();
+    timeMachineBtn.show();
+    mobileBtn.show();
+  }
+  updateStatusBars();
 
   const projectRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (projectRoot && typeof vscode.workspace.createFileSystemWatcher === 'function') {
@@ -135,9 +135,11 @@ updateStatusBars();
     fs.appendFileSync(path.join(context.globalStorageUri.fsPath, 'status.jsonl'), JSON.stringify(data) + '\n');
   }
   function ensureTerminal() {
-    if (!terminal || terminal.exitStatus !== undefined) {
+    const config = vscode.workspace.getConfiguration('vibe');
+    const executable = config.get('codexPath') || config.get('opencodePath');
+    if (!terminal || terminal.exitStatus !== undefined || terminal.creationOptions?.shellPath !== executable) {
       const projectPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-      terminal = vscode.window.terminals.find(t => t.creationOptions.env?.VIBE_PROJECT === projectPath && t.exitStatus === undefined);
+      terminal = vscode.window.terminals.find(t => t.creationOptions?.env?.VIBE_PROJECT === projectPath && t.creationOptions?.shellPath === executable && t.exitStatus === undefined);
       if (!terminal) {
         const config = vscode.workspace.getConfiguration('vibe');
         const executable = config.get('codexPath') || config.get('opencodePath');
@@ -161,6 +163,14 @@ updateStatusBars();
         record('terminal-created', { agent: terminalName });
       }
     }
+    try {
+      for (const t of vscode.window.terminals) {
+        if (t !== terminal && !t.creationOptions?.env?.VIBE_PROJECT) {
+          t.dispose();
+        }
+      }
+    } catch {}
+    terminal.show(false);
     return terminal;
   }
  async function restore(options) {

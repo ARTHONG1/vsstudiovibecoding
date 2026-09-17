@@ -8,7 +8,8 @@
     },
     "main": "./extension.js",
     "activationEvents": [
-        "*"
+        "*",
+        "onStartupFinished"
     ],
     "contributes": {
         "commands": [
@@ -105,7 +106,7 @@
             "properties": {
                 "vibe.enabled": {
                     "type": "boolean",
-                    "default": false
+                    "default": true
                 },
                 "vibe.codexPath": {
                     "type": "string",
