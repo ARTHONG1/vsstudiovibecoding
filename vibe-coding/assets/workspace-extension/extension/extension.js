@@ -5,6 +5,7 @@ const path = require('path');
 const http = require('http');
 const https = require('https');
 const { execSync, spawn } = require('child_process');
+const { MobileServer, getMobileWebviewHtml } = require('./mobile-server');
 
 function checkPortReachable(urlStr) {
   return new Promise(resolve => {
@@ -45,6 +46,8 @@ function activate(context) {
   let previewTabRef;
   let currentMode = context.workspaceState?.get?.('vibeMode', 'split') || 'split'; // 'split' | 'terminal' | 'preview'
  let busy = false;
+  let mobileServer;
+  let mobileWebviewPanel;
   const exec = (command, ...args) => vscode.commands.executeCommand(command, ...args);
 
   const terminalBtn = vscode.window.createStatusBarItem('vibe.terminalToggle', vscode.StatusBarAlignment.Right, 1001);
@@ -92,6 +95,14 @@ updateStatusBars();
   timeMachineBtn.command = 'vibe.restoreCheckpoint';
   timeMachineBtn.show();
   context.subscriptions.push(timeMachineBtn);
+
+  const mobileBtn = vscode.window.createStatusBarItem('vibe.mobileRemoteToggle', vscode.StatusBarAlignment.Right, 998);
+  mobileBtn.name = 'Vibe Coding Mobile Remote';
+  mobileBtn.text = '$(device-mobile) 모바일';
+  mobileBtn.tooltip = '스마트폰으로 AI 원격 제어 및 모바일 화면 미리보기 (Vibe Coding)';
+  mobileBtn.command = 'vibe.openMobileRemote';
+  mobileBtn.show();
+  context.subscriptions.push(mobileBtn);
 
   const projectRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (projectRoot && typeof vscode.workspace.createFileSystemWatcher === 'function') {
@@ -588,6 +599,51 @@ updateStatusBars();
     }
   }
 
+  async function openMobileRemote() {
+    if (!mobileServer) {
+      mobileServer = new MobileServer({
+        port: 4100,
+        getStatus: () => {
+          const config = vscode.workspace.getConfiguration('vibe');
+          const executable = config.get('codexPath') || config.get('opencodePath');
+          const isCodex = /codex/i.test(executable);
+          const agent = isCodex ? 'Codex' : 'OpenCode';
+          const project = vscode.workspace.workspaceFolders?.[0]?.name || 'Vibe Coding';
+          const previewUrl = config.get('previewUrl', '') || 'http://127.0.0.1:3000';
+          return { mode: currentMode, agent, project, previewUrl };
+        },
+        onPrompt: async (prompt) => {
+          const t = ensureTerminal();
+          t.show(false);
+          t.sendText(prompt, true);
+          record('mobile-prompt-sent', { prompt });
+        },
+        onCommand: async (cmd) => {
+          if (cmd === 'restore') await restore();
+          else if (cmd === 'preview') await togglePreview();
+          else if (cmd === 'terminal') await toggle();
+          record('mobile-command-executed', { command: cmd });
+        }
+      });
+      await mobileServer.start();
+      context.subscriptions.push({ dispose: () => mobileServer.stop() });
+    }
+    const remoteUrl = mobileServer.getUrl();
+    const qrSvg = mobileServer.getQrSvg();
+    if (mobileWebviewPanel) {
+      mobileWebviewPanel.reveal(vscode.ViewColumn.One);
+    } else {
+      mobileWebviewPanel = vscode.window.createWebviewPanel(
+        'vibeMobileRemote',
+        '📱 Vibe Coding 모바일 원격 제어',
+        vscode.ViewColumn.One,
+        { enableScripts: true, retainContextWhenHidden: true }
+      );
+      mobileWebviewPanel.onDidDispose(() => { mobileWebviewPanel = null; });
+    }
+    mobileWebviewPanel.webview.html = getMobileWebviewHtml(remoteUrl, qrSvg);
+    record('mobile-remote-opened', { url: remoteUrl });
+  }
   async function guarded(action) {
     if (busy) return;
     busy = true;
@@ -601,6 +657,7 @@ updateStatusBars();
     vscode.commands.registerCommand('vibe.togglePreview', () => guarded(() => togglePreview())),
     vscode.commands.registerCommand('vibe.openExternalBrowser', () => guarded(() => openExternalBrowser())),
     vscode.commands.registerCommand('vibe.pasteImage', () => guarded(() => pasteImage())),
+    vscode.commands.registerCommand('vibe.openMobileRemote', () => guarded(() => openMobileRemote())),
     vscode.commands.registerCommand('vibe.restoreCheckpoint', () => guarded(() => showTimeMachinePicker(vscode.workspace.workspaceFolders[0].uri.fsPath))),
     vscode.commands.registerCommand('vibe.createCheckpoint', () => guarded(async () => {
       const p = vscode.workspace.workspaceFolders[0].uri.fsPath;

@@ -64,7 +64,7 @@ function createMockVSCode(config = {}) {
     {
       module,
       exports: module.exports,
-      require: name => (name === 'vscode' ? vscode : name === 'fs' ? { existsSync: () => true, mkdirSync() {}, appendFileSync() {} } : require(name)),
+      require: name => (name === 'vscode' ? vscode : name === 'fs' ? { existsSync: () => true, mkdirSync() {}, appendFileSync() {} } : name.startsWith('.') ? require(path.join(__dirname, '../vibe-coding/assets/workspace-extension/extension', name)) : require(name)),
       setTimeout: fn => fn(),
       clearTimeout: () => {},
       URL

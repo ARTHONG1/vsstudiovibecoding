@@ -26,11 +26,11 @@ test('restore reuses a preview after its title becomes the page title', async ()
   };
   const module = {exports:{}};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../vibe-coding/assets/workspace-extension/extension/extension.js'),'utf8'), {
-    module, exports:module.exports, require:name=>name==='vscode'?vscode:name==='fs'?{existsSync:()=>true,mkdirSync(){},appendFileSync(){}}:require(name),
+    module, exports:module.exports, require:name=>name==='vscode'?vscode:name==='fs'?{existsSync:()=>true,mkdirSync(){},appendFileSync(){}}:name.startsWith('.')?require(path.join(__dirname,'../vibe-coding/assets/workspace-extension/extension',name)):require(name),
     setTimeout:fn=>{fn();},URL
   });
   await module.exports.activate({subscriptions:[],globalStorageUri:{fsPath:'C:/test'}});
-  assert.deepEqual(statusIds, ['vibe.terminalToggle', 'vibe.previewToggle', 'vibe.timeMachine']);
+  assert.deepEqual(statusIds, ['vibe.terminalToggle', 'vibe.previewToggle', 'vibe.timeMachine', 'vibe.mobileRemoteToggle']);
   tab.label='나의 페이지';
   await commands.get('vibe.restoreLayout')({maximized:false});
   await commands.get('vibe.restoreLayout')({maximized:false});
@@ -79,7 +79,7 @@ test('restore cleans up misplaced entry file tab in column 1 without reference e
   };
   const module = { exports: {} };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../vibe-coding/assets/workspace-extension/extension/extension.js'), 'utf8'), {
-    module, exports: module.exports, require: name => name === 'vscode' ? vscode : name === 'fs' ? { existsSync: () => true, mkdirSync() {}, appendFileSync() {} } : require(name),
+    module, exports: module.exports, require: name => name === 'vscode' ? vscode : name === 'fs' ? { existsSync: () => true, mkdirSync() {}, appendFileSync() {} } : name.startsWith('.') ? require(path.join(__dirname, '../vibe-coding/assets/workspace-extension/extension', name)) : require(name),
     setTimeout: fn => { fn(); }, URL
   });
   await module.exports.activate({ subscriptions: [], globalStorageUri: { fsPath: 'C:/test' } });

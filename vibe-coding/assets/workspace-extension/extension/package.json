@@ -2,7 +2,7 @@
     "name": "vibe-workspace",
     "displayName": "Vibe Coding Workspace",
     "publisher": "local-vibe",
-    "version": "2.3.4",
+    "version": "2.4.0",
     "engines": {
         "vscode": "^1.94.0"
     },
@@ -45,6 +45,11 @@
                 "command": "vibe.pasteImage",
                 "title": "Vibe Coding: Paste Clipboard Image (Alt+V)",
                 "icon": "$(file-media)"
+            },
+            {
+                "command": "vibe.openMobileRemote",
+                "title": "Vibe Coding: Open Mobile Remote (QR Code)",
+                "icon": "$(device-mobile)"
             }
         ],
         "menus": {
@@ -71,6 +76,11 @@
                 },
                 {
                     "command": "vibe.pasteImage",
+                    "group": "navigation",
+                    "when": "config.vibe.enabled"
+                },
+                {
+                    "command": "vibe.openMobileRemote",
                     "group": "navigation",
                     "when": "config.vibe.enabled"
                 }
