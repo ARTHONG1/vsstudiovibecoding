@@ -2,7 +2,7 @@
 
 The agent owns these checks. Record pass/fail/blocked and the actual observation, not a generic "all checks passed".
 
-1. **Physical configuration:** the native user's context reads the generated workspace and entry file; paths point to the intended project, user data, and extensions. AI Agent (Codex/OpenCode) `--version` succeeds. JSON and PowerShell startup parse.
+1. **Physical configuration:** the native user's context reads the generated workspace and entry file; paths point to the intended project, user data, and extensions. AI Agent (Codex) `--version` succeeds. JSON and PowerShell startup parse.
 2. **User launch:** launch the generated desktop shortcut from the real desktop context. Select the returned intended window by title/project. Observe actual preview, actual source file, and Codex prompt in left-to-right order. No empty untitled substitute files; no default Chat substituted for Codex.
 3. **Usability:** adjust the panel width so the Codex prompt is readable. Confirm Korean UI localization (menus/popups), autoSave without manual Ctrl+S, and Korean/non-ASCII text integrity in the Codex terminal. Do not leave a narrow sliver and call the arrangement complete. Do not interact with unrelated apps or security popups.
 4. **Preview:** on the sample, click the test button and observe the counter change. For an existing project, use a harmless existing interaction or a temporary reversible local change, then restore it. Never submit business forms as a test. Verify the dev server is reachable when used.

@@ -629,7 +629,13 @@ function activate(context) {
         vscode.ViewColumn.One,
         { enableScripts: true, retainContextWhenHidden: true }
       );
-      mobileWebviewPanel.onDidDispose(() => { mobileWebviewPanel = null; });
+      mobileWebviewPanel.onDidDispose(() => {
+        mobileWebviewPanel = null;
+        if (mobileServer) {
+          try { mobileServer.stop(); } catch {}
+          mobileServer = null;
+        }
+      });
     }
     mobileWebviewPanel.webview.html = getMobileWebviewHtml(remoteUrl, qrSvg);
     record('mobile-remote-opened', { url: remoteUrl });

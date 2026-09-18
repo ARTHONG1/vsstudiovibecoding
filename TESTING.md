@@ -35,7 +35,7 @@ npm test
 ```
 
 **What it checks:**
-1. **Startup & Restoration:** Verifies that `vibe.restoreLayout` configures the 50:50 editor split, positions the Agent (Codex / OpenCode) panel to the right, and prevents duplicate terminal creation.
+1. **Startup & Restoration:** Verifies that `vibe.restoreLayout` configures the 50:50 editor split, positions the Agent (Codex) panel to the right, and prevents duplicate terminal creation.
 2. **Title Independence:** Confirms preview tab discovery does not break even if the document title changes dynamically.
 3. **State Machine Integrity:** Tests 3-mode transitions (`split` ↔ `terminal` ↔ `preview`) and ensures clean recovery without tab pollution.
 
@@ -45,8 +45,8 @@ npm test
 
 Follow the 7-step checklist defined in `vibe-coding/references/verification.md`:
 
-1. **Physical Configuration:** Ensure isolated directories (`%LOCALAPPDATA%\VibeCoding`), workspaces, and shortcuts resolve to physical native paths. Verify agent CLI (`codex --version` or `opencode --version`).
-2. **Desktop Launch:** Launch the generated `.lnk` shortcut in the interactive desktop context. Confirm Preview (1열), Code (2열), and Agent (Codex / OpenCode, 3열) are visible.
+1. **Physical Configuration:** Ensure isolated directories (`%LOCALAPPDATA%\VibeCoding`), workspaces, and shortcuts resolve to physical native paths. Verify agent CLI (`codex --version`).
+2. **Desktop Launch:** Launch the generated `.lnk` shortcut in the interactive desktop context. Confirm Preview (1열), Code (2열), and Agent (Codex, 3열) are visible.
 3. **Usability & Localization:** Confirm Korean UI localization (`locale: ko`), automatic 500ms auto-save without manual `Ctrl+S`, and UTF-8 encoding in PowerShell.
 4. **Interactive Preview:** Click the "미리보기 작동 확인" button on the sample page and verify the counter increments.
 5. **3-Mode & DevTools Round Trip:**
@@ -65,7 +65,6 @@ Follow the 7-step checklist defined in `vibe-coding/references/verification.md`:
 |---|---|---|
 | **OS** | Windows 11 x64 (Build 22631+) | PASS |
 | **VS Code** | 1.94.0 - 1.137.0+ | PASS |
-| **Codex CLI** | Official / OpenCodex | PASS |
-| **OpenCode CLI** | 1.18.30 | PASS |
+| **Codex CLI** | Official OpenAI Codex CLI | PASS |
 | **Live Preview** | 0.4.20 | PASS |
 | **Node.js** | 20.x, 22.x, 24.x | PASS |

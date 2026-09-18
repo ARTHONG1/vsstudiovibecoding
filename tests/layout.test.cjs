@@ -9,7 +9,7 @@ test('restore reuses a preview after its title becomes the page title', async ()
   const commands = new Map(), events = [], terminals = [], statusIds = [];
   const tab = { label: '127.0.0.1:3000', isActive: true };
   const group = { viewColumn: 1, tabs: [tab] };
-  const config = { enabled: true, entryFile: 'index.html', codexPath: 'C:/tools/codex.exe', opencodePath: 'C:/tools/opencode.exe' };
+  const config = { enabled: true, entryFile: 'index.html', codexPath: 'C:/tools/codex.exe' };
   const vscode = {
     workspace: { getConfiguration: () => ({get:(k,d)=>config[k] ?? d}), workspaceFolders: [{uri:{fsPath:'C:/project'}}] },
     window: { createOutputChannel:()=>({appendLine:line=>events.push(JSON.parse(line))}),
@@ -51,7 +51,7 @@ test('restore cleans up misplaced entry file tab in column 1 without reference e
   };
   const previewTab = { label: '127.0.0.1:3000', isActive: true };
   const group1 = { viewColumn: 1, tabs: [misplacedTab, previewTab] };
-  const config = { enabled: true, entryFile: 'index.html', codexPath: 'C:/tools/codex.exe', opencodePath: 'C:/tools/opencode.exe' };
+  const config = { enabled: true, entryFile: 'index.html', codexPath: 'C:/tools/codex.exe' };
   const vscode = {
     workspace: {
       getConfiguration: () => ({ get: (k, d) => config[k] ?? d }),

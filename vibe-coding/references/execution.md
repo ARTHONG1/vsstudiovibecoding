@@ -99,7 +99,7 @@ To support dynamic frameworks (Vite, Next.js, Astro) and backend servers (Stream
 
 When the user double-clicks the generated desktop shortcut, VS Code natively starts the background task, the server binds to localhost, and Column 1 (Live Preview) connects immediately with zero `ERR_CONNECTION_REFUSED` errors.
 
-Discover the requested Codex CLI and verify its --version before apply. The legacy helper can select OpenCode if Codex is absent, so inspect the plan and resolve Codex first when Codex was requested. Do not infer authentication, model access, or computer control from a successful --version. Use current official instructions for missing software; do not assume administrator rights or winget.
+Discover the requested Codex CLI and verify its --version before apply. Resolve and verify official OpenAI Codex CLI. Do not infer authentication, model access, or computer control from a successful --version. Use current official instructions for missing software; do not assume administrator rights or winget.
 
 ## Known failure distinctions
 

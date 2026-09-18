@@ -223,7 +223,7 @@ function getMobileHtml(options) {
 class MobileServer {
   constructor(options = {}) {
     this.options = options;
-    this.token = crypto.randomBytes(4).toString('hex');
+    this.token = crypto.randomBytes(16).toString('hex');
     this.server = null;
     this.port = options.port || 4100;
     this.localIp = getLocalIpAddress();
@@ -255,8 +255,7 @@ class MobileServer {
         const reqUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
         const qToken = reqUrl.searchParams.get('token') || req.headers['x-vibe-token'];
 
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-vibe-token');
 
         if (req.method === 'OPTIONS') {
@@ -265,7 +264,16 @@ class MobileServer {
           return;
         }
 
+        const verifyToken = (bodyToken) => {
+          return (qToken && qToken === this.token) || (bodyToken && bodyToken === this.token);
+        };
+
         if (reqUrl.pathname === '/' && req.method === 'GET') {
+          if (!verifyToken()) {
+            res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end('<!DOCTYPE html><html><head><meta charset="utf-8"><title>403 Forbidden</title></head><body style="background:#0d1117;color:#f85149;font-family:sans-serif;padding:32px;text-align:center;"><h2>🔒 접근 제한</h2><p>VS Code 화면의 QR 코드를 직접 스캔하여 접속하세요. (인증 토큰 누락 또는 불일치)</p></body></html>');
+            return;
+          }
           const status = this.statusGetter();
           const html = getMobileHtml({
             token: this.token,
@@ -281,15 +289,16 @@ class MobileServer {
         }
 
         if (reqUrl.pathname === '/api/qr' && req.method === 'GET') {
+          if (!verifyToken()) {
+            res.writeHead(403, { 'Content-Type': 'text/plain' });
+            res.end('Forbidden');
+            return;
+          }
           const svg = this.getQrSvg();
           res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
           res.end(svg);
           return;
         }
-
-        const verifyToken = (bodyToken) => {
-          return (qToken && qToken === this.token) || (bodyToken && bodyToken === this.token);
-        };
 
         if (reqUrl.pathname === '/api/status' && req.method === 'GET') {
           if (!verifyToken()) {

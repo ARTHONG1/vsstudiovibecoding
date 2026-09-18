@@ -23,7 +23,7 @@ test('MobileServer handles remote status, commands, and prompts', async () => {
     port: 4890,
     getStatus: () => ({
       mode: 'split',
-      agent: 'OpenCode',
+      agent: 'Codex',
       project: '과전강',
       previewUrl: 'http://localhost:5173'
     }),
@@ -57,11 +57,15 @@ test('MobileServer handles remote status, commands, and prompts', async () => {
   };
 
   try {
-    // 1. GET /
-    const home = await makeReq('/');
-    assert.equal(home.status, 200);
-    assert.ok(home.body.includes('Vibe Remote'), 'Home HTML includes Vibe Remote');
-    assert.ok(home.body.includes('과전강'), 'Home HTML includes project name');
+    // 1. GET / without token (must 403)
+    const homeUnauth = await makeReq('/');
+    assert.equal(homeUnauth.status, 403);
+
+    // 1-1. GET / with valid token (must 200)
+    const homeAuth = await makeReq('/?token=' + server.token);
+    assert.equal(homeAuth.status, 200);
+    assert.ok(homeAuth.body.includes('Vibe Remote'), 'Home HTML includes Vibe Remote');
+    assert.ok(homeAuth.body.includes('과전강'), 'Home HTML includes project name');
 
     // 2. GET /api/status without token (must 403)
     const unauthorized = await makeReq('/api/status');
@@ -72,7 +76,7 @@ test('MobileServer handles remote status, commands, and prompts', async () => {
     assert.equal(statusRes.status, 200);
     const statusData = JSON.parse(statusRes.body);
     assert.equal(statusData.project, '과전강');
-    assert.equal(statusData.agent, 'OpenCode');
+    assert.equal(statusData.agent, 'Codex');
     assert.equal(statusData.mode, 'split');
 
     // 4. POST /api/command
@@ -85,8 +89,12 @@ test('MobileServer handles remote status, commands, and prompts', async () => {
     assert.equal(promptRes.status, 200);
     assert.equal(lastPrompt, '헤더 색상 변경해줘');
 
-    // 6. GET /api/qr
-    const qrRes = await makeReq('/api/qr');
+    // 6. GET /api/qr without token (must 403)
+    const qrUnauth = await makeReq('/api/qr');
+    assert.equal(qrUnauth.status, 403);
+
+    // 6-1. GET /api/qr with token (must 200)
+    const qrRes = await makeReq('/api/qr?token=' + server.token);
     assert.equal(qrRes.status, 200);
     assert.ok(qrRes.headers['content-type'].includes('image/svg+xml'));
   } finally {
