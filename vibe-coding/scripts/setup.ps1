@@ -198,6 +198,7 @@ Set-Key $settings 'chat.commandCenter.enabled' $false
 Set-Key $settings 'task.allowAutomaticTasks' 'on'
 Set-Key $settings 'chat.agentHost.codexAgent.enabled' $true
 Set-Key $settings 'chat.agentHost.enabled' $true
+Set-Key $settings 'chat.agentSessions.showExternal' 'recent'
 Set-Key $settings 'remote.tunnels.access.preventSleep' $true
 Save-Json $settingsPath $settings
 $argvPath = Join-Path $userDir 'argv.json'
@@ -216,6 +217,7 @@ Set-Key $wsSettings 'vibe.entryFile' $EntryFile
 Set-Key $wsSettings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
 Set-Key $wsSettings 'task.allowAutomaticTasks' 'on'
 Set-Key $wsSettings 'chat.agentHost.codexAgent.enabled' $true
+Set-Key $wsSettings 'chat.agentSessions.showExternal' 'recent'
 Set-Key $wsSettings 'window.title' 'Vibe Coding - ${activeEditorShort}${separator}${rootName}'
 $otherFolders = @($workspace.folders | Where-Object { $_ -and $_.path -ne $ProjectPath })
 Set-Key $workspace 'folders' (@(@{path=$ProjectPath}) + $otherFolders)
@@ -280,5 +282,6 @@ if ($Launch -and (Test-Path -LiteralPath $shortcutPath)) {
 $plan.applied=$true
 $plan['backup']=$backup
 $plan['codexVersion']=($version -join ' ')
+if ($CodePath) { try { $plan['codeVersion']=(& $CodePath --version | Select-Object -First 1) } catch {} }
 $plan['uiVerification']='PENDING: agent must launch shortcut and complete references/verification.md'
 $plan | ConvertTo-Json -Depth 5

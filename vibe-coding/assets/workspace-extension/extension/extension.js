@@ -501,15 +501,22 @@ function activate(context) {
       try { fs.mkdirSync(vibeDir, { recursive: true }); } catch {}
       const shadowIndex = path.join(vibeDir, 'shadow_index');
       const gitEnv = { ...process.env, GIT_INDEX_FILE: shadowIndex };
+      let commitSha = null;
       try {
         execSync('git add -A', { cwd: p, env: gitEnv, stdio: 'ignore' });
         const treeSha = execSync('git write-tree', { cwd: p, env: gitEnv, encoding: 'utf8' }).trim();
-        const commitSha = execSync('git commit-tree ' + treeSha + ' -m "Vibe Safety Backup"', { cwd: p, encoding: 'utf8' }).trim();
+        commitSha = execSync('git commit-tree ' + treeSha + ' -m "Vibe Safety Backup"', { cwd: p, encoding: 'utf8' }).trim();
         const now = new Date();
         const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
         const safetyFile = path.join(p, '.vibe', 'safety.json');
         fs.writeFileSync(safetyFile, JSON.stringify({ sha: commitSha, title: '롤백 직전 코드 (취소/Redo용)', timeStr }), 'utf8');
-      } catch {}
+      } catch (err) {
+        throw new Error('롤백 직전 안전 백업 생성에 실패하여 작업을 중단했습니다: ' + err.message);
+      }
+
+      if (!commitSha) {
+        throw new Error('안전 백업 해시가 생성되지 않아 파일 보호를 위해 롤백을 중단합니다.');
+      }
 
       execSync('git checkout ' + targetSha + ' -- .', { cwd: p, stdio: 'ignore' });
       execSync('git clean -fd -e .vibe', { cwd: p, stdio: 'ignore' });

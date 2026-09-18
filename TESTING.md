@@ -64,7 +64,7 @@ Follow the 7-step checklist defined in `vibe-coding/references/verification.md`:
 | Environment | Verified Version | Status |
 |---|---|---|
 | **OS** | Windows 11 x64 (Build 22631+) | PASS |
-| **VS Code** | 1.94.0 - 1.137.0+ | PASS |
+| **VS Code** | 1.138.0+ | PASS |
 | **Codex CLI** | Official OpenAI Codex CLI | PASS |
 | **Live Preview** | 0.4.20 | PASS |
 | **Node.js** | 20.x, 22.x, 24.x | PASS |
