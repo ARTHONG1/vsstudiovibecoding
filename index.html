@@ -92,9 +92,9 @@
 
     <main>
       <section>
-        <h2>최신 버전 v2.6.2 · 공식 Dev Tunnel 모바일 원격 & Git 섀도우 인덱스 타임머신</h2>
-        <p>VS Code 1.138+ 공식 Remote Agent Host 및 Microsoft Dev Tunnel 기반의 네이티브 모바일 원격 연동을 지원합니다. 사설 웹서버를 구동하지 않아 방화벽 경고와 포트 개방 없이 안전하며, 스마트폰 브라우저(<code>vscode.dev/agents</code>)에서 내 PC의 Codex 에이전트가 실시간으로 코드를 수정하고 테스트하는 과정을 시각적으로 모니터링할 수 있습니다. 또한 타임머신은 <code>GIT_INDEX_FILE</code> 섀도우 인덱스로 격리되어 사용자의 Staged 작업 내역을 단 1바이트도 오염시키지 않습니다.</p>
-        <p><a href="https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.6.2/vibe-coding-2.6.2.zip">v2.6.2 스킬 ZIP 다운로드</a> · <a href="https://github.com/ARTHONG1/vsstudiovibecoding/releases/tag/v2.6.2">릴리스 노트 보기</a></p>
+        <h2>최신 버전 v2.6.3 · 공식 Codex Remote 모바일 작업 안내</h2>
+        <p>휴대폰에서 공식 Codex Remote로 연결된 PC의 기존 작업을 이어가세요. [📱 모바일] 버튼은 현재 프로젝트 경로와 AI에게 초기 설정을 맡기는 요청을 제공합니다. AI가 기존 연결과 작업 폴더를 확인하고, 사용자는 필요한 로그인·QR 스캔·기기 승인만 진행합니다. 연결 후에는 스킬을 다시 호출하지 않아도 됩니다.</p>
+        <p><a href="https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.6.3/vibe-coding-2.6.3.zip">v2.6.3 스킬 ZIP 다운로드</a> · <a href="https://github.com/ARTHONG1/vsstudiovibecoding/releases/tag/v2.6.3">릴리스 노트 보기</a></p>
       </section>
     <section>
       <h2>🚀 1분 만에 세팅하기 (AI에게 요청)</h2>
@@ -140,8 +140,8 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
       </div>
       <div class="grid">
         <div class="step-card">
-          <h3>📱 공식 Dev Tunnel 모바일 원격</h3>
-          <p>상태바의 <strong>[📱 모바일]</strong> 버튼을 누르고 <strong>[원격 터널 켜기]</strong>를 실행한 뒤 QR 코드를 스캔하세요. 외부(LTE/5G)에서도 스마트폰으로 내 PC의 AI 에이전트 작업 과정과 실시간 Diff를 시각적으로 확인하며 지시할 수 있습니다.</p>
+          <h3>📱 공식 Codex Remote로 작업 이어가기</h3>
+          <p>상태바의 <strong>[📱 모바일]</strong> 버튼에서 초기 설정 요청을 복사해 AI에게 맡기세요. 이미 연결했다면 휴대폰 ChatGPT 앱의 <strong>Remote → 이 PC → 기존 작업</strong>을 선택하면 됩니다. 버튼 자체는 원격 접속을 켜거나 연결 상태를 판정하지 않습니다.</p>
         </div>
         <div class="step-card">
           <h3>⏪ 무오염 Vibe 타임머신 (Alt+Z)</h3>
@@ -184,7 +184,7 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
       </details>
       <details>
         <summary><strong>스마트폰으로 모바일 원격 작업은 어떻게 하나요?</strong></summary>
-        <p>VS Code 우측 하단 상태바의 <code>[📱 모바일]</code> 버튼을 누르고, 안내 창에서 <code>[원격 터널 켜기]</code>를 활성화한 뒤 화면의 QR 코드를 스마트폰으로 스캔하세요. 별도의 앱 설치나 공유기 포트 개방 없이 <code>vscode.dev/agents</code>에서 내 PC의 Codex 에이전트와 프로젝트에 안전하게 접속할 수 있습니다.</p>
+        <p>[📱 모바일] 안내에 따라 PC의 공식 데스크톱 앱에서 Remote를 설정하고, 앱이 제공하는 QR로 휴대폰을 연결하세요. 같은 계정·워크스페이스와 동일한 프로젝트 폴더를 사용해야 합니다. PC는 켜져 있고 온라인이어야 하며, 미리보기 갱신에는 개발 서버가 필요합니다. VS Code 화면 전송이나 CLI 대화의 실시간 동기화는 보장하지 않습니다. <a href="https://learn.chatgpt.com/docs/remote-connections">공식 연결 안내</a></p>
       </details>
       <details>
         <summary><strong>새로운 프로젝트마다 어떻게 적용하나요?</strong></summary>

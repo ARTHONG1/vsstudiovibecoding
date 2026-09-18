@@ -68,3 +68,10 @@ Follow the 7-step checklist defined in `vibe-coding/references/verification.md`:
 | **Codex CLI** | Official OpenAI Codex CLI | PASS |
 | **Live Preview** | 0.4.20 | PASS |
 | **Node.js** | 20.x, 22.x, 24.x | PASS |
+
+## v2.6.3 Mobile Remote change validation
+
+- Automated tests cover the script-free official Remote guide, escaped project paths, reuse of the guide panel, and absence of clipboard reads, tunnel commands or terminal creation when opening it.
+- A desktop-origin read-only continuation of an existing CLI task was observed in the same local project, with matching index.html SHA256 and an HTTP 200 preview response. This is not proof of a phone-origin test.
+- The user reported successful use of the Remote workflow. New button visual acceptance remains assigned to the user; it is not claimed as automated E2E coverage.
+- To accept the new UI: reload the VS Code window, open [모바일], confirm the actual project path and official Remote instructions, then continue the intended existing task from the phone. No tunnel activation or pairing status should be displayed as automatically verified.

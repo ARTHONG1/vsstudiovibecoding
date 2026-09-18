@@ -32,6 +32,7 @@ const requiredFiles = [
   'vibe-coding/scripts/setup-files.ps1',
   'vibe-coding/references/execution.md',
   'vibe-coding/references/verification.md',
+  'vibe-coding/references/mobile-remote.md',
   'vibe-coding/assets/sample.html',
   'vibe-coding/assets/workspace-extension/extension/package.json',
   'vibe-coding/assets/workspace-extension/extension/extension.js',

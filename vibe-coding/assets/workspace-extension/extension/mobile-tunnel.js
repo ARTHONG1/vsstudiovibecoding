@@ -1,292 +1,34 @@
 'use strict';
-
-function getMobileTunnelWebviewHtml(options = {}) {
-  const { qrSvg = '', tunnelUrl = '', isTunnelActive = false } = options;
-
-  return `<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      padding: 24px 20px;
-      text-align: center;
-      color: var(--vscode-foreground, #cccccc);
-      background: var(--vscode-editor-background, #1e1e1e);
-      line-height: 1.6;
-    }
-    .card {
-      max-width: 540px;
-      margin: 0 auto;
-      background: var(--vscode-editorWidget-background, #252526);
-      border: 1px solid var(--vscode-widget-border, #30363d);
-      border-radius: 12px;
-      padding: 26px 24px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    }
-    h2 {
-      margin-top: 0;
-      margin-bottom: 8px;
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--vscode-textLink-foreground, #3794ff);
-    }
-    p.desc {
-      margin-bottom: 18px;
-      font-size: 13px;
-      opacity: 0.85;
-    }
-    .badge-container {
-      margin-bottom: 18px;
-    }
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .status-badge.active {
-      background: rgba(46, 160, 67, 0.15);
-      border: 1px solid #2ea043;
-      color: #3fb950;
-    }
-    .status-badge.inactive {
-      background: rgba(210, 153, 34, 0.15);
-      border: 1px solid #d29922;
-      color: #e3b341;
-    }
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: currentColor;
-    }
-    .btn-action {
-      background: #238636;
-      color: #ffffff;
-      border: 1px solid #2ea043;
-      padding: 11px 22px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s;
-    }
-    .btn-action:hover {
-      background: #2ea043;
-    }
-    .btn-refresh {
-      background: transparent;
-      color: var(--vscode-foreground, #cccccc);
-      border: 1px solid var(--vscode-widget-border, #3b3b3b);
-      padding: 11px 18px;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-refresh:hover {
-      background: var(--vscode-button-secondaryHoverBackground, #45494e);
-    }
-    .btn-row {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .qr-container {
-      background: #ffffff;
-      padding: 16px;
-      border-radius: 12px;
-      display: inline-block;
-      margin: 6px 0 18px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      min-width: 240px;
-      min-height: 240px;
-    }
-    .qr-placeholder {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 240px;
-      width: 240px;
-      color: #555555;
-      font-size: 13px;
-      gap: 12px;
-    }
-    .spinner {
-      width: 28px;
-      height: 28px;
-      border: 3px solid rgba(0,0,0,0.1);
-      border-radius: 50%;
-      border-top-color: #238636;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .url-box {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 18px;
-    }
-    input[type="text"] {
-      flex: 1;
-      padding: 9px 12px;
-      background: var(--vscode-input-background, #3c3c3c);
-      color: var(--vscode-input-foreground, #cccccc);
-      border: 1px solid var(--vscode-input-border, #3b3b3b);
-      border-radius: 6px;
-      font-size: 12px;
-      font-family: Consolas, monospace;
-      outline: none;
-    }
-    .btn-secondary {
-      background: var(--vscode-button-secondaryBackground, #3a3d41);
-      color: var(--vscode-button-secondaryForeground, #ffffff);
-      border: none;
-      padding: 9px 14px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-secondary:hover {
-      background: var(--vscode-button-secondaryHoverBackground, #45494e);
-    }
-    .steps {
-      text-align: left;
-      background: var(--vscode-textBlockQuote-background, rgba(255,255,255,0.04));
-      padding: 14px 18px;
-      border-radius: 8px;
-      font-size: 12.5px;
-      margin-top: 14px;
-      border-left: 3px solid var(--vscode-textLink-foreground, #3794ff);
-    }
-    .steps ol {
-      margin: 8px 0 8px 20px;
-      padding: 0;
-    }
-    .steps li {
-      margin-bottom: 6px;
-    }
-    .info-tip {
-      font-size: 11.5px;
-      color: #8b949e;
-      margin-top: 10px;
-      line-height: 1.5;
-    }
-    .notice-box {
-      background: rgba(56, 139, 253, 0.1);
-      border: 1px solid rgba(56, 139, 253, 0.3);
-      color: #79c0ff;
-      border-radius: 6px;
-      padding: 10px 14px;
-      font-size: 12px;
-      margin-bottom: 16px;
-      text-align: left;
-      display: none;
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h2>📱 Vibe Coding 모바일 원격 AI 에이전트</h2>
-    <p class="desc">VS Code 공식 Remote Agent Host & Dev Tunnel을 통해 스마트폰에서 실시간 작업 모니터링과 프롬프트 지시를 수행합니다.</p>
-    
-    <div class="badge-container">
-      <span id="statusBadge" class="status-badge ${isTunnelActive ? 'active' : 'inactive'}">
-        <span class="status-dot"></span>
-        <span id="statusText">${isTunnelActive ? '🟢 내 PC 원격 터널 연결됨 (다이렉트 직행)' : '⚪ 원격 터널 대기 중 (PC에서 터널 켜기 필요)'}</span>
-      </span>
-    </div>
-
-    <div class="notice-box" id="noticeBox">
-      💡 <strong>진행 안내:</strong> VS Code 상단/하단에 뜬 로그인 팝업에서 GitHub 또는 Microsoft 계정으로 로그인해주세요. 완료되면 즉시 내 컴퓨터 직행 QR 코드가 생성됩니다.
-    </div>
-
-    <div class="btn-row">
-      <button class="btn-action" onclick="turnOnTunnel()">🚀 원격 터널 켜기 / 활성화</button>
-      <button class="btn-refresh" onclick="checkTunnel()">🔄 연결 상태 새로고침</button>
-    </div>
-
-    <div class="qr-container" id="qrContainer">
-      ${qrSvg ? qrSvg : `<div class="qr-placeholder" id="qrPlaceholder">
-        <div class="spinner"></div>
-        <div>터널 주소를 감지하는 중...<br><span style="font-size:11px; color:#888;">[원격 터널 켜기]를 먼저 눌러주세요</span></div>
-      </div>`}
-    </div>
-
-    <div class="url-box">
-      <input type="text" readonly value="${tunnelUrl}" id="urlInput" placeholder="터널이 활성화되면 내 PC 전용 URL이 표시됩니다">
-      <button class="btn-secondary" onclick="copyUrl()">복사</button>
-      <button class="btn-secondary" onclick="openUrl()">열기</button>
-    </div>
-
-    <div class="steps">
-      <strong>📱 스마트폰 접속 3단계:</strong>
-      <ol>
-        <li>위 <strong>[원격 터널 켜기]</strong>를 눌러 GitHub/Microsoft 계정으로 로그인합니다 (최초 1회).</li>
-        <li>터널이 켜지면 생성되는 <strong>내 PC 전용 QR 코드</strong>를 스마트폰으로 스캔합니다.</li>
-        <li>스마트폰 브라우저에서 <strong>PC와 동일한 계정</strong>으로 로그인하면 'No Host' 없이 내 작업 화면으로 즉시 연결됩니다.</li>
-      </ol>
-      <div class="info-tip">🔒 Microsoft 공식 엔드투엔드 보안 터널로 암호화되며, 별도의 사설 포트나 방화벽 개방 없이 어디서나 안전하게 접속됩니다.</div>
-    </div>
-  </div>
-
-  <script>
-    const vscode = acquireVsCodeApi();
-
-    function turnOnTunnel() {
-      document.getElementById('noticeBox').style.display = 'block';
-      vscode.postMessage({ command: 'turnOnTunnel' });
-    }
-
-    function checkTunnel() {
-      vscode.postMessage({ command: 'checkTunnel' });
-    }
-
-    function copyUrl() {
-      const input = document.getElementById('urlInput');
-      if (!input.value) return;
-      input.select();
-      navigator.clipboard.writeText(input.value);
-    }
-
-    function openUrl() {
-      const url = document.getElementById('urlInput').value;
-      if (url) {
-        vscode.postMessage({ command: 'openUrl', url });
-      }
-    }
-
-    window.addEventListener('message', event => {
-      const msg = event.data;
-      if (msg.command === 'tunnelActive') {
-        const badge = document.getElementById('statusBadge');
-        badge.className = 'status-badge active';
-        document.getElementById('statusText').innerText = '🟢 내 PC 원격 터널 연결됨 (다이렉트 직행)';
-        document.getElementById('urlInput').value = msg.url;
-        document.getElementById('qrContainer').innerHTML = msg.qrSvg;
-        document.getElementById('noticeBox').style.display = 'none';
-      } else if (msg.command === 'tunnelWaiting') {
-        document.getElementById('noticeBox').style.display = 'block';
-      }
-    });
-  </script>
-</body>
-</html>`;
+// Filename/export retained for compatibility with existing skill packages.
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
-
-module.exports = { getMobileTunnelWebviewHtml };
+function getMobileSetupPrompt(projectPath) {
+  return '$vibe-coding 현재 VS Code 프로젝트 ' + JSON.stringify(projectPath) + '를 공식 Codex Remote로 휴대폰에서 이어서 작업하도록 초기 설정해줘. 기존 연결과 작업을 우선 재사용하고 실제 PC와 작업 폴더가 같은지 확인해줘. 기존 레이아웃·터미널·모델·백업 설정은 보존해줘. 필요한 로그인·QR 스캔·기기 승인만 나에게 안내하고, 연결과 원격 실행을 구분해서 검증해줘. 확인하지 못한 단계는 미검증으로 보고해줘.';
+}
+function getMobileTunnelWebviewHtml({ projectPath = '' } = {}) {
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>Codex Remote · 모바일 작업</title><style>
+body{font-family:var(--vscode-font-family,sans-serif);color:var(--vscode-foreground);background:var(--vscode-editor-background);padding:24px;line-height:1.7}main{max-width:640px;margin:auto}h1{font-size:24px}h2{font-size:17px;margin-top:28px}code,pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--vscode-textCodeBlock-background);padding:10px;display:block}a{color:var(--vscode-textLink-foreground)}.note{border-left:3px solid var(--vscode-focusBorder);padding:10px 14px}li{margin-bottom:10px}
+</style></head><body><main>
+<h1>휴대폰에서도 이어서 작업하세요</h1>
+<p>공식 <strong>Codex Remote</strong>로 휴대폰에서 요청하면 연결된 PC가 작업합니다. 같은 폴더를 열어 둔 VS Code에서 변경된 코드를 확인할 수 있습니다.</p>
+<h2>이 창의 프로젝트</h2><code>${escapeHtml(projectPath || '프로젝트 폴더를 먼저 열어주세요.')}</code>
+<p class="note">연결 상태는 이 화면에서 자동 확인하지 않습니다. 이 안내를 열었다고 원격 연결이 켜지는 것은 아닙니다.</p>
+<h2>이미 휴대폰을 연결했다면</h2>
+<p>휴대폰 ChatGPT 앱의 <strong>Remote → 이 PC → 기존 작업</strong>을 선택하세요. 작업 폴더가 위 경로와 같은지 확인하고 평소처럼 요청하면 됩니다. 스킬을 다시 호출할 필요는 없습니다.</p>
+<h2>처음이라면 AI에게 설정을 맡기세요</h2>
+<p>아래 요청을 복사해 PC의 AI에게 보내세요. 폴더와 기존 연결 확인은 AI가 진행하고, 필요한 인증만 안내합니다.</p>
+<pre>${escapeHtml(getMobileSetupPrompt(projectPath))}</pre>
+<h2>공식 연결 절차</h2><ol>
+<li>PC의 Codex/ChatGPT 데스크톱 앱에서 <strong>설정 → Connections → Control this Mac or PC</strong>를 엽니다. 메뉴 이름은 앱 버전에 따라 다를 수 있습니다.</li>
+<li>공식 앱이 표시하는 QR을 휴대폰으로 스캔하고 같은 계정·워크스페이스로 기기 연결을 승인합니다. 이미 연결했으면 생략하세요.</li>
+<li>휴대폰 Remote에서 PC와 기존 작업을 선택합니다. 별도 클라우드나 다른 작업 폴더를 선택하면 이 VS Code에 변경이 바로 반영되지 않습니다.</li></ol>
+<p><a href="https://learn.chatgpt.com/docs/remote-connections">공식 Remote 연결 안내 열기</a></p>
+<h2>연결 확인 요청</h2><pre>모바일 연결 테스트야. 파일 수정하지 말고 현재 작업 폴더와 이 프로젝트의 미리보기 서버 응답 상태만 확인해줘.</pre>
+<p>PC가 켜져 있고 온라인이어야 합니다. 미리보기 갱신에는 개발 서버가 실행 중이어야 합니다. 이 기능은 휴대폰에서 코딩 작업을 맡기는 방식이며 VS Code 화면 자체를 전송하지 않습니다. PC와 휴대폰에서 같은 파일을 동시에 수정하지 마세요.</p>
+</main></body></html>`;
+}
+module.exports = { getMobileTunnelWebviewHtml, getMobileSetupPrompt };

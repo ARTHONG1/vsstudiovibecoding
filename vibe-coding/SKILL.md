@@ -41,6 +41,12 @@ AI가 코드를 수정할 때마다 대화/작업 단위로 그림자 스냅샷�
 6. **Verify and repair.** Follow [verification.md](references/verification.md). Reproduce failures, change their cause, and retest. Do not ask the user to perform actions available to the agent. If UI automation is unavailable, finish authorized setup and report UI verification as pending; never substitute process existence for screen evidence.
 7. **Deliver.** Leave the verified window open. State the shortcut, F12 behavior, and only what was actually tested. Distinguish Codex startup from an authenticated AI response. Do not send an AI request just to test setup unless requested.
 
+## Optional mobile task setup — official Codex Remote
+
+When the user requests phone-based AI instructions, read [mobile-remote.md](references/mobile-remote.md). The agent owns initial environment discovery, project matching, connection assistance and verification; official Codex Remote owns subsequent execution. Reuse an existing connection and do not require this skill for each later task. Ordinary VS Code setup does not enable remote access automatically.
+
+Use the installed desktop app's supported Remote flow. A visible CLI conversation, a QR code, or the existing VS Code Tunnel mobile button is not proof of Remote execution. Preserve the existing layout, terminals, model/provider choices and project files. Separate setup readiness, phone pairing, local execution and preview verification in the completion report; never claim untested CLI conversation continuity.
+
 ## Bundled implementation
 
 - `scripts/setup.ps1`: plan/apply, discovery, configuration merge, backup, extension packaging/install, project workspace and shortcut. `Get-Help`/script parameters show inputs. PowerShell 5.1 compatible; no policy changes.

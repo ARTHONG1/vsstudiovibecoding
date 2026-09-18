@@ -1,15 +1,15 @@
 # Vibe Coding
 
-[![Version](https://img.shields.io/badge/version-2.6.2-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
+[![Version](https://img.shields.io/badge/version-2.6.3-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6.svg?logo=windows)](https://github.com/ARTHONG1/vsstudiovibecoding)
 [![CI](https://github.com/ARTHONG1/vsstudiovibecoding/actions/workflows/ci.yml/badge.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/actions)
 
 **AI 에이전트에게 설치부터 화면 검증까지 맡기는 Windows용 바이브 코딩 스킬.**
 
-VS Code를 **미리보기 | 코드 | Codex** 3열로 배치하며, 상태바와 에디터 툴바의 전용 버튼으로 **3대 뷰포트 모드와 📱 공식 Dev Tunnel 모바일 원격 연동** ([3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체])**을 원클릭 전환합니다. 3열에 OpenAI 공식 Codex CLI를 구동하여 Computer Use 자율 화면 제어를 지원하며, VS Code 순정 `F12`(정의로 이동)를 100% 보존합니다.
+VS Code를 **미리보기 | 코드 | Codex** 3열로 배치하며, 상태바와 에디터 툴바의 전용 버튼으로 **3대 뷰포트 모드와 📱 공식 Codex Remote 초기 설정 안내** ([3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체])을 원클릭 전환합니다. 3열에 OpenAI 공식 Codex CLI를 구동하여 Computer Use 자율 화면 제어를 지원하며, VS Code 순정 `F12`(정의로 이동)를 100% 보존합니다.
 
-**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.6.2/vibe-coding-2.6.2.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
+**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.6.3/vibe-coding-2.6.3.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
 
 ## 가장 쉬운 시작
 
@@ -125,3 +125,13 @@ AI가 코드를 수정하다가 기존 기능을 망가뜨렸을 때, Firebase S
 ## 검증 기록
 
 2026-09-18, Windows 11 x64 / VS Code 1.138.0 / Codex CLI / Live Preview 0.4.20에서 샘플 3열·한글·버튼·F12 왕복·정상 종료/재실행과 미리보기 제목 변경 수정 후 복원을 실제 화면 및 로그로 확인했습니다. 다른 PC와 모든 프레임워크에서 성공을 보장하는 결과는 아닙니다. [검증 범위](TESTING.md)를 확인하세요.
+
+## 휴대폰에서 기존 작업 이어가기 (v2.6.3)
+
+상태바 **[📱 모바일]** 버튼은 현재 프로젝트 경로, 공식 Codex Remote 연결 절차, AI에게 초기 설정을 맡기는 복사용 요청을 보여줍니다. 스킬을 읽은 AI가 기존 연결·작업을 확인하고 VS Code와 같은 PC·프로젝트 폴더를 사용하는지 검증합니다. 사용자는 필요한 로그인·QR 스캔·기기 승인만 진행합니다.
+
+연결 후에는 휴대폰 ChatGPT 앱의 **Remote → 연결된 PC → 기존 작업**에서 요청하세요. 매번 스킬을 호출할 필요가 없습니다. PC와 필요한 앱이 켜져 있고 온라인이어야 하며, VS Code 미리보기 갱신에는 개발 서버가 실행 중이어야 합니다. 같은 파일을 PC와 휴대폰에서 동시에 수정하지 마세요.
+
+이 버튼은 연결 안내이며 연결 상태를 자동 확인하거나 원격 접속을 켜지 않습니다. 별도 웹서버·Dev Tunnel·자체 QR을 실행하지 않습니다. 휴대폰에서 VS Code 화면 자체를 보는 기능이나 CLI 대화의 실시간 양방향 표시는 보장하지 않습니다. 계정·워크스페이스 및 앱 버전에 따라 공식 Remote 제공 여부가 달라질 수 있습니다.
+
+[공식 Remote 연결 안내](https://learn.chatgpt.com/docs/remote-connections) · [AI의 모바일 설정 절차](vibe-coding/references/mobile-remote.md)

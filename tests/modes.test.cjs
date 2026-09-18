@@ -123,3 +123,29 @@ test('openExternalBrowser opens system default browser with dev server URL', asy
   assert.equal(lastEvent.event, 'external-browser-opened');
   assert.equal(lastEvent.url, 'http://localhost:5173');
 });
+
+test('mobile command reuses safe guide panel without tunnel commands or clipboard access', async () => {
+  const env = createMockVSCode();
+  const calls = [];
+  let created = 0, revealed = 0, panelOptions, panel;
+  env.vscode.commands.executeCommand = async cmd => { calls.push(cmd); };
+  env.vscode.env.clipboard = { readText() { throw new Error('Unexpected clipboard read'); } };
+  env.vscode.window.createWebviewPanel = (id, title, column, options) => {
+    created++;
+    panelOptions = options;
+    panel = { webview: { html: '' }, reveal() { revealed++; }, onDidDispose() {}, dispose() {} };
+    return panel;
+  };
+  await env.module.exports.activate({ subscriptions: [], globalStorageUri: { fsPath: 'C:/test' } });
+  const terminalsBefore = env.terminals.length;
+  calls.length = 0;
+  await env.commands.get('vibe.openMobileRemote')();
+  await env.commands.get('vibe.openMobileRemote')();
+  assert.equal(created, 1);
+  assert.equal(revealed, 1);
+  assert.equal(panelOptions.enableScripts, false);
+  assert.ok(panel.webview.html.includes('C:/project'));
+  assert.equal(env.terminals.length, terminalsBefore);
+  assert.deepEqual(calls, []);
+  assert.equal(env.events.at(-1).connectionVerified, false);
+});

@@ -6,7 +6,6 @@ const http = require('http');
 const https = require('https');
 const { execSync } = require('child_process');
 const { getMobileTunnelWebviewHtml } = require('./mobile-tunnel');
-const { generateQRCodeSVG } = require('./qrcode');
 
 function checkPortReachable(urlStr) {
   return new Promise(resolve => {
@@ -47,7 +46,6 @@ function activate(context) {
   let currentMode = context.workspaceState?.get?.('vibeMode', 'split') || 'split'; // 'split' | 'terminal' | 'preview'
  let busy = false;
   let mobileWebviewPanel;
-  let tunnelPollTimer = null;
   const exec = (command, ...args) => vscode.commands.executeCommand(command, ...args);
 
   const terminalBtn = vscode.window.createStatusBarItem('vibe.terminalToggle', vscode.StatusBarAlignment.Right, 1001);
@@ -70,7 +68,7 @@ function activate(context) {
   const mobileBtn = vscode.window.createStatusBarItem('vibe.mobileRemoteToggle', vscode.StatusBarAlignment.Right, 998);
   mobileBtn.name = 'Vibe Coding Mobile Remote';
   mobileBtn.text = '$(device-mobile) 모바일';
-  mobileBtn.tooltip = '스마트폰으로 AI 원격 제어 및 모바일 화면 미리보기 (Vibe Coding)';
+  mobileBtn.tooltip = '공식 Codex Remote로 휴대폰에서 작업 이어가기 · 초기 설정 안내';
   mobileBtn.command = 'vibe.openMobileRemote';
   context.subscriptions.push(mobileBtn);
 
@@ -600,95 +598,25 @@ function activate(context) {
     }
   }
 
-  async function detectActiveTunnelUrl() {
-    try {
-      const prev = await vscode.env.clipboard.readText();
-      await vscode.commands.executeCommand("workbench.action.remoteTunnel.copyBrowserUrl");
-      const curr = await vscode.env.clipboard.readText();
-      if (curr && (curr.startsWith("https://vscode.dev/tunnel/") || curr.startsWith("https://insiders.vscode.dev/tunnel/"))) {
-        return curr;
-      }
-    } catch {}
-    return null;
-  }
-
-  function startTunnelPolling() {
-    if (tunnelPollTimer) {
-      clearInterval(tunnelPollTimer);
-      tunnelPollTimer = null;
-    }
-    let count = 0;
-    tunnelPollTimer = setInterval(async () => {
-      count++;
-      const url = await detectActiveTunnelUrl();
-      if (url) {
-        clearInterval(tunnelPollTimer);
-        tunnelPollTimer = null;
-        if (mobileWebviewPanel) {
-          const qrSvg = generateQRCodeSVG(url, { size: 240, margin: 2 });
-          mobileWebviewPanel.webview.postMessage({
-            command: "tunnelActive",
-            url,
-            qrSvg
-          });
-        }
-      } else if (count >= 30) {
-        clearInterval(tunnelPollTimer);
-        tunnelPollTimer = null;
-      }
-    }, 1000);
-  }
-
   async function openMobileRemote() {
-    const activeUrl = await detectActiveTunnelUrl();
-    const isTunnelActive = Boolean(activeUrl);
-    const initialUrl = activeUrl || "";
-    const qrSvg = initialUrl ? generateQRCodeSVG(initialUrl, { size: 240, margin: 2 }) : "";
-
+    const folders = vscode.workspace.workspaceFolders || [];
+    let folder = folders[0];
+    if (folders.length > 1) {
+      folder = await vscode.window.showWorkspaceFolderPick({ placeHolder: '휴대폰에서 이어서 작업할 프로젝트를 선택하세요' });
+      if (!folder) return;
+    }
     if (mobileWebviewPanel) {
       mobileWebviewPanel.reveal(vscode.ViewColumn.One);
     } else {
       mobileWebviewPanel = vscode.window.createWebviewPanel(
-        "vibeMobileRemote",
-        "📱 Vibe Coding 모바일 원격 AI 에이전트",
-        vscode.ViewColumn.One,
-        { enableScripts: true, retainContextWhenHidden: true }
+        'vibeMobileRemote', '📱 Codex Remote · 모바일 작업',
+        vscode.ViewColumn.One, { enableScripts: false, localResourceRoots: [] }
       );
-      mobileWebviewPanel.onDidDispose(() => {
-        if (tunnelPollTimer) {
-          clearInterval(tunnelPollTimer);
-          tunnelPollTimer = null;
-        }
-        mobileWebviewPanel = null;
-      });
-      mobileWebviewPanel.webview.onDidReceiveMessage(async message => {
-        if (message.command === "turnOnTunnel") {
-          try {
-            await exec("workbench.action.remoteTunnel.turnOn");
-          } catch {}
-          startTunnelPolling();
-        } else if (message.command === "checkTunnel") {
-          const checkUrl = await detectActiveTunnelUrl();
-          if (checkUrl && mobileWebviewPanel) {
-            const checkQr = generateQRCodeSVG(checkUrl, { size: 240, margin: 2 });
-            mobileWebviewPanel.webview.postMessage({
-              command: "tunnelActive",
-              url: checkUrl,
-              qrSvg: checkQr
-            });
-          } else {
-            startTunnelPolling();
-          }
-        } else if (message.command === "openUrl" && message.url) {
-          await vscode.env.openExternal(vscode.Uri.parse(message.url));
-        }
-      });
+      mobileWebviewPanel.onDidDispose(() => { mobileWebviewPanel = null; });
+      context.subscriptions.push(mobileWebviewPanel);
     }
-    mobileWebviewPanel.webview.html = getMobileTunnelWebviewHtml({ tunnelUrl: initialUrl, qrSvg, isTunnelActive });
-    record("mobile-remote-opened", { url: initialUrl, isTunnelActive });
-    if (!isTunnelActive) {
-      startTunnelPolling();
-    }
+    mobileWebviewPanel.webview.html = getMobileTunnelWebviewHtml({ projectPath: folder?.uri.fsPath || '' });
+    record('mobile-remote-guide-opened', { connectionVerified: false });
   }
   async function guarded(action) {
     if (busy) return;
@@ -716,7 +644,6 @@ function activate(context) {
     vscode.window.onDidCloseTerminal(t => { if (t === terminal) terminal = undefined; }),
   );
   record('activated');
-  context.subscriptions.push({ dispose: () => { if (tunnelPollTimer) clearInterval(tunnelPollTimer); } });
   return guarded(restore);
 }
 module.exports = { activate };
