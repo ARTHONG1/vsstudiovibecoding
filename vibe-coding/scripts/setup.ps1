@@ -139,6 +139,33 @@ if ($CreateSample) {
   New-Item -ItemType Directory -Force -Path $ProjectPath | Out-Null
   if (!(Test-Path -LiteralPath $entryPath)) { Copy-Item -LiteralPath (Join-Path $SkillRoot 'assets\sample.html') -Destination $entryPath }
 }
+if ($PreviewUrl -and (Test-Path -LiteralPath (Join-Path $ProjectPath 'package.json') -PathType Leaf)) {
+  $tasksDir = Join-Path $ProjectPath '.vscode'
+  $tasksPath = Join-Path $tasksDir 'tasks.json'
+  if (!(Test-Path -LiteralPath $tasksPath)) {
+    try {
+      $pkg = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $ProjectPath 'package.json') | ConvertFrom-Json
+      $scriptName = if ($pkg.scripts.dev) { 'dev' } elseif ($pkg.scripts.start) { 'start' } else { $null }
+      if ($scriptName) {
+        New-Item -ItemType Directory -Force -Path $tasksDir | Out-Null
+        $autoTasks = [ordered]@{
+          version = '2.0.0'
+          tasks = @(
+            [ordered]@{
+              label = 'Auto Start Dev Server'
+              type = 'shell'
+              command = "npm run $scriptName"
+              isBackground = $true
+              problemMatcher = @()
+              runOptions = [ordered]@{ runOn = 'folderOpen' }
+            }
+          )
+        }
+        Save-Json $tasksPath $autoTasks
+      }
+    } catch {}
+  }
+}
 if (!(Test-Path -LiteralPath $entryPath -PathType Leaf)) { throw 'Entry file is not a file.' }
 $profiles = $settings.'terminal.integrated.profiles.windows'
 if (!$profiles) { $profiles = [pscustomobject]@{} }

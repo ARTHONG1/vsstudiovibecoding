@@ -447,10 +447,14 @@ function activate(context) {
   function createShadowCheckpoint(p, customLabel) {
     try {
       initGit(p);
+      const vibeDir = path.join(p, '.vibe');
+      try { fs.mkdirSync(vibeDir, { recursive: true }); } catch {}
+      const shadowIndex = path.join(vibeDir, 'shadow_index');
+      const gitEnv = { ...process.env, GIT_INDEX_FILE: shadowIndex };
       const status = execSync('git status --porcelain', { cwd: p, encoding: 'utf8' }).trim();
       if (!status && !customLabel) return null;
-      execSync('git add -A', { cwd: p, stdio: 'ignore' });
-      const treeSha = execSync('git write-tree', { cwd: p, encoding: 'utf8' }).trim();
+      execSync('git add -A', { cwd: p, env: gitEnv, stdio: 'ignore' });
+      const treeSha = execSync('git write-tree', { cwd: p, env: gitEnv, encoding: 'utf8' }).trim();
       const list = getCheckpoints(p);
       if (list.length > 0 && list[0].treeSha === treeSha && !customLabel) return null;
       const now = new Date();
@@ -493,9 +497,13 @@ function activate(context) {
   async function restoreShadowCheckpoint(p, targetSha, targetTitle) {
     try {
       initGit(p);
+      const vibeDir = path.join(p, '.vibe');
+      try { fs.mkdirSync(vibeDir, { recursive: true }); } catch {}
+      const shadowIndex = path.join(vibeDir, 'shadow_index');
+      const gitEnv = { ...process.env, GIT_INDEX_FILE: shadowIndex };
       try {
-        execSync('git add -A', { cwd: p, stdio: 'ignore' });
-        const treeSha = execSync('git write-tree', { cwd: p, encoding: 'utf8' }).trim();
+        execSync('git add -A', { cwd: p, env: gitEnv, stdio: 'ignore' });
+        const treeSha = execSync('git write-tree', { cwd: p, env: gitEnv, encoding: 'utf8' }).trim();
         const commitSha = execSync('git commit-tree ' + treeSha + ' -m "Vibe Safety Backup"', { cwd: p, encoding: 'utf8' }).trim();
         const now = new Date();
         const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
@@ -504,7 +512,7 @@ function activate(context) {
       } catch {}
 
       execSync('git checkout ' + targetSha + ' -- .', { cwd: p, stdio: 'ignore' });
-      execSync('git clean -fd', { cwd: p, stdio: 'ignore' });
+      execSync('git clean -fd -e .vibe', { cwd: p, stdio: 'ignore' });
       if (vscode.window.activeTextEditor && !vscode.window.activeTextEditor.document.isUntitled) {
         await vscode.commands.executeCommand('workbench.action.files.revert');
       }
@@ -650,7 +658,6 @@ function activate(context) {
       }
     })),
     vscode.window.onDidCloseTerminal(t => { if (t === terminal) terminal = undefined; }),
-    { dispose: () => { if (devProcess) { try { devProcess.kill(); } catch {} devProcess = null; } } }
   );
   record('activated');
   return guarded(restore);
