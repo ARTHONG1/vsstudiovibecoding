@@ -2,7 +2,7 @@
     "name": "vibe-workspace",
     "displayName": "Vibe Coding Workspace",
     "publisher": "local-vibe",
-    "version": "2.4.1",
+    "version": "2.5.0",
     "engines": {
         "vscode": "^1.94.0"
     },
@@ -109,10 +109,6 @@
                     "default": true
                 },
                 "vibe.codexPath": {
-                    "type": "string",
-                    "default": ""
-                },
-                "vibe.opencodePath": {
                     "type": "string",
                     "default": ""
                 },

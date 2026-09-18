@@ -6,7 +6,6 @@ param(
   [string]$Root = (Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'VibeCoding'),
   [string]$CodePath,
   [string]$CodexPath,
-  [string]$OpenCodePath,
   [string]$DesktopPath = [Environment]::GetFolderPath('Desktop'),
   [string]$SkillRoot,
   [switch]$CreateSample,
@@ -88,33 +87,18 @@ if (!$CodexPath) {
     (Join-Path $env:ProgramFiles 'OpenAI\Codex\codex.exe')
   )
 }
-if (!$OpenCodePath) {
-  $command = Get-Command opencode.exe -ErrorAction SilentlyContinue
-  $OpenCodePath = Find-Executable @($(if ($command) {$command.Source}), (Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'npm\node_modules\opencode-ai\bin\opencode.exe'), (Join-Path $env:USERPROFILE '.opencode\bin\opencode.exe'), (Join-Path $env:USERPROFILE 'scoop\shims\opencode.exe'))
-}
-$agentExe = if ($CodexPath) { $CodexPath } else { $OpenCodePath }
-$agentName = if ($CodexPath) { 'Codex' } else { 'OpenCode' }
-if (!$agentExe -and $Apply) {
-  $npm = Get-Command npm.cmd -ErrorAction SilentlyContinue
-  if (!$npm) { $npm = Get-Command npm -ErrorAction SilentlyContinue }
-  if ($npm) {
-    & $npm.Source install -g opencode-ai
-    $command = Get-Command opencode.exe -ErrorAction SilentlyContinue
-    $OpenCodePath = Find-Executable @($(if ($command) {$command.Source}), (Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'npm\node_modules\opencode-ai\bin\opencode.exe'), (Join-Path $env:USERPROFILE '.opencode\bin\opencode.exe'), (Join-Path $env:USERPROFILE 'scoop\shims\opencode.exe'))
-    $agentExe = $OpenCodePath
-    $agentName = 'OpenCode'
-  }
-}
+$agentExe = $CodexPath
+$agentName = 'Codex'
 $missing = @()
 if (!$CodePath -or !(Test-Path -LiteralPath $CodePath -PathType Leaf)) { $missing += 'VS Code executable' }
-if (!$agentExe -or !(Test-Path -LiteralPath $agentExe -PathType Leaf)) { $missing += 'AI Agent executable (Codex or OpenCode)' }
+if (!$CodexPath -or !(Test-Path -LiteralPath $CodexPath -PathType Leaf)) { $missing += 'OpenAI Codex CLI executable (codex.exe or codex.cmd)' }
 $sha = [Security.Cryptography.SHA256]::Create()
 try { $id = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($ProjectPath.ToLowerInvariant())))).Replace('-','').Substring(0,10).ToLowerInvariant() } finally { $sha.Dispose() }
 $name = (Split-Path -Leaf $ProjectPath) -replace '[<>:"/\\|?*]', '_'
 $workspaceDir = Join-Path $Root 'Workspaces'
 $workspacePath = Join-Path $workspaceDir ('vibe-' + $id + '.code-workspace')
 $shortcutPath = Join-Path $DesktopPath ('Vibe Coding - ' + $name + '-' + $id + '.lnk')
-$plan = [ordered]@{ project=$ProjectPath; entry=$entryPath; previewUrl=$PreviewUrl; root=$Root; code=$CodePath; agent=$agentName; codex=$CodexPath; openCode=$OpenCodePath; workspace=$workspacePath; shortcut=$shortcutPath; registerContextMenu=[bool]$RegisterContextMenu; missing=$missing; applied=$false }
+$plan = [ordered]@{ project=$ProjectPath; entry=$entryPath; previewUrl=$PreviewUrl; root=$Root; code=$CodePath; agent='Codex'; codex=$CodexPath; workspace=$workspacePath; shortcut=$shortcutPath; registerContextMenu=[bool]$RegisterContextMenu; missing=$missing; applied=$false }
 if (!$Apply) { $plan | ConvertTo-Json -Depth 5; return }
 if ($missing.Count) { throw ('Install/discover prerequisites first: ' + ($missing -join ', ')) }
 . ([scriptblock]::Create([IO.File]::ReadAllText((Join-Path $SkillRoot 'scripts\native-files.ps1'))))
@@ -181,7 +165,6 @@ Set-Key $settings 'files.autoSave' 'afterDelay'
 Set-Key $settings 'files.autoSaveDelay' 500
 Set-Key $settings 'vibe.enabled' $true
 Set-Key $settings 'vibe.codexPath' $(if ($CodexPath) {$CodexPath} else {''})
-Set-Key $settings 'vibe.opencodePath' $(if ($OpenCodePath) {$OpenCodePath} else {''})
 Set-Key $settings 'vibe.entryFile' $EntryFile
 Set-Key $settings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
 Set-Key $settings 'chat.commandCenter.enabled' $false
@@ -199,7 +182,6 @@ $wsSettings = $workspace.settings
 if (!$wsSettings) { $wsSettings = [pscustomobject]@{} }
 Set-Key $wsSettings 'vibe.enabled' $true
 Set-Key $wsSettings 'vibe.codexPath' $(if ($CodexPath) {$CodexPath} else {''})
-Set-Key $wsSettings 'vibe.opencodePath' $(if ($OpenCodePath) {$OpenCodePath} else {''})
 Set-Key $wsSettings 'vibe.entryFile' $EntryFile
 Set-Key $wsSettings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
 Set-Key $wsSettings 'task.allowAutomaticTasks' 'on'
@@ -231,11 +213,6 @@ foreach ($extension in @('MS-CEINTL.vscode-language-pack-ko','ms-vscode.live-ser
   Invoke-VibeCode --user-data-dir $userDir --extensions-dir $extensionsDir --install-extension $extension --force
   if ($LASTEXITCODE -ne 0) { throw "Extension installation failed: $extension. Configuration backup: $backup" }
 }
-try {
-  if (!(@($installed | Where-Object { $_ -like 'sst-dev.opencode@*' }).Count)) {
-    Invoke-VibeCode --user-data-dir $userDir --extensions-dir $extensionsDir --install-extension 'sst-dev.opencode' --force 2>$null
-  }
-} catch {}
 if (!(Test-Path -LiteralPath $DesktopPath -PathType Container)) { throw 'Desktop directory not found; provide the real DesktopPath.' }
 if (!(Test-VibeExtensionContent (Join-Path $packageSource 'extension') $installedLayout)) {
   throw 'Installed layout extension differs from the skill source. Preserve the existing installation and inspect the CLI result before creating a shortcut.'
@@ -271,7 +248,6 @@ if ($Launch -and (Test-Path -LiteralPath $shortcutPath)) {
 }
 $plan.applied=$true
 $plan['backup']=$backup
-$plan['agentVersion']=($version -join ' ')
-$plan['openCodeVersion']=($version -join ' ')
+$plan['codexVersion']=($version -join ' ')
 $plan['uiVerification']='PENDING: agent must launch shortcut and complete references/verification.md'
 $plan | ConvertTo-Json -Depth 5

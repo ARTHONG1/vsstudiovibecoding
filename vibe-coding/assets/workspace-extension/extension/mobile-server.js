@@ -37,7 +37,6 @@ function getMobileHtml(options) {
     header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #30363d; padding-bottom: 12px; }
     .brand { font-size: 18px; font-weight: 700; color: #58a6ff; display: flex; align-items: center; gap: 8px; }
     .badge { font-size: 12px; background: #238636; color: #fff; padding: 3px 8px; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
-    .badge.opencode { background: #1f6feb; }
     .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .card-title { font-size: 14px; font-weight: 600; color: #8b949e; display: flex; justify-content: space-between; align-items: center; }
     .btn-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

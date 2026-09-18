@@ -29,7 +29,7 @@ Run from the skill's directory or use an absolute script path. Discover real val
 & <skill>/scripts/setup.ps1 -CreateSample -Apply
 ```
 
-Optional `-Root`, `-CodePath`, `-OpenCodePath`, `-DesktopPath` override discovered physical paths. `-SkillRoot` supports scriptblock invocation when PSScriptRoot is unavailable. If local policy blocks script files, use a supported shell invocation of the inspected script text only when that is allowed by policy; do not change the machine's execution policy or evade organizational restrictions.
+Optional `-Root`, `-CodePath`, `-CodexPath`, `-DesktopPath` override discovered physical paths. `-SkillRoot` supports scriptblock invocation when PSScriptRoot is unavailable. If local policy blocks script files, use a supported shell invocation of the inspected script text only when that is allowed by policy; do not change the machine's execution policy or evade organizational restrictions.
 
 Existing settings must be parseable JSON for the bundled merger. If JSONC/comments are present, preserve the original and use a JSONC-aware parser or targeted edit before continuing; do not overwrite settings with defaults. Existing user keybindings are 100% preserved. Native VS Code F12 (Go to Definition) is completely untouched. Screen toggling is operated via the dedicated Status Bar button (or Command Palette vibe.toggleTerminal).
 

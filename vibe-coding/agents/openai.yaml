@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vibe Coding"
+  short_description: "Windows VS Code Preview | Code | Codex 3-mode workspace"
+  default_prompt: "현재 프로젝트를 Vibe Coding 3열 작업 환경으로 설정하고 검증해줘."

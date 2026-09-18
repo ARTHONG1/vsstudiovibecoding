@@ -1,6 +1,6 @@
 # Vibe Coding
 
-[![Version](https://img.shields.io/badge/version-2.4.1-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
+[![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6.svg?logo=windows)](https://github.com/ARTHONG1/vsstudiovibecoding)
 [![CI](https://github.com/ARTHONG1/vsstudiovibecoding/actions/workflows/ci.yml/badge.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/actions)
@@ -9,7 +9,7 @@
 
 VS Code를 **미리보기 | 코드 | Codex** 3열로 배치하며, 상태바와 에디터 툴바의 전용 버튼으로 **3대 뷰포트 모드와 📱 모바일 원격 제어** ([3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체])**를 원클릭 전환합니다. 3열에 OpenAI 공식 Codex CLI를 구동하여 OpenCodex 멀티 모델 및 Computer Use 자율 화면 제어를 지원하며, VS Code 순정 `F12`(정의로 이동)를 100% 보존합니다.
 
-**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.4.1/vibe-coding-2.4.1.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
+**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.5.0/vibe-coding-2.5.0.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
 
 ## 가장 쉬운 시작
 
@@ -30,7 +30,7 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
 ### ZIP으로 직접 설치할 때
 
 1. 위 스킬 ZIP을 받아 압축을 풉니다. 안에 `vibe-coding/SKILL.md`가 있어야 합니다.
-2. Codex의 경우 `vibe-coding` 폴더 전체를 `%USERPROFILE%\.codex\skills\` 아래에 둡니다. 다른 도구는 해당 도구의 스킬 위치를 사용하세요. 동명의 스킬이 있으면 기존 폴더를 먼저 백업하세요.
+2. Codex의 경우 `vibe-coding` 폴더 전체를 `%USERPROFILE%\.agents\skills\` (또는 기존 `%USERPROFILE%\.codex\skills\`) 아래에 둡니다. 동명의 스킬이 있으면 기존 폴더를 먼저 백업하세요.
 3. 새 대화를 열고 `$vibe-coding 환경 처음부터 끝까지 세팅해줘`를 입력합니다.
 
 `SKILL.md` 하나만 복사하면 안 됩니다. `scripts`, `assets`, `references`가 함께 필요합니다. 스킬을 설치하는 단계와 PC 개발 환경을 설정하는 단계는 별개입니다.
@@ -42,7 +42,7 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
 | PC | Windows. Windows 11 x64에서 실제 검증. macOS/Linux는 이 패키지의 지원 대상이 아닙니다. |
 | AI 도구 | 로컬 파일·셸 실행 권한. 화면 검증에는 Windows 화면 제어 도구도 필요합니다. |
 | 인터넷 | VS Code, OpenCode, 확장 다운로드에 필요합니다. 학교·회사 네트워크 정책에 따라 차단될 수 있습니다. |
-| OpenCode | CLI와 VS Code 확장은 별개입니다. 스킬은 실제 CLI 실행까지 확인합니다. |
+| Codex | OpenAI 공식 Codex CLI(`codex.exe` / `codex.cmd`)를 3열 에이전트 터미널로 구동합니다. |
 | AI 사용 | 선택한 제공자의 로그인/API 키가 필요할 수 있고 요금·사용 한도가 다릅니다. 환경 설정이 AI 이용권을 제공하지 않습니다. |
 | 프로젝트 | 처음에는 샘플 권장. 기존 HTML·React/Vite 등은 원래 파일과 개발 서버를 유지합니다. |
 
@@ -50,7 +50,7 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
 
 - **작업 공간 신뢰:** 직접 만든 샘플이나 출처를 아는 프로젝트인지 확인하고 VS Code의 `Trust Workspace & Continue`를 선택합니다. 모든 폴더를 일괄 신뢰하거나 보안을 끄지 마세요.
 - **도구의 앱 제어 승인:** 에이전트가 VS Code를 볼 수 있도록 도구가 요청하는 승인을 확인합니다.
-- **AI 로그인:** OpenCode의 `/connect`에서 원하는 제공자를 연결합니다. 계정·비밀번호·키는 공개 이슈나 채팅에 붙여 넣지 마세요. VS Code의 GitHub 로그인은 OpenCode 연결과 다릅니다.
+- **AI 로그인:** Codex CLI 실행 시 인증 요구사항을 확인합니다. 계정·비밀번호·키는 공개 이슈나 채팅에 붙여 넣지 마세요.
 
 보안·로그인 화면은 자동화 도구의 규칙에 따라 사용자가 직접 처리해야 합니다. 완료 후 “진행해”라고 말하면 나머지는 에이전트가 이어갑니다.
 
@@ -74,13 +74,13 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
 | 빈 화면, 기본 Chat만 보임 | 시작 안내를 완료했는지와 상단 `Restricted Mode`를 먼저 확인. “현재 화면과 확장 활성화 로그를 확인해줘.” |
 | 제한 모드 | 출처를 확인한 프로젝트만 신뢰. 에이전트가 대신 승인할 수 없는 경우 직접 선택 후 “진행해”. |
 | Codex를 찾지 못함 | 공식 Codex CLI 설치 확인 또는 npm fallback 확인. “codex.exe의 경로와 --version을 확인해줘.” |
-| 오른쪽이 너무 좁음 | 패널 경계선을 왼쪽으로 이동. “OpenCode 입력창이 잘 보이도록 너비를 조정해줘.” |
+| 오른쪽이 너무 좁음 | 패널 경계선을 왼쪽으로 이동. “Codex 입력창이 잘 보이도록 너비를 조정해줘.” |
 | 상태바 버튼이 안 보임 | 화면 우측 하단(포트 번호 바로 왼쪽) 확인. 창 다시 로드(`Ctrl+Shift+P` → `Reload Window`) 실행. |
 | 미리보기 복원 시간 초과 | v2.1.0에는 3대 뷰포트 모드, 터미널 복사/붙여넣기, 클립보드 이미지(Alt+V) 첨부 포함. “업데이트 후 저장하지 않은 파일을 보존하고 전용 창을 다시 열어 검증해줘.” |
 | 실행 정책/조직 정책 오류 | 정책을 끄거나 우회하지 않음. 에이전트가 허용된 실행 경로를 확인; 관리 조직 정책이면 관리자 문의. |
 | 빈 index.html 또는 경로 불일치 | 앱 가상화 가능성. “실제 Windows 사용자와 에이전트의 파일 해시·경로를 비교해줘.” |
 | React/Vite 미리보기 연결 실패 | 기존 개발 서버가 실행 중인지와 실제 localhost URL 확인. HTML 샘플로 덮어쓰지 않음. |
-| AI 응답이 없음 | OpenCode의 제공자 연결·한도·네트워크 확인. GitHub 로그인만으로 연결되지 않음. |
+| AI 응답이 없음 | Codex CLI의 로그인/인증 상태·한도·네트워크 확인. |
 
 문제 신고에는 OS, 버전, 기대/실제 동작, 민감정보를 가린 오류만 포함하세요. 전체 로그나 사용자 경로·API 키를 그대로 게시하지 마세요.
 
@@ -96,7 +96,7 @@ AI가 코드를 수정하다가 기존 기능을 망가뜨렸을 때, Firebase S
 
 전용 환경은 `%LOCALAPPDATA%\VibeCoding` 아래의 `VSCodeUserData`, `VSCodeExtensions`, `Workspaces`, `Backups`에 저장됩니다. 샘플은 `SampleProject`입니다. 기존 프로젝트는 이동하지 않습니다.
 
-업데이트할 때 기존 스킬을 백업하고 새 폴더로 바꾼 뒤 에이전트에게 재설정을 요청합니다. 전용 설정의 관리 키만 병합하고 기존 파일을 보존합니다. 삭제가 필요하면 먼저 샘플에서 만든 작업을 별도로 보관한 뒤, 전용 창과 해당 바로가기·폴더만 정리하세요. 공유해서 사용하는 VS Code와 OpenCode 프로그램은 자동으로 삭제하지 않습니다.
+업데이트할 때 기존 스킬을 백업하고 새 폴더로 바꾼 뒤 에이전트에게 재설정을 요청합니다. 전용 설정의 관리 키만 병합하고 기존 파일을 보존합니다. 사용자의 개인 터미널이나 에디터 탭은 절대 종료하지 않습니다.
 
 ## 하이브리드 브라우저 & AI 디버깅 파이프라인
 
@@ -118,7 +118,7 @@ AI가 코드를 수정하다가 기존 기능을 망가뜨렸을 때, Firebase S
 & .\vibe-coding\scripts\setup.ps1 -ProjectPath 'C:\Projects\My Site' -EntryFile index.html -Apply
 ```
 
-설치 스크립트는 OpenCode CLI가 없을 경우 시스템의 `npm`을 확인하여 `npm install -g opencode-ai`로 자동 설치를 시도합니다. 시스템에 `npm`이 없거나 VS Code 자체가 없는 경우 에이전트가 공식 안내([VS Code](https://code.visualstudio.com/docs/setup/windows), [OpenCode](https://opencode.ai/docs/))에 따라 설치를 진행합니다. 프레임워크 서버 시작도 프로젝트별로 처리합니다.
+설치 스크립트는 공식 OpenAI Codex CLI를 탐색하여 3열 터미널을 구성합니다. 프레임워크 개발 서버는 `.vscode/tasks.json` 백그라운드 태스크로 자동 실행을 소유하여 포트 충돌 없이 구동됩니다.
 
  `npm test`로 회귀 테스트, `npm run check`로 패키지·문서 링크 검사, Windows의 `powershell -File scripts/build-release.ps1`로 배포 ZIP을 만듭니다.
 

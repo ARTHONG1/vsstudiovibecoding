@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
-const { execSync, spawn } = require('child_process');
+const { execSync } = require('child_process');
 const { MobileServer, getMobileWebviewHtml } = require('./mobile-server');
 
 function checkPortReachable(urlStr) {
@@ -42,7 +42,6 @@ function activate(context) {
   const output = vscode.window.createOutputChannel('Vibe Coding');
   context.subscriptions.push(output);
   let terminal;
-  let devProcess;
   let previewTabRef;
   let currentMode = context.workspaceState?.get?.('vibeMode', 'split') || 'split'; // 'split' | 'terminal' | 'preview'
  let busy = false;
@@ -136,36 +135,31 @@ function activate(context) {
   }
   function ensureTerminal() {
     const config = vscode.workspace.getConfiguration('vibe');
-    const executable = config.get('codexPath') || config.get('opencodePath');
+    const executable = config.get('codexPath');
+    const projectPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
     if (!terminal || terminal.exitStatus !== undefined || terminal.creationOptions?.shellPath !== executable) {
-      const projectPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
       terminal = vscode.window.terminals.find(t => t.creationOptions?.env?.VIBE_PROJECT === projectPath && t.creationOptions?.shellPath === executable && t.exitStatus === undefined);
       if (!terminal) {
-        const config = vscode.workspace.getConfiguration('vibe');
-        const executable = config.get('codexPath') || config.get('opencodePath');
-        if (!executable || !fs.existsSync(executable)) throw new Error('AI Agent (Codex) executable was not found: ' + executable);
-        const isCodex = /codex/i.test(executable);
-        const terminalName = isCodex ? 'Codex' : 'OpenCode';
+        if (!executable || !fs.existsSync(executable)) throw new Error('OpenAI Codex CLI executable was not found: ' + executable);
         terminal = vscode.window.createTerminal({
-          name: terminalName,
+          name: 'Codex',
           shellPath: executable,
           shellArgs: [],
           cwd: vscode.workspace.workspaceFolders[0].uri.fsPath,
           location: vscode.TerminalLocation.Panel,
           env: {
             CODEX_CALLER: 'vscode',
-            OPENCODE_CALLER: 'vscode',
             VIBE_PROJECT: projectPath,
             LANG: 'ko_KR.UTF-8',
             PYTHONIOENCODING: 'utf-8'
           }
         });
-        record('terminal-created', { agent: terminalName });
+        record('terminal-created', { agent: 'Codex' });
       }
     }
     try {
       for (const t of vscode.window.terminals) {
-        if (t !== terminal && !t.creationOptions?.env?.VIBE_PROJECT) {
+        if (t !== terminal && t.creationOptions?.env?.VIBE_PROJECT === projectPath) {
           t.dispose();
         }
       }
@@ -198,10 +192,10 @@ function activate(context) {
       for (const g of vscode.window.tabGroups.all) {
         for (const t of [...g.tabs]) {
           const isFailed = t.label === 'Failed to Load Page' || t.label.includes('ERR_');
-          const isStaleBrowser = t.input?.viewType === 'simpleBrowser.view' ||
-                                 t.input?.viewType?.includes('preview') ||
-                                 /127\.0\.0\.1|localhost|Simple Browser/.test(t.label) ||
-                                 (!t.input?.uri && !t.isDirty);
+          const isSimpleBrowser = t.input?.viewType === 'simpleBrowser.view';
+          const isLivePreview = typeof t.input?.viewType === 'string' && t.input.viewType.includes('preview');
+          const isLocalhostLabel = /127\.0\.0\.1|localhost|Simple Browser|Live Preview/i.test(t.label);
+          const isStaleBrowser = (isSimpleBrowser || isLivePreview || isLocalhostLabel);
           const isWrongColumnEntry = g.viewColumn === vscode.ViewColumn.One && t.input?.uri && t.input.uri.fsPath.endsWith(entryFileName) && !t.isDirty;
           if (isFailed || (isStaleBrowser && t !== previewTabRef) || isWrongColumnEntry) {
             vscode.window.tabGroups.close(t);
@@ -221,35 +215,16 @@ function activate(context) {
         if (previewUrl) {
           let reachable = await checkPortReachable(previewUrl);
           if (!reachable) {
-            const projectPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-            if (projectPath) {
-              const pkgPath = path.join(projectPath, 'package.json');
-              if (fs.existsSync(pkgPath)) {
-                try {
-                  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-                  const scriptName = pkg.scripts?.dev ? 'dev' : pkg.scripts?.start ? 'start' : null;
-                  if (scriptName && !devProcess) {
-                    const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-                    devProcess = spawn(npmCmd, ['run', scriptName], { cwd: projectPath, shell: true, env: process.env });
-                    devProcess.stdout?.on('data', d => output.append(d.toString()));
-                    devProcess.stderr?.on('data', d => output.append(d.toString()));
-                    devProcess.on('exit', () => { devProcess = null; });
-                    for (let i = 0; i < 50; i++) {
-                      await new Promise(r => setTimeout(r, 200));
-                      reachable = await checkPortReachable(previewUrl);
-                      if (reachable) break;
-                    }
-                  }
-                } catch (e) {
-                  output.appendLine('Failed to auto-start dev server: ' + e.message);
-                }
-              }
+            for (let i = 0; i < 40; i++) {
+              await new Promise(r => setTimeout(r, 250));
+              reachable = await checkPortReachable(previewUrl);
+              if (reachable) break;
             }
           }
           try {
             for (const g of vscode.window.tabGroups.all) {
               for (const t of [...g.tabs]) {
-                if (t.label === 'Failed to Load Page' || (!t.input?.uri && !t.isDirty)) {
+                if (t.label === 'Failed to Load Page' || t.label.includes('ERR_')) {
                   vscode.window.tabGroups.close(t);
                 }
               }
@@ -615,12 +590,9 @@ function activate(context) {
         port: 4100,
         getStatus: () => {
           const config = vscode.workspace.getConfiguration('vibe');
-          const executable = config.get('codexPath') || config.get('opencodePath');
-          const isCodex = /codex/i.test(executable);
-          const agent = isCodex ? 'Codex' : 'OpenCode';
           const project = vscode.workspace.workspaceFolders?.[0]?.name || 'Vibe Coding';
           const previewUrl = config.get('previewUrl', '') || 'http://127.0.0.1:3000';
-          return { mode: currentMode, agent, project, previewUrl };
+          return { mode: currentMode, agent: 'Codex', project, previewUrl };
         },
         onPrompt: async (prompt) => {
           const t = ensureTerminal();
