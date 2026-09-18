@@ -5,7 +5,8 @@ const path = require('path');
 const http = require('http');
 const https = require('https');
 const { execSync } = require('child_process');
-const { MobileServer, getMobileWebviewHtml } = require('./mobile-server');
+const { getMobileTunnelWebviewHtml } = require('./mobile-tunnel');
+const { generateQRCodeSVG } = require('./qrcode');
 
 function checkPortReachable(urlStr) {
   return new Promise(resolve => {
@@ -45,7 +46,6 @@ function activate(context) {
   let previewTabRef;
   let currentMode = context.workspaceState?.get?.('vibeMode', 'split') || 'split'; // 'split' | 'terminal' | 'preview'
  let busy = false;
-  let mobileServer;
   let mobileWebviewPanel;
   const exec = (command, ...args) => vscode.commands.executeCommand(command, ...args);
 
@@ -593,52 +593,30 @@ function activate(context) {
   }
 
   async function openMobileRemote() {
-    if (!mobileServer) {
-      mobileServer = new MobileServer({
-        port: 4100,
-        getStatus: () => {
-          const config = vscode.workspace.getConfiguration('vibe');
-          const project = vscode.workspace.workspaceFolders?.[0]?.name || 'Vibe Coding';
-          const previewUrl = config.get('previewUrl', '') || 'http://127.0.0.1:3000';
-          return { mode: currentMode, agent: 'Codex', project, previewUrl };
-        },
-        onPrompt: async (prompt) => {
-          const t = ensureTerminal();
-          t.show(false);
-          t.sendText(prompt, true);
-          record('mobile-prompt-sent', { prompt });
-        },
-        onCommand: async (cmd) => {
-          if (cmd === 'restore') await restore();
-          else if (cmd === 'preview') await togglePreview();
-          else if (cmd === 'terminal') await toggle();
-          record('mobile-command-executed', { command: cmd });
-        }
-      });
-      await mobileServer.start();
-      context.subscriptions.push({ dispose: () => mobileServer.stop() });
-    }
-    const remoteUrl = mobileServer.getUrl();
-    const qrSvg = mobileServer.getQrSvg();
+    const tunnelUrl = 'https://vscode.dev/agents';
+    const qrSvg = generateQRCodeSVG(tunnelUrl, { size: 240, margin: 2 });
     if (mobileWebviewPanel) {
       mobileWebviewPanel.reveal(vscode.ViewColumn.One);
     } else {
       mobileWebviewPanel = vscode.window.createWebviewPanel(
         'vibeMobileRemote',
-        '📱 Vibe Coding 모바일 원격 제어',
+        '📱 Vibe Coding 모바일 원격 AI 에이전트',
         vscode.ViewColumn.One,
         { enableScripts: true, retainContextWhenHidden: true }
       );
       mobileWebviewPanel.onDidDispose(() => {
         mobileWebviewPanel = null;
-        if (mobileServer) {
-          try { mobileServer.stop(); } catch {}
-          mobileServer = null;
+      });
+      mobileWebviewPanel.webview.onDidReceiveMessage(async message => {
+        if (message.command === 'turnOnTunnel') {
+          await exec('workbench.action.remoteTunnel.turnOn');
+        } else if (message.command === 'openUrl' && message.url) {
+          await vscode.env.openExternal(vscode.Uri.parse(message.url));
         }
       });
     }
-    mobileWebviewPanel.webview.html = getMobileWebviewHtml(remoteUrl, qrSvg);
-    record('mobile-remote-opened', { url: remoteUrl });
+    mobileWebviewPanel.webview.html = getMobileTunnelWebviewHtml({ tunnelUrl, qrSvg });
+    record('mobile-remote-opened', { url: tunnelUrl });
   }
   async function guarded(action) {
     if (busy) return;

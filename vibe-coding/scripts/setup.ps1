@@ -196,6 +196,9 @@ Set-Key $settings 'vibe.entryFile' $EntryFile
 Set-Key $settings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
 Set-Key $settings 'chat.commandCenter.enabled' $false
 Set-Key $settings 'task.allowAutomaticTasks' 'on'
+Set-Key $settings 'chat.agentHost.codexAgent.enabled' $true
+Set-Key $settings 'chat.agentHost.enabled' $true
+Set-Key $settings 'remote.tunnels.access.preventSleep' $true
 Save-Json $settingsPath $settings
 $argvPath = Join-Path $userDir 'argv.json'
 $argv = Read-Object $argvPath
@@ -212,6 +215,7 @@ Set-Key $wsSettings 'vibe.codexPath' $(if ($CodexPath) {$CodexPath} else {''})
 Set-Key $wsSettings 'vibe.entryFile' $EntryFile
 Set-Key $wsSettings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
 Set-Key $wsSettings 'task.allowAutomaticTasks' 'on'
+Set-Key $wsSettings 'chat.agentHost.codexAgent.enabled' $true
 Set-Key $wsSettings 'window.title' 'Vibe Coding - ${activeEditorShort}${separator}${rootName}'
 $otherFolders = @($workspace.folders | Where-Object { $_ -and $_.path -ne $ProjectPath })
 Set-Key $workspace 'folders' (@(@{path=$ProjectPath}) + $otherFolders)

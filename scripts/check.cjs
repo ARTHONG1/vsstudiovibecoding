@@ -36,7 +36,7 @@ const requiredFiles = [
   'vibe-coding/assets/workspace-extension/extension/package.json',
   'vibe-coding/assets/workspace-extension/extension/extension.js',
   'vibe-coding/assets/workspace-extension/extension/qrcode.js',
-  'vibe-coding/assets/workspace-extension/extension/mobile-server.js'
+  'vibe-coding/assets/workspace-extension/extension/mobile-tunnel.js'
 ];
 
 for (const rel of requiredFiles) {
