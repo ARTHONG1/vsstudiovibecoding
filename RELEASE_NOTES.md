@@ -1,3 +1,13 @@
+## Vibe Coding v2.6.2 - Mobile Direct Tunnel Detection & 'No Host' Bug Fix
+
+Resolved the mobile remote 'No Host' waiting issue by dynamically detecting machine-specific VS Code Dev Tunnel URLs and rendering real-time direct QR codes.
+
+### What's New in v2.6.2
+- **Dynamic Host Tunnel URI Detection:** Replaced the static generic URL (`vscode.dev/agents`) with active detection of the direct host tunnel URI (`vscode.dev/tunnel/<host>/...`) via `workbench.action.remoteTunnel.copyBrowserUrl`.
+- **Dynamic QR Code Generation:** Real-time QR code rendering of the direct tunnel link, allowing smartphones to connect straight to the local PC workspace without manual host selection or 'No Host' hangs.
+- **3-Phase Mobile Webview State Machine:** Provides explicit waiting (⚪), login in-progress, and active direct connected (🟢) UI badges with manual [🔄 연결 상태 새로고침] capability.
+- **Resource Leak Prevention:** Strictly capped tunnel activation polling and wired timer cleanup to panel disposal and extension deactivation lifecycle.
+
 ## Vibe Coding v2.2.1 - Native Filesystem Verification & Virtualization Safety
 
 Hardened installation and verification: native Windows filesystem SHA-256 and user SID checks, stale same-version detection, and non-destructive VS Code lifecycle management.
