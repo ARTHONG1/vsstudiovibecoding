@@ -238,12 +238,23 @@ $otherFolders = @($workspace.folders | Where-Object { $_ -and $_.path -ne $Proje
 Set-Key $workspace 'folders' (@(@{path=$ProjectPath}) + $otherFolders)
 Set-Key $workspace 'settings' $wsSettings
 Save-Json $workspacePath $workspace
+$vibeDir = Join-Path $ProjectPath '.vibe'
+New-Item -ItemType Directory -Force -Path $vibeDir | Out-Null
+$remoteConfig = [ordered]@{
+  version = 1
+  entryFile = $EntryFile
+  previewUrl = $(if ($PreviewUrl) {$PreviewUrl} else {''})
+  codexPath = $(if ($CodexPath) {$CodexPath} else {''})
+  codePath = $CodePath
+}
+[IO.File]::WriteAllText((Join-Path $vibeDir 'remote-config.json'), ($remoteConfig | ConvertTo-Json -Depth 5), $utf8)
 $packageSource = Join-Path $SkillRoot 'assets\workspace-extension'
 $manifest = Get-Content -Raw -Encoding UTF8 (Join-Path $packageSource 'extension\package.json') | ConvertFrom-Json
 $installedLayout = Join-Path $extensionsDir ($manifest.publisher + '.' + $manifest.name + '-' + $manifest.version)
 $packagePath = Join-Path $backup ('vibe-workspace-' + $manifest.version + '.vsix')
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 [IO.Compression.ZipFile]::CreateFromDirectory($packageSource, $packagePath)
+Copy-Item -LiteralPath $packagePath -Destination (Join-Path $Root 'vibe-workspace.vsix') -Force
 $cli = Join-Path (Split-Path -Parent $CodePath) 'bin\code.cmd'
 if (!(Test-Path -LiteralPath $cli)) { throw 'VS Code CLI was not found beside Code.exe.' }
 function Invoke-VibeCode {

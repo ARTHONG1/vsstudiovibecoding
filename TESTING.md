@@ -94,3 +94,10 @@ Follow the 7-step checklist defined in `vibe-coding/references/verification.md`:
 - Removed automated `git rm -rf --cached .vibe` from `initGit`, fully preserving user staging area without implicit index mutation.
 - Added `-- .` pathspec to `git status --porcelain`, ensuring monorepo sibling directory changes do not trigger unintended project snapshots.
 - Removed unused legacy `qrcode.js` asset and relaxed marketing claims to accurately state Git-tracked and untracked file restoration boundaries.
+
+## v2.7.0 Direct Dev Tunnel QR & Mobile 2-Button UX validation
+
+- Automated tests in `tests/tunnel.test.cjs` verify official `vscode.dev` tunnel URL extraction, stream chunk buffering, and offline SVG QR code generation.
+- Verified `extensionKind: ["workspace"]` in package.json to ensure execution within Remote Extension Host on the host PC.
+- Added `.vibe/remote-config.json` generation in `setup.ps1` to preserve entryFile, previewUrl, and codexPath when opening individual project folders via tunnel.
+- Integrated `vscode.env.asExternalUri` for remote preview rendering, and simplified mobile status bar to 2 prominent buttons in web/remote environments.

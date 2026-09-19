@@ -6,6 +6,7 @@ const http = require('http');
 const https = require('https');
 const { execSync, execFileSync } = require('child_process');
 const { getMobileTunnelWebviewHtml } = require('./mobile-tunnel');
+const { getOrStartTunnel } = require('./tunnel-manager');
 
 function checkPortReachable(urlStr) {
   return new Promise(resolve => {
@@ -79,6 +80,14 @@ function activate(context) {
   }
 
   function updateStatusBars() {
+    const isRemoteWeb = (vscode.UIKind && vscode.env.uiKind === vscode.UIKind.Web) || !!vscode.env.remoteName;
+    if (isRemoteWeb) {
+      timeMachineBtn.hide();
+      mobileBtn.hide();
+    } else {
+      timeMachineBtn.show();
+      mobileBtn.show();
+    }
     if (currentMode === 'terminal') {
       terminalBtn.text = '$(layout-sidebar-right) 3열 복원';
       terminalBtn.tooltip = '미리보기 | 코드 | 터미널 3열 화면으로 복원합니다 (Vibe Coding)';
@@ -132,10 +141,38 @@ function activate(context) {
     fs.mkdirSync(context.globalStorageUri.fsPath, { recursive: true });
     fs.appendFileSync(path.join(context.globalStorageUri.fsPath, 'status.jsonl'), JSON.stringify(data) + '\n');
   }
-  function ensureTerminal() {
+  function resolveCodexExecutable(projectPath) {
     const config = vscode.workspace.getConfiguration('vibe');
-    const executable = config.get('codexPath');
+    let executable = config.get('codexPath');
+    if (executable && fs.existsSync(executable)) return executable;
+    try {
+      const rcPath = path.join(projectPath, '.vibe', 'remote-config.json');
+      if (fs.existsSync(rcPath)) {
+        const rc = JSON.parse(fs.readFileSync(rcPath, 'utf8'));
+        if (rc && rc.codexPath && fs.existsSync(rc.codexPath)) return rc.codexPath;
+      }
+    } catch {}
+    try {
+      const whereOut = execFileSync('where.exe', ['codex'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+      const firstLine = whereOut.split('\n')[0].trim();
+      if (firstLine && fs.existsSync(firstLine)) return firstLine;
+    } catch {}
+    try {
+      const localAppData = process.env.LOCALAPPDATA || '';
+      const codexBinDir = path.join(localAppData, 'OpenAI', 'Codex', 'bin');
+      if (fs.existsSync(codexBinDir)) {
+        const subdirs = fs.readdirSync(codexBinDir);
+        for (const d of subdirs) {
+          const candidate = path.join(codexBinDir, d, 'codex.exe');
+          if (fs.existsSync(candidate)) return candidate;
+        }
+      }
+    } catch {}
+    return executable || '';
+  }
+  function ensureTerminal() {
     const projectPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    const executable = resolveCodexExecutable(projectPath);
     if (!terminal || terminal.exitStatus !== undefined || terminal.creationOptions?.shellPath !== executable) {
       terminal = vscode.window.terminals.find(t => t.creationOptions?.env?.VIBE_PROJECT === projectPath && t.creationOptions?.shellPath === executable && t.exitStatus === undefined);
       if (!terminal) {
@@ -230,7 +267,14 @@ function activate(context) {
             }
           } catch {}
           if (reachable) {
-            await exec('simpleBrowser.show', previewUrl);
+           let targetUrl = previewUrl;
+           if ((vscode.UIKind && vscode.env.uiKind === vscode.UIKind.Web) || !!vscode.env.remoteName) {
+              try {
+                const ext = await vscode.env.asExternalUri(vscode.Uri.parse(previewUrl));
+                targetUrl = ext.toString();
+              } catch {}
+            }
+            await exec('simpleBrowser.show', targetUrl);
           } else {
             await exec('livePreview.start.internalPreview.atFile', uri);
           }
@@ -627,18 +671,36 @@ function activate(context) {
       folder = await vscode.window.showWorkspaceFolderPick({ placeHolder: '휴대폰에서 이어서 작업할 프로젝트를 선택하세요' });
       if (!folder) return;
     }
+    const p = folder ? folder.uri.fsPath : '';
     if (mobileWebviewPanel) {
       mobileWebviewPanel.reveal(vscode.ViewColumn.One);
     } else {
       mobileWebviewPanel = vscode.window.createWebviewPanel(
-        'vibeMobileRemote', '📱 Codex Remote · 모바일 작업',
-        vscode.ViewColumn.One, { enableScripts: false, localResourceRoots: [] }
+        'vibeMobileRemote', '📱 Vibe Coding 모바일 원격 작업',
+        vscode.ViewColumn.One, { enableScripts: true, localResourceRoots: [] }
       );
       mobileWebviewPanel.onDidDispose(() => { mobileWebviewPanel = null; });
+      mobileWebviewPanel.webview.onDidReceiveMessage(async message => {
+        if (message && message.command === 'copy') {
+          await vscode.env.clipboard.writeText(message.text || '');
+          vscode.window.showInformationMessage('모바일 원격 접속 주소가 클립보드에 복사되었습니다.');
+        }
+      });
       context.subscriptions.push(mobileWebviewPanel);
     }
-    mobileWebviewPanel.webview.html = getMobileTunnelWebviewHtml({ projectPath: folder?.uri.fsPath || '' });
-    record('mobile-remote-guide-opened', { connectionVerified: false });
+    mobileWebviewPanel.webview.html = getMobileTunnelWebviewHtml({ projectPath: p, loading: true });
+    try {
+      const tunnelInfo = await getOrStartTunnel(p);
+      if (mobileWebviewPanel) {
+        mobileWebviewPanel.webview.html = getMobileTunnelWebviewHtml({ projectPath: p, tunnelUrl: tunnelInfo.url, tunnelName: tunnelInfo.tunnelName });
+      }
+      record('mobile-remote-tunnel-ready', { url: tunnelInfo.url });
+    } catch (err) {
+      if (mobileWebviewPanel) {
+        mobileWebviewPanel.webview.html = getMobileTunnelWebviewHtml({ projectPath: p, error: err.message });
+      }
+      record('mobile-remote-tunnel-error', { error: err.message });
+    }
   }
   async function guarded(action) {
     if (busy) return;

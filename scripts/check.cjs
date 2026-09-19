@@ -36,6 +36,8 @@ const requiredFiles = [
   'vibe-coding/assets/sample.html',
   'vibe-coding/assets/workspace-extension/extension/package.json',
   'vibe-coding/assets/workspace-extension/extension/extension.js',
+  'vibe-coding/assets/workspace-extension/extension/qrcode.js',
+  'vibe-coding/assets/workspace-extension/extension/tunnel-manager.js',
   'vibe-coding/assets/workspace-extension/extension/mobile-tunnel.js'
 ];
 
@@ -72,6 +74,8 @@ try {
 console.log('\x1b[36m[3/4] Checking JavaScript syntax and formatting...\x1b[0m');
 const jsFilesToCheck = [
   'vibe-coding/assets/workspace-extension/extension/extension.js',
+  'vibe-coding/assets/workspace-extension/extension/qrcode.js',
+  'vibe-coding/assets/workspace-extension/extension/tunnel-manager.js',
   'scripts/check.cjs'
 ];
 
