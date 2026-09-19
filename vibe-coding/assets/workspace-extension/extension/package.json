@@ -2,7 +2,7 @@
     "name": "vibe-workspace",
     "displayName": "Vibe Coding Workspace",
     "publisher": "local-vibe",
-    "version": "2.6.4",
+    "version": "2.6.5",
     "engines": {
         "vscode": "^1.94.0"
     },
@@ -49,7 +49,7 @@
             },
             {
                 "command": "vibe.openMobileRemote",
-                "title": "Vibe Coding: Open Mobile Remote (QR Code)",
+                "title": "Vibe Coding: Mobile Remote Setup",
                 "icon": "$(device-mobile)"
             }
         ],

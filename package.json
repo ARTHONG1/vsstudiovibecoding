@@ -1,7 +1,7 @@
 {
   "name": "vibe-coding-skill",
   "private": true,
-  "version": "2.6.4",
+  "version": "2.6.5",
   "license": "MIT",
   "scripts": {
     "test": "node --test",

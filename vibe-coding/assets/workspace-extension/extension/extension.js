@@ -338,23 +338,29 @@ function activate(context) {
   }
 
   function initGit(p) {
-    const gitDir = path.join(p, '.git');
-    if (!fs.existsSync(gitDir)) {
+    let gitDir;
+    try {
+      const gitDirRaw = execSync('git rev-parse --git-dir', { cwd: p, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+      gitDir = path.resolve(p, gitDirRaw);
+    } catch {
       try {
         execSync('git init', { cwd: p, stdio: 'ignore' });
         execSync('git config user.name "Vibe Coding"', { cwd: p, stdio: 'ignore' });
         execSync('git config user.email "vibe@local"', { cwd: p, stdio: 'ignore' });
+        gitDir = path.join(p, '.git');
       } catch {}
     }
-    try {
-      const excludeFile = path.join(gitDir, 'info', 'exclude');
-      let excludeContent = fs.existsSync(excludeFile) ? fs.readFileSync(excludeFile, 'utf8') : '';
-      if (!excludeContent.includes('.vibe')) {
-        excludeContent += '\n.vibe\n.vibe/*\n';
-        fs.writeFileSync(excludeFile, excludeContent, 'utf8');
-        try { execSync('git rm -rf --cached .vibe', { cwd: p, stdio: 'ignore' }); } catch {}
-      }
-    } catch {}
+    if (gitDir) {
+      try {
+        const excludeFile = path.join(gitDir, 'info', 'exclude');
+        let excludeContent = fs.existsSync(excludeFile) ? fs.readFileSync(excludeFile, 'utf8') : '';
+        if (!excludeContent.includes('.vibe')) {
+          excludeContent += '\n.vibe\n.vibe/*\n';
+          fs.writeFileSync(excludeFile, excludeContent, 'utf8');
+          try { execSync('git rm -rf --cached .vibe', { cwd: p, stdio: 'ignore' }); } catch {}
+        }
+      } catch {}
+    }
   }
 
   function getRecentPrompt(p) {
@@ -474,6 +480,7 @@ function activate(context) {
       // ONE CHECKPOINT PER CONVERSATION TURN:
       // If the latest checkpoint in the list belongs to the SAME turn, update it with the final state!
       if (list.length > 0 && !customLabel) {
+        const oldId = list[0].id;
         const isSameTurn = (turnId && list[0].turnId === turnId) || (list[0].title === title);
         if (isSameTurn) {
           const commitMsg = 'Vibe Checkpoint: ' + title + ' (' + timeStr + ')';
@@ -485,7 +492,12 @@ function activate(context) {
           list[0].timestamp = now.toISOString();
           list[0].fileSummary = fileSummary;
           list[0].changedCount = changedFiles.length;
-          try { execSync('git update-ref refs/vibe/checkpoints/' + list[0].id + ' ' + commitSha, { cwd: p, stdio: 'ignore' }); } catch {}
+          try {
+            execSync('git update-ref refs/vibe/checkpoints/' + list[0].id + ' ' + commitSha, { cwd: p, stdio: 'ignore' });
+            if (oldId && oldId !== list[0].id) {
+              execSync('git update-ref -d refs/vibe/checkpoints/' + oldId, { cwd: p, stdio: 'ignore' });
+            }
+          } catch {}
           saveCheckpoints(p, list);
           return list[0];
         }

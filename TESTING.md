@@ -81,3 +81,9 @@ Follow the 7-step checklist defined in `vibe-coding/references/verification.md`:
 - Automated tests cover official Remote webview guidance updates, verifying explanations for both Chat Vision Loop (markdown screenshot report) and VS Code Dev Tunnels.
 - Workspace configuration testing verifies automatic injection of `remote.portsAttributes` when a dev server port is present, ensuring zero-config preparation in VS Code's Ports view.
 - Native Windows Edge headless capture (`msedge --headless=new --disable-gpu --screenshot="..." --window-size=412,915 --virtual-time-budget=1500`) verified locally on Windows 11 without third-party dependencies.
+
+## v2.6.5 Time Machine Git GC Protection & Staging Isolation validation
+
+- Automated tests cover `refs/vibe/checkpoints/<id>` ref verification via `git rev-parse` and old ref pruning on same-turn updates.
+- Verified genuine working tree rollback while preserving user staging area (`git add`) completely intact using `GIT_INDEX_FILE` shadow index.
+- Monorepo safety verified via `git rev-parse --git-dir` in `initGit`, preventing nested `.git` creation.

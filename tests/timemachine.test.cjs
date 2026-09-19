@@ -29,10 +29,10 @@ test('createShadowCheckpoint does NOT pollute user git index or modify staged fi
         workspaceFolders: [{ uri: { fsPath: tempDir } }]
       },
       window: {
-        createOutputChannel: () => ({ appendLine() {} }),
-        createStatusBarItem: () => ({ show() {}, dispose() {} }),
-        showErrorMessage: () => {},
-        showInformationMessage: () => {},
+      createOutputChannel: () => ({ appendLine() {} }),
+      createStatusBarItem: () => ({ show() {}, dispose() {} }),
+      showErrorMessage: () => {},
+      showInformationMessage: () => {},
         showInputBox: async () => '테스트 체크포인트',
         terminals: [],
         onDidCloseTerminal: () => ({ dispose() {} })
@@ -41,7 +41,12 @@ test('createShadowCheckpoint does NOT pollute user git index or modify staged fi
         registerCommand: (name, fn) => {
           commands.set(name, fn);
           return { dispose() {} };
-        }
+        },
+        executeCommand: async () => {}
+      },
+      QuickPickItemKind: { Separator: 1 },
+      Uri: {
+        joinPath: (base, ...segments) => ({ fsPath: path.join(base.fsPath, ...segments) })
       },
       StatusBarAlignment: { Right: 2 },
       env: {}
@@ -80,13 +85,26 @@ test('createShadowCheckpoint does NOT pollute user git index or modify staged fi
     // Modify working tree and verify restore keeps user staged index intact
     fs.writeFileSync(path.join(tempDir, 'unstaged.txt'), 'modified-before-rollback');
     const targetCheckpoint = list[0];
-    // Mock showQuickPick to select targetCheckpoint
-    vscode.window.showQuickPick = async () => ({ id: targetCheckpoint.id, commitSha: targetCheckpoint.commitSha, label: targetCheckpoint.title });
+    // Mock showQuickPick to select targetCheckpoint (must provide sha and title)
+    vscode.window.showQuickPick = async () => ({ sha: targetCheckpoint.commitSha, title: targetCheckpoint.title, label: targetCheckpoint.title });
     await commands.get('vibe.restoreCheckpoint')();
 
-    // Verify user staged file is STILL staged after restore
+    // Verify user staged file is STILL staged after restore AND working tree genuinely rolled back
     const statusAfterRestore = execSync('git status --porcelain', { cwd: tempDir, encoding: 'utf8' }).trim();
     assert.ok(statusAfterRestore.includes('A  staged.txt'), 'User staged file must remain staged after restore');
+    const rolledBackContent = fs.readFileSync(path.join(tempDir, 'unstaged.txt'), 'utf8');
+    assert.equal(rolledBackContent, 'unstaged content', 'Working tree file must be genuinely rolled back to checkpoint content');
+
+    // Verify old ref cleanup on same-turn checkpoint update
+    const initialRef = list[0].id;
+    fs.writeFileSync(path.join(tempDir, 'unstaged.txt'), 'same-turn-update');
+    // create checkpoint with identical turn/title
+    vscode.window.showInputBox = async () => '테스트 체크포인트';
+    await commands.get('vibe.createCheckpoint')();
+    const updatedList = JSON.parse(fs.readFileSync(checkpointsFile, 'utf8'));
+    const newRef = updatedList[0].id;
+    assert.notEqual(initialRef, newRef, 'Updated checkpoint should have new id');
+    assert.equal(execSync('git rev-parse refs/vibe/checkpoints/' + newRef, { cwd: tempDir, encoding: 'utf8' }).trim(), updatedList[0].commitSha);
 
     fs.rmSync(storageDir, { recursive: true, force: true });
   } finally {
