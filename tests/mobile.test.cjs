@@ -21,3 +21,10 @@ test('setup request delegates to AI with reuse and verification boundaries', () 
   const prompt = getMobileSetupPrompt('C:/work/과전강');
   for (const text of ['C:/work/과전강', '$vibe-coding', '기존 연결', '미검증']) assert.ok(prompt.includes(text));
 });
+
+test('mobile guide includes both chat vision feedback and VS Code port forwarding options', () => {
+  const html = getMobileTunnelWebviewHtml({ projectPath: 'C:/work/과전강' });
+  assert.ok(html.includes('대화창 사진 확인'));
+  assert.ok(html.includes('직접 터치 조작'));
+  assert.ok(html.includes('포트(Ports)'));
+});

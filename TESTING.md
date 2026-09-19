@@ -75,3 +75,9 @@ Follow the 7-step checklist defined in `vibe-coding/references/verification.md`:
 - A desktop-origin read-only continuation of an existing CLI task was observed in the same local project, with matching index.html SHA256 and an HTTP 200 preview response. This is not proof of a phone-origin test.
 - The user reported successful use of the Remote workflow. New button visual acceptance remains assigned to the user; it is not claimed as automated E2E coverage.
 - To accept the new UI: reload the VS Code window, open [모바일], confirm the actual project path and official Remote instructions, then continue the intended existing task from the phone. No tunnel activation or pairing status should be displayed as automatically verified.
+
+## v2.6.4 Agent-owned Visual Feedback & Port Forwarding validation
+
+- Automated tests cover official Remote webview guidance updates, verifying explanations for both Chat Vision Loop (markdown screenshot report) and VS Code Dev Tunnels.
+- Workspace configuration testing verifies automatic injection of `remote.portsAttributes` when a dev server port is present, ensuring zero-config preparation in VS Code's Ports view.
+- Native Windows Edge headless capture (`msedge --headless=new --disable-gpu --screenshot="..." --window-size=412,915 --virtual-time-budget=1500`) verified locally on Windows 11 without third-party dependencies.

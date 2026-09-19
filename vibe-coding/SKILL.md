@@ -43,9 +43,16 @@ AI가 코드를 수정할 때마다 대화/작업 단위로 그림자 스냅샷�
 
 ## Optional mobile task setup — official Codex Remote
 
-When the user requests phone-based AI instructions, read [mobile-remote.md](references/mobile-remote.md). The agent owns initial environment discovery, project matching, connection assistance and verification; official Codex Remote owns subsequent execution. Reuse an existing connection and do not require this skill for each later task. Ordinary VS Code setup does not enable remote access automatically.
+When the user requests phone-based AI instructions, read [mobile-remote.md](references/mobile-remote.md). The agent owns initial environment discovery, project matching, connection assistance, visual feedback verification, and dev tunnel configuration; official Codex Remote owns subsequent execution. Reuse an existing connection and do not require this skill for each later task. Ordinary VS Code setup does not enable remote access automatically.
 
 Use the installed desktop app's supported Remote flow. A visible CLI conversation, a QR code, or the existing VS Code Tunnel mobile button is not proof of Remote execution. Preserve the existing layout, terminals, model/provider choices and project files. Separate setup readiness, phone pairing, local execution and preview verification in the completion report; never claim untested CLI conversation continuity.
+
+### Agent-owned visual feedback and port forwarding
+When working on phone/remote requests that touch UI or when requested by the user:
+1. **Chat vision loop (primary):** After completing UI modifications, verify that the local dev server is responding, capture the rendered page using Windows native Edge headless:
+   `& "$env:ProgramFiles (x86)\Microsoft\Edge\Application\msedge.exe" --headless=new --disable-gpu --screenshot="$projectPath\.vibe\previews\preview.png" --window-size=412,915 --virtual-time-budget=1500 "http://localhost:$port"`
+   Embed the markdown image `![Preview](.vibe/previews/preview.png)` in the completion response so the mobile user can review the visual result immediately without switching applications.
+2. **Interactive touch (optional):** The workspace preconfigures `remote.portsAttributes` for the project dev server port. When the user wishes to interact with the live page on their mobile browser, guide them to the VS Code built-in Ports view (Dev Tunnels) to open or scan the public HTTPS URL.
 
 ## Bundled implementation
 

@@ -218,6 +218,19 @@ Set-Key $wsSettings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''}
 Set-Key $wsSettings 'task.allowAutomaticTasks' 'on'
 Set-Key $wsSettings 'chat.agentHost.codexAgent.enabled' $true
 Set-Key $wsSettings 'chat.agentSessions.showExternal' 'recent'
+if ($PreviewUrl) {
+  try {
+    $previewUri = [Uri]$PreviewUrl
+    if ($previewUri.Port -gt 0) {
+      $portKey = [string]$previewUri.Port
+      $portsAttr = $wsSettings.'remote.portsAttributes'
+      if (!$portsAttr) { $portsAttr = [pscustomobject]@{} }
+      Set-Key $portsAttr $portKey @{ label = 'Vibe Dev Server'; onAutoForward = 'notify' }
+      Set-Key $wsSettings 'remote.portsAttributes' $portsAttr
+      Set-Key $settings 'remote.portsAttributes' $portsAttr
+    }
+  } catch {}
+}
 Set-Key $wsSettings 'window.title' 'Vibe Coding - ${activeEditorShort}${separator}${rootName}'
 $otherFolders = @($workspace.folders | Where-Object { $_ -and $_.path -ne $ProjectPath })
 Set-Key $workspace 'folders' (@(@{path=$ProjectPath}) + $otherFolders)

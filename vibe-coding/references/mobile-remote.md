@@ -35,9 +35,25 @@ Do not make experimental CLI `remote-control` commands the default bootstrap mer
 
 The Vibe Coding mobile button opens a script-free official Codex Remote setup guide showing the selected workspace folder and a request the user can copy to their AI agent. It does not enable remote access, read the clipboard, generate pairing codes, or report connection status. Older v2.6.2 installations may still show the former VS Code Tunnel flow until the updated extension is loaded. A Tunnel QR is not Codex pairing. If the user explicitly wants the full VS Code interface remotely, treat that as a different workflow.
 
-### 4. Prepare the existing preview for local changes
+### 4. Prepare preview verification and visual feedback
 
-Confirm the existing server URL belongs to the selected project, and that the preview is reachable. Reuse the configured server rather than spawning duplicates. Remote AI instructions do not require exposing the preview server to the phone: the preview still runs on the PC. Viewing the preview on the phone is a separate feature and must not be promised here.
+Confirm the existing server URL belongs to the selected project, and that the preview is reachable. Reuse the configured server rather than spawning duplicates.
+
+To provide seamless mobile vibe coding without requiring custom daemon servers or fragile background processes, the agent owns the visual feedback loop and leverages official VS Code port forwarding:
+
+1. **Agent-driven visual feedback (Chat Vision Loop):**
+   When the user requests UI changes from mobile:
+   - Perform and verify the code edits.
+   - Confirm the dev server is active and note its active port (e.g., 5173, 3000).
+   - Use Windows native Edge headless to capture a mobile-viewport (412×915) screenshot:
+     ```powershell
+     & "$env:ProgramFiles (x86)\Microsoft\Edge\Application\msedge.exe" --headless=new --disable-gpu --screenshot="$projectPath\.vibe\previews\preview.png" --window-size=412,915 --virtual-time-budget=1500 "http://localhost:$port"
+     ```
+   - Embed the captured image in the chat response using markdown (`![Preview](.vibe/previews/preview.png)`). This allows the mobile user to inspect the visual outcome directly in the conversation without app switching.
+
+2. **Interactive touch testing via VS Code Port Forwarding (Dev Tunnels):**
+   - The workspace `.code-workspace` includes `remote.portsAttributes` for the dev server port so VS Code automatically prepares it in the Ports view.
+   - If the user wants to tap, scroll, or interactively test the UI on their phone browser over LTE/Wi-Fi, guide them to open the VS Code `Ports` tab, ensure visibility is set to `Public`, and scan the official Dev Tunnel QR code.
 
 The host must remain awake and online, with the required app/service available. Explain those conditions; do not silently change global power policies. Do not start simultaneous CLI and mobile edits to the same files. Finish or pause the relevant existing task through supported controls before switching execution clients; preserve unrelated terminals and unsaved editors.
 
