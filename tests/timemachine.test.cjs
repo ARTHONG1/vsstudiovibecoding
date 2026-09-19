@@ -72,6 +72,22 @@ test('createShadowCheckpoint does NOT pollute user git index or modify staged fi
     assert.ok(fs.existsSync(checkpointsFile), 'checkpoints.json must be created in .vibe');
     const list = JSON.parse(fs.readFileSync(checkpointsFile, 'utf8'));
     assert.ok(list.length > 0, 'At least one checkpoint must be recorded');
+
+    // Verify Git hidden ref protection against Git GC
+    const refSha = execSync('git rev-parse refs/vibe/checkpoints/' + list[0].id, { cwd: tempDir, encoding: 'utf8' }).trim();
+    assert.equal(refSha, list[0].commitSha, 'Git ref refs/vibe/checkpoints/<id> must point to checkpoint commit');
+
+    // Modify working tree and verify restore keeps user staged index intact
+    fs.writeFileSync(path.join(tempDir, 'unstaged.txt'), 'modified-before-rollback');
+    const targetCheckpoint = list[0];
+    // Mock showQuickPick to select targetCheckpoint
+    vscode.window.showQuickPick = async () => ({ id: targetCheckpoint.id, commitSha: targetCheckpoint.commitSha, label: targetCheckpoint.title });
+    await commands.get('vibe.restoreCheckpoint')();
+
+    // Verify user staged file is STILL staged after restore
+    const statusAfterRestore = execSync('git status --porcelain', { cwd: tempDir, encoding: 'utf8' }).trim();
+    assert.ok(statusAfterRestore.includes('A  staged.txt'), 'User staged file must remain staged after restore');
+
     fs.rmSync(storageDir, { recursive: true, force: true });
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });

@@ -440,6 +440,12 @@ function activate(context) {
   function saveCheckpoints(p, list) {
     const dir = path.join(p, '.vibe');
     try { fs.mkdirSync(dir, { recursive: true }); } catch {}
+    if (list.length > 50) {
+      const pruned = list.slice(50);
+      for (const old of pruned) {
+        try { execSync('git update-ref -d refs/vibe/checkpoints/' + old.id, { cwd: p, stdio: 'ignore' }); } catch {}
+      }
+    }
     fs.writeFileSync(path.join(dir, 'checkpoints.json'), JSON.stringify(list.slice(0, 50), null, 2), 'utf8');
   }
 
@@ -479,6 +485,7 @@ function activate(context) {
           list[0].timestamp = now.toISOString();
           list[0].fileSummary = fileSummary;
           list[0].changedCount = changedFiles.length;
+          try { execSync('git update-ref refs/vibe/checkpoints/' + list[0].id + ' ' + commitSha, { cwd: p, stdio: 'ignore' }); } catch {}
           saveCheckpoints(p, list);
           return list[0];
         }
@@ -488,6 +495,7 @@ function activate(context) {
       const commitSha = execSync('git commit-tree ' + treeSha + ' -m "' + commitMsg.replace(/"/g, '\\"') + '"', { cwd: p, encoding: 'utf8' }).trim();
       const record = { id: commitSha.slice(0, 7), commitSha, treeSha, title, turnId: turnId || null, fileSummary, changedCount: changedFiles.length, timestamp: now.toISOString(), timeStr };
       list.unshift(record);
+      try { execSync('git update-ref refs/vibe/checkpoints/' + record.id + ' ' + commitSha, { cwd: p, stdio: 'ignore' }); } catch {}
       saveCheckpoints(p, list);
       return record;
     } catch (e) { return null; }
@@ -507,6 +515,7 @@ function activate(context) {
         commitSha = execSync('git commit-tree ' + treeSha + ' -m "Vibe Safety Backup"', { cwd: p, encoding: 'utf8' }).trim();
         const now = new Date();
         const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        try { execSync('git update-ref refs/vibe/safety ' + commitSha, { cwd: p, stdio: 'ignore' }); } catch {}
         const safetyFile = path.join(p, '.vibe', 'safety.json');
         fs.writeFileSync(safetyFile, JSON.stringify({ sha: commitSha, title: '롤백 직전 코드 (취소/Redo용)', timeStr }), 'utf8');
       } catch (err) {
@@ -517,8 +526,8 @@ function activate(context) {
         throw new Error('안전 백업 해시가 생성되지 않아 파일 보호를 위해 롤백을 중단합니다.');
       }
 
-      execSync('git checkout ' + targetSha + ' -- .', { cwd: p, stdio: 'ignore' });
-      execSync('git clean -fd -e .vibe', { cwd: p, stdio: 'ignore' });
+      execSync('git checkout ' + targetSha + ' -- .', { cwd: p, env: gitEnv, stdio: 'ignore' });
+      execSync('git clean -fd -e .vibe', { cwd: p, env: gitEnv, stdio: 'ignore' });
       if (vscode.window.activeTextEditor && !vscode.window.activeTextEditor.document.isUntitled) {
         await vscode.commands.executeCommand('workbench.action.files.revert');
       }
