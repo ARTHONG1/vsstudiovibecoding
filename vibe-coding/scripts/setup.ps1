@@ -198,6 +198,7 @@ Set-Key $settings 'chat.commandCenter.enabled' $false
 Set-Key $settings 'task.allowAutomaticTasks' 'on'
 Set-Key $settings 'chat.agentHost.codexAgent.enabled' $true
 Set-Key $settings 'chat.agentHost.enabled' $true
+Set-Key $settings 'chat.agentHost.allowSignedOutWhenUsable' $true
 Set-Key $settings 'chat.agentSessions.showExternal' 'recent'
 Set-Key $settings 'remote.tunnels.access.preventSleep' $true
 Save-Json $settingsPath $settings
@@ -217,6 +218,7 @@ Set-Key $wsSettings 'vibe.entryFile' $EntryFile
 Set-Key $wsSettings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
 Set-Key $wsSettings 'task.allowAutomaticTasks' 'on'
 Set-Key $wsSettings 'chat.agentHost.codexAgent.enabled' $true
+Set-Key $wsSettings 'chat.agentHost.allowSignedOutWhenUsable' $true
 Set-Key $wsSettings 'chat.agentSessions.showExternal' 'recent'
 if ($PreviewUrl) {
   try {

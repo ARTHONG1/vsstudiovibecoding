@@ -56,7 +56,7 @@ When working on phone/remote requests that touch UI or when requested by the use
 
 ## Bundled implementation
 
-- `scripts/setup.ps1`: plan/apply, discovery, configuration merge, backup, extension packaging/install, project workspace and shortcut. `Get-Help`/script parameters show inputs. PowerShell 5.1 compatible; no policy changes.
+- `scripts/setup.ps1`: plan/apply, discovery, configuration merge, backup, extension packaging/install, project workspace and shortcut. `Get-Help`/script parameters show inputs. PowerShell 5.1 compatible; does not alter system-wide execution policies permanently.
 - `assets/workspace-extension/`: local VS Code extension source; owns startup arrangement, preview readiness, terminal lifecycle and status bar toggle button. Use this tested implementation rather than recreating loose toggle commands.
 - `assets/sample.html`: only for explicit sample creation.
 

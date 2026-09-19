@@ -464,7 +464,7 @@ function activate(context) {
       const gitEnv = { ...process.env, GIT_INDEX_FILE: shadowIndex };
       const status = execSync('git status --porcelain', { cwd: p, encoding: 'utf8' }).trim();
       if (!status && !customLabel) return null;
-      execSync('git add -A', { cwd: p, env: gitEnv, stdio: 'ignore' });
+      execSync('git add -A -- .', { cwd: p, env: gitEnv, stdio: 'ignore' });
       const treeSha = execSync('git write-tree', { cwd: p, env: gitEnv, encoding: 'utf8' }).trim();
       const list = getCheckpoints(p);
       if (list.length > 0 && list[0].treeSha === treeSha && !customLabel) return null;
@@ -522,7 +522,7 @@ function activate(context) {
       const gitEnv = { ...process.env, GIT_INDEX_FILE: shadowIndex };
       let commitSha = null;
       try {
-        execSync('git add -A', { cwd: p, env: gitEnv, stdio: 'ignore' });
+        execSync('git add -A -- .', { cwd: p, env: gitEnv, stdio: 'ignore' });
         const treeSha = execSync('git write-tree', { cwd: p, env: gitEnv, encoding: 'utf8' }).trim();
         commitSha = execSync('git commit-tree ' + treeSha + ' -m "Vibe Safety Backup"', { cwd: p, encoding: 'utf8' }).trim();
         const now = new Date();
@@ -538,7 +538,9 @@ function activate(context) {
         throw new Error('안전 백업 해시가 생성되지 않아 파일 보호를 위해 롤백을 중단합니다.');
       }
 
-      execSync('git checkout ' + targetSha + ' -- .', { cwd: p, env: gitEnv, stdio: 'ignore' });
+      try { fs.rmSync(shadowIndex, { force: true }); } catch {}
+      execSync('git read-tree ' + targetSha, { cwd: p, env: gitEnv, stdio: 'ignore' });
+      execSync('git checkout-index -a -f', { cwd: p, env: gitEnv, stdio: 'ignore' });
       execSync('git clean -fd -e .vibe', { cwd: p, env: gitEnv, stdio: 'ignore' });
       if (vscode.window.activeTextEditor && !vscode.window.activeTextEditor.document.isUntitled) {
         await vscode.commands.executeCommand('workbench.action.files.revert');
