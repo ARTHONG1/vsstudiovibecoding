@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const { getMobileTunnelWebviewHtml } = require('./mobile-tunnel');
 
 function checkPortReachable(urlStr) {
@@ -357,7 +357,6 @@ function activate(context) {
         if (!excludeContent.includes('.vibe')) {
           excludeContent += '\n.vibe\n.vibe/*\n';
           fs.writeFileSync(excludeFile, excludeContent, 'utf8');
-          try { execSync('git rm -rf --cached .vibe', { cwd: p, stdio: 'ignore' }); } catch {}
         }
       } catch {}
     }
@@ -462,7 +461,7 @@ function activate(context) {
       try { fs.mkdirSync(vibeDir, { recursive: true }); } catch {}
       const shadowIndex = path.join(vibeDir, 'shadow_index');
       const gitEnv = { ...process.env, GIT_INDEX_FILE: shadowIndex };
-      const status = execSync('git status --porcelain', { cwd: p, encoding: 'utf8' }).trim();
+      const status = execFileSync('git', ['status', '--porcelain', '--', '.'], { cwd: p, encoding: 'utf8' }).trim();
       if (!status && !customLabel) return null;
       execSync('git add -A -- .', { cwd: p, env: gitEnv, stdio: 'ignore' });
       const treeSha = execSync('git write-tree', { cwd: p, env: gitEnv, encoding: 'utf8' }).trim();
@@ -484,7 +483,7 @@ function activate(context) {
         const isSameTurn = (turnId && list[0].turnId === turnId) || (list[0].title === title);
         if (isSameTurn) {
           const commitMsg = 'Vibe Checkpoint: ' + title + ' (' + timeStr + ')';
-          const commitSha = execSync('git commit-tree ' + treeSha + ' -m "' + commitMsg.replace(/"/g, '\\"') + '"', { cwd: p, encoding: 'utf8' }).trim();
+          const commitSha = execFileSync('git', ['commit-tree', treeSha, '-m', commitMsg], { cwd: p, encoding: 'utf8' }).trim();
           list[0].id = commitSha.slice(0, 7);
           list[0].commitSha = commitSha;
           list[0].treeSha = treeSha;
@@ -493,9 +492,9 @@ function activate(context) {
           list[0].fileSummary = fileSummary;
           list[0].changedCount = changedFiles.length;
           try {
-            execSync('git update-ref refs/vibe/checkpoints/' + list[0].id + ' ' + commitSha, { cwd: p, stdio: 'ignore' });
+            execFileSync('git', ['update-ref', 'refs/vibe/checkpoints/' + list[0].id, commitSha], { cwd: p, stdio: 'ignore' });
             if (oldId && oldId !== list[0].id) {
-              execSync('git update-ref -d refs/vibe/checkpoints/' + oldId, { cwd: p, stdio: 'ignore' });
+              execFileSync('git', ['update-ref', '-d', 'refs/vibe/checkpoints/' + oldId], { cwd: p, stdio: 'ignore' });
             }
           } catch {}
           saveCheckpoints(p, list);
@@ -504,10 +503,10 @@ function activate(context) {
       }
 
       const commitMsg = 'Vibe Checkpoint: ' + title + ' (' + timeStr + ')';
-      const commitSha = execSync('git commit-tree ' + treeSha + ' -m "' + commitMsg.replace(/"/g, '\\"') + '"', { cwd: p, encoding: 'utf8' }).trim();
+      const commitSha = execFileSync('git', ['commit-tree', treeSha, '-m', commitMsg], { cwd: p, encoding: 'utf8' }).trim();
       const record = { id: commitSha.slice(0, 7), commitSha, treeSha, title, turnId: turnId || null, fileSummary, changedCount: changedFiles.length, timestamp: now.toISOString(), timeStr };
       list.unshift(record);
-      try { execSync('git update-ref refs/vibe/checkpoints/' + record.id + ' ' + commitSha, { cwd: p, stdio: 'ignore' }); } catch {}
+      try { execFileSync('git', ['update-ref', 'refs/vibe/checkpoints/' + record.id, commitSha], { cwd: p, stdio: 'ignore' }); } catch {}
       saveCheckpoints(p, list);
       return record;
     } catch (e) { return null; }
@@ -524,10 +523,10 @@ function activate(context) {
       try {
         execSync('git add -A -- .', { cwd: p, env: gitEnv, stdio: 'ignore' });
         const treeSha = execSync('git write-tree', { cwd: p, env: gitEnv, encoding: 'utf8' }).trim();
-        commitSha = execSync('git commit-tree ' + treeSha + ' -m "Vibe Safety Backup"', { cwd: p, encoding: 'utf8' }).trim();
+        commitSha = execFileSync('git', ['commit-tree', treeSha, '-m', 'Vibe Safety Backup'], { cwd: p, encoding: 'utf8' }).trim();
         const now = new Date();
         const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-        try { execSync('git update-ref refs/vibe/safety ' + commitSha, { cwd: p, stdio: 'ignore' }); } catch {}
+        try { execFileSync('git', ['update-ref', 'refs/vibe/safety', commitSha], { cwd: p, stdio: 'ignore' }); } catch {}
         const safetyFile = path.join(p, '.vibe', 'safety.json');
         fs.writeFileSync(safetyFile, JSON.stringify({ sha: commitSha, title: '롤백 직전 코드 (취소/Redo용)', timeStr }), 'utf8');
       } catch (err) {

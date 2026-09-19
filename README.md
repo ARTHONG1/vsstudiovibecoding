@@ -1,6 +1,6 @@
 # Vibe Coding
 
-[![Version](https://img.shields.io/badge/version-2.6.5-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
+[![Version](https://img.shields.io/badge/version-2.6.6-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6.svg?logo=windows)](https://github.com/ARTHONG1/vsstudiovibecoding)
 [![CI](https://github.com/ARTHONG1/vsstudiovibecoding/actions/workflows/ci.yml/badge.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/actions)
@@ -9,7 +9,7 @@
 
 VS Code를 **미리보기 | 코드 | Codex** 3열로 배치하며, 상태바와 에디터 툴바의 전용 버튼으로 **3대 뷰포트 모드와 📱 공식 Codex Remote 초기 설정 안내** ([3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체])을 원클릭 전환합니다. 3열에 OpenAI 공식 Codex CLI를 구동하여 Computer Use 자율 화면 제어를 지원하며, VS Code 순정 `F12`(정의로 이동)를 100% 보존합니다.
 
-**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.6.5/vibe-coding-2.6.5.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
+**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.6.6/vibe-coding-2.6.6.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
 
 ## 가장 쉬운 시작
 
@@ -86,7 +86,7 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
 
 ## ⏪ Vibe 타임머신 (대화 단위 무오염 롤백)
 
-AI가 코드를 수정하다가 기존 기능을 망가뜨렸을 때, Firebase Studio나 Google AI Studio처럼 **대화 턴 단위로 원하는 과거 시점을 선택해 0.1초 만에 프로젝트 전체를 복원**합니다.
+AI가 코드를 수정하다가 기존 기능을 망가뜨렸을 때, Firebase Studio나 Google AI Studio처럼 **대화 턴 단위로 원하는 과거 시점을 선택해 사용자의 Staging Area를 보존하면서 작업 소스 및 신규 생성 파일을 안전하게 복원**합니다.
 
 - **순정 Git 히스토리 100% 무오염**: git commit이나 git stash를 쓰지 않고, Git 저수준 배관 명령어(commit-tree)로 분리된 그림자 스냅샷을 생성하므로 사용자의 main 브랜치 커밋 로그를 단 1글자도 더럽히지 않습니다.
 - **스마트 대화 제목 추출**: 중간의 "응", "진행해" 같은 단순 확인 단답을 자동 필터링하고, 사용자가 실제로 Codex에게 요청했던 핵심 지시 내용(예: *"점수판 텍스트를 한글로 점수라고 표시해줘"*)을 스냅샷 제목으로 1대화당 딱 1개씩 깔끔하게 기록합니다.
@@ -126,7 +126,7 @@ AI가 코드를 수정하다가 기존 기능을 망가뜨렸을 때, Firebase S
 
 2026-09-18, Windows 11 x64 / VS Code 1.138.0 / Codex CLI / Live Preview 0.4.20에서 샘플 3열·한글·버튼·F12 왕복·정상 종료/재실행과 미리보기 제목 변경 수정 후 복원을 실제 화면 및 로그로 확인했습니다. 다른 PC와 모든 프레임워크에서 성공을 보장하는 결과는 아닙니다. [검증 범위](TESTING.md)를 확인하세요.
 
-## 휴대폰에서 기존 작업 이어가기 (v2.6.5)
+## 휴대폰에서 기존 작업 이어가기 (v2.6.6)
 
 상태바 **[📱 모바일]** 버튼은 현재 프로젝트 경로, 공식 Codex Remote 연결 절차, 대화창 사진 검증(Chat Vision Loop) 및 VS Code 포트 전달(Dev Tunnels) 안내를 보여줍니다. 스킬을 읽은 AI가 기존 연결·작업을 확인하고 VS Code와 같은 PC·프로젝트 폴더를 사용하는지 검증합니다. 모바일에서 화면 수정을 요청하면 AI가 윈도우 내장 Edge로 모바일 캡처본을 찍어 대화창에 바로 첨부 보고하며, 실시간 터치 조작이 필요할 때는 VS Code 공식 포트 전달(Dev Tunnels)을 통해 어디서나 폰 브라우저로 직접 접속할 수 있습니다.
 

@@ -101,7 +101,7 @@ test('createShadowCheckpoint does NOT pollute user git index or modify staged fi
     const initialRef = list[0].id;
     fs.writeFileSync(path.join(tempDir, 'unstaged.txt'), 'same-turn-update');
     // create checkpoint with identical turn/title
-    vscode.window.showInputBox = async () => '테스트 체크포인트';
+    vscode.window.showInputBox = async () => '진행률 100% 완료 & "특수문자" | 테스트';
     await commands.get('vibe.createCheckpoint')();
     const updatedList = JSON.parse(fs.readFileSync(checkpointsFile, 'utf8'));
     const newRef = updatedList[0].id;

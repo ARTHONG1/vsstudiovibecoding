@@ -87,3 +87,10 @@ Follow the 7-step checklist defined in `vibe-coding/references/verification.md`:
 - Automated tests cover `refs/vibe/checkpoints/<id>` ref verification via `git rev-parse` and old ref pruning on same-turn updates.
 - Verified genuine working tree rollback while preserving user staging area (`git add`) completely intact using `GIT_INDEX_FILE` shadow index.
 - Monorepo safety verified via `git rev-parse --git-dir` in `initGit`, preventing nested `.git` creation.
+
+## v2.6.6 Git Command Security & Monorepo Pathspec Isolation validation
+
+- Converted all critical Git commands from shell string interpolation to safe argument arrays (`execFileSync`), preventing shell injection from user prompts containing `%`, `&`, `|`, and quotes.
+- Removed automated `git rm -rf --cached .vibe` from `initGit`, fully preserving user staging area without implicit index mutation.
+- Added `-- .` pathspec to `git status --porcelain`, ensuring monorepo sibling directory changes do not trigger unintended project snapshots.
+- Removed unused legacy `qrcode.js` asset and relaxed marketing claims to accurately state Git-tracked and untracked file restoration boundaries.
