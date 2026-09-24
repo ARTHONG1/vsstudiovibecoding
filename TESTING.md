@@ -101,3 +101,12 @@ Follow the 7-step checklist defined in `vibe-coding/references/verification.md`:
 - Verified `extensionKind: ["workspace"]` in package.json to ensure execution within Remote Extension Host on the host PC.
 - Added `.vibe/remote-config.json` generation in `setup.ps1` to preserve entryFile, previewUrl, and codexPath when opening individual project folders via tunnel.
 - Integrated `vscode.env.asExternalUri` for remote preview rendering, and simplified mobile status bar to 2 prominent buttons in web/remote environments.
+
+## v2.7.1 Mobile connection target & phone-first mode switching validation
+
+- `tests/tunnel.test.cjs` verifies that the connection URL is rebuilt from the tunnel name plus a pure-ASCII target: an existing `.code-workspace` file is preferred, an ASCII project path is accepted, a missing workspace file is rejected, and the emitted URL never contains percent escapes or falls back to the tunnel root. This reproduces the reported failure where `vscode.dev` displayed `%EA%B3%BC%EC%A0%84%EA%B0%95` as a literal folder and reported a missing workspace.
+- `tests/modes.test.cjs` verifies phone-first startup and switching: on a web client the extension opens the maximized Codex terminal without applying the desktop split layout, places the two mode buttons on the left of the status bar with short labels, hides the time machine and mobile buttons, resolves the preview through `vscode.env.asExternalUri`, and does not toggle back to a split view when the active mode button is pressed again.
+- Verified on the reporting machine that the remote tunnel server keeps its own extension directory. The desktop extension alone left the phone without Vibe buttons; installing the packaged VSIX into the tunnel server and matching `extension.js` hashes across desktop, skill source and remote server resolved it.
+- Preview tab discovery now matches `simpleBrowser.view` directly, because a Korean VS Code UI labels the tab `간단한 브라우저` and the previous English-only title match left the first column empty.
+- The auto-start dev server task received a `reveal: never` presentation block after a failed task covered the Codex prompt on the phone. Dev server reachability was confirmed separately over HTTP; a failed task and an unreachable server remain distinct findings.
+- Phone-side acceptance of the two buttons and the forwarded preview remains assigned to the user and is not claimed as automated end-to-end coverage.

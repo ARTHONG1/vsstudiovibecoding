@@ -49,12 +49,15 @@ function activate(context) {
   let mobileWebviewPanel;
   const exec = (command, ...args) => vscode.commands.executeCommand(command, ...args);
 
-  const terminalBtn = vscode.window.createStatusBarItem('vibe.terminalToggle', vscode.StatusBarAlignment.Right, 1001);
+  const isWebClient = !!(vscode.UIKind && vscode.env.uiKind === vscode.UIKind.Web);
+  const modeAlignment = isWebClient ? vscode.StatusBarAlignment.Left : vscode.StatusBarAlignment.Right;
+  const modePriority = isWebClient ? 1000000 : 1001;
+  const terminalBtn = vscode.window.createStatusBarItem('vibe.terminalToggle', modeAlignment, modePriority);
   terminalBtn.name = 'Vibe Coding Terminal Toggle';
   terminalBtn.command = 'vibe.toggleTerminal';
   context.subscriptions.push(terminalBtn);
 
-  const previewBtn = vscode.window.createStatusBarItem('vibe.previewToggle', vscode.StatusBarAlignment.Right, 1000);
+  const previewBtn = vscode.window.createStatusBarItem('vibe.previewToggle', modeAlignment, modePriority - 1);
   previewBtn.name = 'Vibe Coding Preview Toggle';
   previewBtn.command = 'vibe.togglePreview';
   context.subscriptions.push(previewBtn);
@@ -104,10 +107,14 @@ function activate(context) {
       previewBtn.text = '$(browser) 미리보기 전체';
       previewBtn.tooltip = '웹앱 미리보기를 전체화면으로 전환합니다 (Vibe Coding)';
     }
+    if (isWebClient) {
+      terminalBtn.text = '$(terminal) 터미널';
+      previewBtn.text = '$(browser) 미리보기';
+      terminalBtn.tooltip = 'Codex 터미널로 전환';
+      previewBtn.tooltip = '프로젝트 미리보기로 전환';
+    }
     terminalBtn.show();
     previewBtn.show();
-    timeMachineBtn.show();
-    mobileBtn.show();
   }
   updateStatusBars();
 
@@ -283,7 +290,7 @@ function activate(context) {
         }
         for (let attempt = 0; attempt < 50; attempt++) {
           previewGroup = vscode.window.tabGroups.all.find(g => {
-            previewTab = g.tabs.find(t => /127\.0\.0\.1|localhost/.test(t.label) || (previewUrl && t.label === 'Simple Browser'));
+            previewTab = g.tabs.find(t => t.input?.viewType === 'simpleBrowser.view' || /127\.0\.0\.1|localhost/.test(t.label) || (previewUrl && ['Simple Browser', '간단한 브라우저'].includes(t.label)));
             return !!previewTab;
           });
           if (previewGroup) break;
@@ -319,6 +326,17 @@ function activate(context) {
     });
   }
   async function toggle(options) {
+    if (isWebClient) {
+      await exec('workbench.action.closeSidebar');
+      await exec('workbench.action.closeAuxiliaryBar');
+      await exec('workbench.action.positionPanelBottom');
+      ensureTerminal().show(false);
+      await exec('workbench.action.terminal.focus');
+      if (currentMode !== 'terminal') await exec('workbench.action.toggleMaximizedPanel');
+      setMode('terminal');
+      record('terminal-full', { mode: currentMode });
+      return;
+    }
     if (currentMode === 'terminal') {
       return restore();
     }
@@ -333,6 +351,18 @@ function activate(context) {
     record('terminal-full', { mode: currentMode });
   }
   async function togglePreview() {
+    if (isWebClient) {
+      const url = vscode.workspace.getConfiguration('vibe').get('previewUrl', '');
+      if (!url) throw new Error('미리보기 주소가 설정되지 않았습니다.');
+      const external = await vscode.env.asExternalUri(vscode.Uri.parse(url));
+      await exec('workbench.action.closeSidebar');
+      await exec('workbench.action.closeAuxiliaryBar');
+      await exec('workbench.action.closePanel');
+      await exec('simpleBrowser.show', external.toString(), { viewColumn: vscode.ViewColumn.One, preserveFocus: false });
+      setMode('preview');
+      record('preview-full', { mode: currentMode });
+      return;
+    }
     if (currentMode === 'preview') {
       return restore();
     }
@@ -690,7 +720,7 @@ function activate(context) {
     }
     mobileWebviewPanel.webview.html = getMobileTunnelWebviewHtml({ projectPath: p, loading: true });
     try {
-      const tunnelInfo = await getOrStartTunnel(p);
+      const tunnelInfo = await getOrStartTunnel(p, { workspaceFile: vscode.workspace.workspaceFile?.fsPath });
       if (mobileWebviewPanel) {
         mobileWebviewPanel.webview.html = getMobileTunnelWebviewHtml({ projectPath: p, tunnelUrl: tunnelInfo.url, tunnelName: tunnelInfo.tunnelName });
       }
@@ -727,7 +757,18 @@ function activate(context) {
     })),
     vscode.window.onDidCloseTerminal(t => { if (t === terminal) terminal = undefined; }),
   );
+  updateStatusBars();
   record('activated');
-  return guarded(restore);
+  return guarded(async () => {
+    if (vscode.UIKind && vscode.env.uiKind === vscode.UIKind.Web) {
+      await exec('workbench.action.closeSidebar');
+      await exec('workbench.action.closeAuxiliaryBar');
+      await exec('workbench.action.positionPanelBottom');
+      currentMode = 'split';
+      await toggle();
+    } else {
+      await restore();
+    }
+  });
 }
 module.exports = { activate };

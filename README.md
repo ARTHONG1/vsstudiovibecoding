@@ -1,15 +1,15 @@
 # Vibe Coding
 
-[![Version](https://img.shields.io/badge/version-2.7.0-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
+[![Version](https://img.shields.io/badge/version-2.7.1-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6.svg?logo=windows)](https://github.com/ARTHONG1/vsstudiovibecoding)
 [![CI](https://github.com/ARTHONG1/vsstudiovibecoding/actions/workflows/ci.yml/badge.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/actions)
 
 **AI 에이전트에게 설치부터 화면 검증까지 맡기는 Windows용 바이브 코딩 스킬.**
 
-VS Code를 **미리보기 | 코드 | Codex** 3열로 배치하며, 상태바와 에디터 툴바의 전용 버튼으로 **3대 뷰포트 모드와 📱 공식 Codex Remote 초기 설정 안내** ([3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체])을 원클릭 전환합니다. 3열에 OpenAI 공식 Codex CLI를 구동하여 Computer Use 자율 화면 제어를 지원하며, VS Code 순정 `F12`(정의로 이동)를 100% 보존합니다.
+VS Code를 **미리보기 | 코드 | Codex** 3열로 배치하며, 상태바와 에디터 툴바의 전용 버튼으로 **3대 뷰포트 모드**([3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체])와 **📱 모바일 원격 연결**을 원클릭 전환합니다. 3열에 OpenAI 공식 Codex CLI를 구동하여 Computer Use 자율 화면 제어를 지원하며, VS Code 순정 `F12`(정의로 이동)를 100% 보존합니다.
 
-**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.7.0/vibe-coding-2.7.0.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
+**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.7.1/vibe-coding-2.7.1.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
 
 ## 가장 쉬운 시작
 
@@ -76,7 +76,9 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
 | Codex를 찾지 못함 | 공식 Codex CLI 설치 확인 또는 npm fallback 확인. “codex.exe의 경로와 --version을 확인해줘.” |
 | 오른쪽이 너무 좁음 | 패널 경계선을 왼쪽으로 이동. “Codex 입력창이 잘 보이도록 너비를 조정해줘.” |
 | 상태바 버튼이 안 보임 | 화면 우측 하단(포트 번호 바로 왼쪽) 확인. 창 다시 로드(`Ctrl+Shift+P` → `Reload Window`) 실행. |
-| 미리보기 복원 시간 초과 | v2.1.0에는 3대 뷰포트 모드, 터미널 복사/붙여넣기, 클립보드 이미지(Alt+V) 첨부 포함. “업데이트 후 저장하지 않은 파일을 보존하고 전용 창을 다시 열어 검증해줘.” |
+| 미리보기 복원 시간 초과 | 개발 서버가 실제로 응답하는지 먼저 확인. "업데이트 후 저장하지 않은 파일을 보존하고 전용 창을 다시 열어 검증해줘." |
+| 휴대폰에서 폴더가 열리지 않음 | 한글·공백 경로는 주소에 그대로 담기지 않습니다. [📱 모바일] QR은 영문 경로의 `.code-workspace`를 대상으로 해야 합니다. |
+| 휴대폰에 버튼이 안 보임 | 원격 서버에도 Vibe 확장이 설치돼야 합니다. 페이지를 새로고침한 뒤 상태바 왼쪽의 [터미널] · [미리보기]를 확인하세요. |
 | 실행 정책/조직 정책 오류 | 정책을 끄거나 우회하지 않음. 에이전트가 허용된 실행 경로를 확인; 관리 조직 정책이면 관리자 문의. |
 | 빈 index.html 또는 경로 불일치 | 앱 가상화 가능성. “실제 Windows 사용자와 에이전트의 파일 해시·경로를 비교해줘.” |
 | React/Vite 미리보기 연결 실패 | 기존 개발 서버가 실행 중인지와 실제 localhost URL 확인. HTML 샘플로 덮어쓰지 않음. |
@@ -126,12 +128,14 @@ AI가 코드를 수정하다가 기존 기능을 망가뜨렸을 때, Firebase S
 
 2026-09-18, Windows 11 x64 / VS Code 1.138.0 / Codex CLI / Live Preview 0.4.20에서 샘플 3열·한글·버튼·F12 왕복·정상 종료/재실행과 미리보기 제목 변경 수정 후 복원을 실제 화면 및 로그로 확인했습니다. 다른 PC와 모든 프레임워크에서 성공을 보장하는 결과는 아닙니다. [검증 범위](TESTING.md)를 확인하세요.
 
-## 휴대폰에서 원격으로 작업하기 (v2.7.0)
+## 휴대폰에서 원격으로 작업하기 (v2.7.1)
 
-상태바 **[📱 모바일]** 버튼을 누르면 마이크로소프트 공식 \`code tunnel\` 엔진이 백그라운드에서 프로젝트 전용 \`vscode.dev\` 다이렉트 주소를 캡처하고 **스마트폰 카메라로 즉시 스캔할 수 있는 QR 코드**를 띄워줍니다. Vibe 확장이 원격 터널 서버에 자동 적재되어, 스마트폰 화면에서도 **[ 🗖 터미널 전체 ]**로 AI에게 지시하고 **[ 🌐 미리보기 전체 ]**로 내 사이트를 전체화면으로 만져볼 수 있습니다.
+상태바 **[📱 모바일]** 버튼을 누르면 마이크로소프트 공식 `code tunnel` 엔진이 백그라운드에서 프로젝트 전용 `vscode.dev` 주소를 만들고, **스마트폰 카메라로 바로 스캔할 수 있는 QR 코드**를 띄웁니다. 휴대폰에서 최초 1회 PC와 같은 GitHub 계정으로 로그인하면 내 PC의 프로젝트가 그대로 열립니다.
 
-스마트폰에서 최초 1회 PC와 동일한 GitHub 계정으로 로그인하면 내 PC의 프로젝트가 바로 열립니다. PC가 켜져 있고 온라인이어야 하며, \`--no-sleep\` 플래그로 터널 동작 중 절전 모드가 방지됩니다.
+휴대폰 화면에서는 상태바 왼쪽에 **[ 터미널 ]** 과 **[ 미리보기 ]** 두 버튼만 크게 노출됩니다. [터미널]은 Codex 입력 화면으로, [미리보기]는 개발 서버가 그리는 실제 결과 화면으로 한 번에 전환합니다. 좁은 화면에서 3열을 거치지 않으므로 이동 중에도 바로 지시하고 결과를 확인할 수 있습니다.
 
-이 버튼은 연결 안내이며 연결 상태를 자동 확인하거나 원격 접속을 켜지 않습니다. 별도 웹서버·Dev Tunnel·자체 QR을 실행하지 않습니다. 휴대폰에서 VS Code 화면 자체를 보는 기능이나 CLI 대화의 실시간 양방향 표시는 보장하지 않습니다. 계정·워크스페이스 및 앱 버전에 따라 공식 Remote 제공 여부가 달라질 수 있습니다.
+연결 주소는 한글·공백이 없는 `.code-workspace` 파일을 가리킵니다. `vscode.dev`가 주소에 담긴 한글을 그대로 폴더 이름으로 취급해 프로젝트가 열리지 않던 문제를 피하기 위해서입니다. 워크스페이스 파일이 프로젝트 폴더와 미리보기 주소를 함께 담고 있어 휴대폰에서도 같은 설정이 적용됩니다.
 
-[공식 Remote 연결 안내](https://learn.chatgpt.com/docs/remote-connections) · [AI의 모바일 설정 절차](vibe-coding/references/mobile-remote.md)
+PC가 켜져 있고 온라인이어야 하며, `--no-sleep` 플래그로 터널 동작 중 절전이 방지됩니다. 원격 창에도 Vibe 확장이 설치돼야 두 버튼이 보입니다. 휴대폰과 PC에서 같은 파일을 동시에 편집하지 마세요.
+
+[AI의 모바일 설정 절차](vibe-coding/references/mobile-remote.md) · [VS Code 원격 터널 공식 문서](https://code.visualstudio.com/docs/remote/tunnels)

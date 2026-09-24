@@ -147,3 +147,36 @@ test('openExternalBrowser opens system default browser with dev server URL', asy
     assert.equal(env.terminals.length, terminalsBefore);
     assert.deepEqual(calls, []);
   });
+
+test('remote web startup opens terminal without desktop split layout', async () => {
+ const env=createMockVSCode();
+ env.vscode.UIKind={Web:2};env.vscode.env.uiKind=2;
+ env.vscode.window.createStatusBarItem=()=>({show(){},hide(){},dispose(){}});
+ const calls=[];env.vscode.commands.executeCommand=async command=>calls.push(command);
+ await env.module.exports.activate({subscriptions:[],globalStorageUri:{fsPath:'C:/test'}});
+ assert.equal(env.terminals.length,1);
+ assert.ok(calls.includes('workbench.action.positionPanelBottom'));
+ assert.ok(calls.includes('workbench.action.toggleMaximizedPanel'));
+ assert.ok(!calls.includes('vscode.setEditorLayout'));
+ assert.ok(env.events.some(e=>e.event==='terminal-full'));
+});
+
+test('web controls stay compact and switch directly without desktop restore', async () => {
+ const env=createMockVSCode({previewUrl:'http://localhost:5173'});
+ env.vscode.UIKind={Web:2};env.vscode.env.uiKind=2;
+ const items=[];env.vscode.window.createStatusBarItem=(id,alignment,priority)=>{const item={id,alignment,priority,show(){this.visible=true},hide(){this.visible=false},dispose(){}};items.push(item);return item;};
+ env.vscode.env.asExternalUri=async()=>({toString:()=> 'https://forwarded.example/'});
+ const calls=[];env.vscode.commands.executeCommand=async(...args)=>calls.push(args);
+ await env.module.exports.activate({subscriptions:[],globalStorageUri:{fsPath:'C:/test'}});
+ assert.equal(items[0].alignment,env.vscode.StatusBarAlignment.Left);
+ assert.equal(items[0].text,'$(terminal) 터미널');
+ assert.equal(items[1].text,'$(browser) 미리보기');
+ assert.equal(items[2].visible,false);
+ await env.commands.get('vibe.togglePreview')();
+ assert.ok(calls.some(c=>c[0]==='simpleBrowser.show' && c[1]==='https://forwarded.example/'));
+ await env.commands.get('vibe.toggleTerminal')();
+ const count=calls.filter(c=>c[0]==='workbench.action.toggleMaximizedPanel').length;
+ await env.commands.get('vibe.toggleTerminal')();
+ assert.equal(calls.filter(c=>c[0]==='workbench.action.toggleMaximizedPanel').length,count);
+ assert.ok(!calls.some(c=>c[0]==='vscode.setEditorLayout'));
+});

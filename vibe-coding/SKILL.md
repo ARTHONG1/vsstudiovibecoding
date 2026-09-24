@@ -41,11 +41,13 @@ AI가 코드를 수정할 때마다 대화/작업 단위로 그림자 스냅샷�
 6. **Verify and repair.** Follow [verification.md](references/verification.md). Reproduce failures, change their cause, and retest. Do not ask the user to perform actions available to the agent. If UI automation is unavailable, finish authorized setup and report UI verification as pending; never substitute process existence for screen evidence.
 7. **Deliver.** Leave the verified window open. State the shortcut, F12 behavior, and only what was actually tested. Distinguish Codex startup from an authenticated AI response. Do not send an AI request just to test setup unless requested.
 
-## Optional mobile task setup — official Codex Remote
+## Optional mobile task setup — VS Code remote tunnel
 
-When the user requests phone-based AI instructions, read [mobile-remote.md](references/mobile-remote.md). The agent owns initial environment discovery, project matching, connection assistance, visual feedback verification, and dev tunnel configuration; official Codex Remote owns subsequent execution. Reuse an existing connection and do not require this skill for each later task. Ordinary VS Code setup does not enable remote access automatically.
+When the user requests phone-based work, read [mobile-remote.md](references/mobile-remote.md). The status bar **[📱 모바일]** button starts Microsoft's official `code tunnel` for the current project and shows a scannable QR code. The agent owns environment discovery, tunnel target selection, remote extension installation and verification; the official tunnel service owns transport and GitHub authentication. Ordinary VS Code setup does not start a tunnel; only this button or an explicit request does.
 
-Use the installed desktop app's supported Remote flow. A visible CLI conversation, a QR code, or the existing VS Code Tunnel mobile button is not proof of Remote execution. Preserve the existing layout, terminals, model/provider choices and project files. Separate setup readiness, phone pairing, local execution and preview verification in the completion report; never claim untested CLI conversation continuity.
+Point the connection URL at the isolated `.code-workspace` file when its path is pure ASCII, because `vscode.dev` treats percent-encoded path segments as literal folder names and fails to open Korean or spaced project paths. The workspace file carries the project folder, preview URL and Codex path, so the phone receives the same configuration. Install the packaged extension into the remote server as well; without it the phone shows no Vibe buttons.
+
+On a phone the layout is two buttons, **[ 터미널 ]** and **[ 미리보기 ]**, placed on the left of the status bar so a narrow screen never hides them. They switch directly between the Codex terminal and the forwarded preview without passing through the desktop 3-column layout. Preserve the existing desktop layout, terminals, model/provider choices and project files. Report tunnel readiness, phone sign-in, remote execution and preview reflection separately; a rendered QR code alone is not proof that the phone opened the project.
 
 ### Agent-owned visual feedback and port forwarding
 When working on phone/remote requests that touch UI or when requested by the user:

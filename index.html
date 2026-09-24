@@ -92,9 +92,10 @@
 
     <main>
       <section>
-        <h2>최신 버전 v2.7.0 · 공식 Dev Tunnel 다이렉트 QR 모바일 원격 코딩</h2>
-        <p>[📱 모바일] 버튼을 누르면 Microsoft 공식 <code>code tunnel</code> 엔진이 프로젝트 전용 <code>vscode.dev</code> 다이렉트 주소를 캡처하고 <strong>스마트폰 카메라로 즉시 스캔할 수 있는 QR 코드</strong>를 띄워줍니다. Vibe 확장이 원격 터널 서버에 자동 적재되어, 스마트폰 화면에서도 <strong>[ 🗖 터미널 전체 ]</strong>로 AI에게 지시하고 <strong>[ 🌐 미리보기 전체 ]</strong>로 내 사이트를 전체화면으로 만져볼 수 있습니다.</p>
-        <p><a href="https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.7.0/vibe-coding-2.7.0.zip">v2.7.0 스킬 ZIP 다운로드</a> · <a href="https://github.com/ARTHONG1/vsstudiovibecoding/releases/tag/v2.7.0">릴리스 노트 보기</a></p>
+        <h2>최신 버전 v2.7.1 · 휴대폰에서 바로 쓰는 터미널 · 미리보기 2버튼</h2>
+        <p>[📱 모바일] 버튼을 누르면 Microsoft 공식 <code>code tunnel</code> 엔진이 프로젝트 전용 <code>vscode.dev</code> 주소를 만들고 <strong>스마트폰 카메라로 바로 스캔할 수 있는 QR 코드</strong>를 띄웁니다. 휴대폰 화면에서는 상태바 왼쪽의 <strong>[ 터미널 ]</strong> 로 AI에게 지시하고 <strong>[ 미리보기 ]</strong> 로 내 사이트 결과를 확인합니다. 좁은 화면에서 3열을 거치지 않고 두 화면을 곧바로 오갑니다.</p>
+        <p>연결 주소는 한글·공백이 없는 <code>.code-workspace</code> 파일을 가리켜, <code>vscode.dev</code>가 한글 경로를 폴더 이름으로 잘못 읽어 프로젝트가 열리지 않던 문제를 해결했습니다.</p>
+        <p><a href="https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.7.1/vibe-coding-2.7.1.zip">v2.7.1 스킬 ZIP 다운로드</a> · <a href="https://github.com/ARTHONG1/vsstudiovibecoding/releases/tag/v2.7.1">릴리스 노트 보기</a></p>
       </section>
     <section>
       <h2>🚀 1분 만에 세팅하기 (AI에게 요청)</h2>
@@ -140,8 +141,8 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
       </div>
       <div class="grid">
         <div class="step-card">
-          <h3>📱 공식 Codex Remote로 작업 이어가기</h3>
-          <p>상태바의 <strong>[📱 모바일]</strong> 버튼에서 초기 설정 요청을 복사해 AI에게 맡기세요. 이미 연결했다면 휴대폰 ChatGPT 앱의 <strong>Remote → 이 PC → 기존 작업</strong>을 선택하면 됩니다. 버튼 자체는 원격 접속을 켜거나 연결 상태를 판정하지 않습니다.</p>
+          <h3>📱 휴대폰에서 작업 이어가기</h3>
+          <p>상태바의 <strong>[📱 모바일]</strong> 버튼을 누르고 QR을 휴대폰 카메라로 스캔하세요. 최초 1회만 PC와 같은 GitHub 계정으로 로그인하면 내 프로젝트가 그대로 열립니다. 이후에는 <strong>[ 터미널 ]</strong> 과 <strong>[ 미리보기 ]</strong> 두 버튼으로 지시와 확인을 반복하면 됩니다.</p>
         </div>
         <div class="step-card">
           <h3>⏪ 무오염 Vibe 타임머신 (Alt+Z)</h3>
@@ -184,7 +185,7 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
       </details>
       <details>
         <summary><strong>스마트폰으로 모바일 원격 작업은 어떻게 하나요?</strong></summary>
-        <p>[📱 모바일] 안내에 따라 PC의 공식 데스크톱 앱에서 Remote를 설정하고, 앱이 제공하는 QR로 휴대폰을 연결하세요. 같은 계정·워크스페이스와 동일한 프로젝트 폴더를 사용해야 합니다. PC는 켜져 있고 온라인이어야 하며, 미리보기 갱신에는 개발 서버가 필요합니다. VS Code 화면 전송이나 CLI 대화의 실시간 동기화는 보장하지 않습니다. <a href="https://learn.chatgpt.com/docs/remote-connections">공식 연결 안내</a></p>
+        <p>[📱 모바일] 버튼이 띄운 QR을 휴대폰 카메라로 스캔하고, 최초 1회 PC와 같은 GitHub 계정으로 로그인하세요. PC는 켜져 있고 온라인이어야 하며, 미리보기 갱신에는 개발 서버가 실행 중이어야 합니다. 원격 창에도 Vibe 확장이 설치돼야 [ 터미널 ] · [ 미리보기 ] 버튼이 보입니다. 휴대폰과 PC에서 같은 파일을 동시에 편집하지 마세요. <a href="https://code.visualstudio.com/docs/remote/tunnels">VS Code 원격 터널 공식 문서</a></p>
       </details>
       <details>
         <summary><strong>새로운 프로젝트마다 어떻게 적용하나요?</strong></summary>
