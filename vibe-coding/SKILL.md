@@ -12,7 +12,7 @@ Deliver a working Windows VS Code window: **Preview | Code | Codex**, with **[3�
 ### Core Delegation Principle
 The primary objective of this skill is **autonomous initial setup of the VS Code Vibe Coding environment on behalf of the user**. Beginners find manual IDE configuration, panel arrangement, dev server matching, terminal UTF-8, and extension wiring complex. The AI agent acts as the autonomous setup engineer: it analyzes the project, configures auto-start in `.vscode/tasks.json`, installs the isolated layout extension, creates a one-click desktop shortcut, launches and verifies the screen, and leaves the user in an immediately usable coding state.
 진짜 브라우저 검수(DevTools, 쿠키, 결제 연동)가 필요한 경우 에디터 상단 툴바의 [ ↗ 외부 브라우저 ]를 통해 1클릭으로 시스템 Chrome/Edge와 연동됩니다.
-AI가 코드를 수정할 때마다 대화/작업 단위로 그림자 스냅샷이 자동 적립되며, 에디터 상단 툴바 [ ⏪ ] 또는 상태바 [ $(history) 타임머신 ](단축키 Alt+Z)을 통해 원하는 과거 대화 시점으로 프로젝트 전체를 0.1초 만에 무결점 롤백할 수 있습니다. (기존 Git 커밋 히스토리를 전혀 더럽히지 않음)
+AI가 코드를 수정할 때마다 대화/작업 단위로 그림자 스냅샷이 쌓이며, 에디터 상단 툴바 [ ⏪ ] 또는 상태바 [ $(history) 타임머신 ](단축키 Alt+Z)에서 원하는 과거 대화 시점으로 작업 파일을 되돌릴 수 있습니다. 스냅샷은 `refs/vibe` 아래에 보관되어 사용자의 브랜치 커밋 기록에는 나타나지 않고, 복원 시 별도 인덱스를 사용하므로 `git add`로 올려둔 상태도 그대로 유지됩니다.
 
 ## Scope and preservation
 

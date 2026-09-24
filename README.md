@@ -5,9 +5,15 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6.svg?logo=windows)](https://github.com/ARTHONG1/vsstudiovibecoding)
 [![CI](https://github.com/ARTHONG1/vsstudiovibecoding/actions/workflows/ci.yml/badge.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/actions)
 
-**AI 에이전트에게 설치부터 화면 검증까지 맡기는 Windows용 바이브 코딩 스킬.**
+**VS Code 세팅을 AI 에이전트에게 통째로 맡기는 Windows용 바이브 코딩 스킬.**
 
-VS Code를 **미리보기 | 코드 | Codex** 3열로 배치하며, 상태바와 에디터 툴바의 전용 버튼으로 **3대 뷰포트 모드**([3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체])와 **📱 모바일 원격 연결**을 원클릭 전환합니다. 3열에 OpenAI 공식 Codex CLI를 구동하여 Computer Use 자율 화면 제어를 지원하며, VS Code 순정 `F12`(정의로 이동)를 100% 보존합니다.
+> Let an AI agent set up your whole Windows VS Code vibe-coding workspace: preview, code, and Codex side by side, plus one-tap mobile access.
+
+바이브 코딩을 시작할 때 진짜 어려운 건 코드가 아니라 **환경**입니다. 어떤 확장을 깔아야 하는지, 개발 서버 포트는 몇 번인지, 미리보기를 어디에 붙여야 하는지, 터미널 한글은 왜 깨지는지. 이 스킬은 그 과정을 사람이 배우게 하지 않고 **AI 에이전트에게 위임합니다.**
+
+한 문장만 던지면 에이전트가 프로젝트를 열어 구조를 읽고, 실행 명령과 미리보기 주소를 직접 찾아내고, 기존 VS Code를 건드리지 않는 전용 작업 환경을 만들고, 바탕화면 바로가기까지 만든 뒤 화면이 실제로 뜨는지 확인합니다. 사용자가 할 일은 아이콘을 누르는 것뿐입니다.
+
+열리는 화면은 왼쪽 **미리보기**, 가운데 **코드**, 오른쪽 **Codex** 세 칸입니다. 상태바 버튼으로 [3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체]를 오가고, [📱 모바일]로 휴대폰에서 같은 프로젝트를 이어서 작업합니다. 작업 중에는 대화 단위로 스냅샷이 쌓여 원하는 과거 시점으로 되돌릴 수 있습니다. 에디터의 `F12`는 VS Code 기본 동작(정의로 이동) 그대로 둡니다.
 
 **[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.7.1/vibe-coding-2.7.1.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
 
@@ -86,13 +92,14 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
 
 문제 신고에는 OS, 버전, 기대/실제 동작, 민감정보를 가린 오류만 포함하세요. 전체 로그나 사용자 경로·API 키를 그대로 게시하지 마세요.
 
-## ⏪ Vibe 타임머신 (대화 단위 무오염 롤백)
+## ⏪ Vibe 타임머신 (대화 단위 되돌리기)
 
-AI가 코드를 수정하다가 기존 기능을 망가뜨렸을 때, Firebase Studio나 Google AI Studio처럼 **대화 턴 단위로 원하는 과거 시점을 선택해 사용자의 Staging Area를 보존하면서 작업 소스 및 신규 생성 파일을 안전하게 복원**합니다.
+AI가 코드를 고치다 멀쩡하던 기능을 망가뜨렸을 때, 대화 턴 단위로 과거 시점을 골라 작업 파일을 되돌립니다. 초보자가 Git 명령을 배우지 않아도 "아까 그 상태로"가 가능하도록 만든 장치입니다.
 
-- **순정 Git 히스토리 100% 무오염**: git commit이나 git stash를 쓰지 않고, Git 저수준 배관 명령어(commit-tree)로 분리된 그림자 스냅샷을 생성하므로 사용자의 main 브랜치 커밋 로그를 단 1글자도 더럽히지 않습니다.
-- **스마트 대화 제목 추출**: 중간의 "응", "진행해" 같은 단순 확인 단답을 자동 필터링하고, 사용자가 실제로 Codex에게 요청했던 핵심 지시 내용(예: *"점수판 텍스트를 한글로 점수라고 표시해줘"*)을 스냅샷 제목으로 1대화당 딱 1개씩 깔끔하게 기록합니다.
-- **원클릭 복원 & Redo**: 에디터 상단 툴바의 **[ ⏪ ]** 아이콘이나 하단 상태바의 **[ $(history) 타임머신 ]** (단축키 Alt + Z)을 누르면 즉시 복원 메뉴가 뜨며, 방금 실행한 롤백을 다시 취소(Redo)하는 안전망도 제공합니다.
+- **브랜치 기록을 건드리지 않음**: `git commit`이나 `git stash` 대신 저수준 명령(`commit-tree`)으로 별도 스냅샷을 만들고 `refs/vibe` 아래에 보관합니다. main 브랜치 커밋 로그에는 아무것도 추가되지 않습니다. 스냅샷 객체 자체는 프로젝트의 `.git` 안에 저장됩니다.
+- **Staging 보존**: 복원할 때 별도 인덱스를 사용하므로, 사용자가 `git add`로 올려둔 상태는 그대로 남습니다.
+- **대화 제목으로 기록**: "응", "진행해" 같은 단답은 걸러내고 실제 지시 내용(예: *"점수판 텍스트를 한글로 바꿔줘"*)을 스냅샷 이름으로 대화당 하나씩 남깁니다.
+- **되돌리기와 취소**: 에디터 툴바의 **[ ⏪ ]** 또는 상태바 **[ 타임머신 ]**(`Alt+Z`)으로 복원 메뉴를 열고, 방금 한 롤백을 다시 취소할 수 있습니다.
 
 ## 저장 위치·업데이트·되돌리기
 
@@ -103,7 +110,7 @@ AI가 코드를 수정하다가 기존 기능을 망가뜨렸을 때, Firebase S
 ## 하이브리드 브라우저 & AI 디버깅 파이프라인
 
 - **가벼운 실시간 코딩:** VS Code 3열 내장 뷰포트로 리소스 낭비 없이 실시간 핫리로드 반영
-- **AI 시각 검수 (Computer Use):** `[ 🌐 미리보기 전체 ]` 모드로 에디터 노이즈를 100% 제거한 1:1 고해상도 뷰포트 확보
+- **AI 시각 검수 (Computer Use):** `[ 🌐 미리보기 전체 ]` 모드로 에디터 요소를 걷어낸 1:1 뷰포트 확보
 - **결제·쿠키·F12 심층 검수:** 코드 상단 툴바의 `[ ↗ 외부 브라우저 ]` 클릭 한 번으로 Chrome/Edge 호출
 - **AI 초고속 DOM 검증:** 프로젝트의 실제 로컬 개발 서버(Live Preview 또는 Vite 5173, Next.js 3000 등) 엔드포인트를 상시 유지하여 Playwright/Browser-Use가 백그라운드 CDP로 결제창·모달·네트워크 무결성 테스트 병행
 
@@ -139,3 +146,12 @@ AI가 코드를 수정하다가 기존 기능을 망가뜨렸을 때, Firebase S
 PC가 켜져 있고 온라인이어야 하며, `--no-sleep` 플래그로 터널 동작 중 절전이 방지됩니다. 원격 창에도 Vibe 확장이 설치돼야 두 버튼이 보입니다. 휴대폰과 PC에서 같은 파일을 동시에 편집하지 마세요.
 
 [AI의 모바일 설정 절차](vibe-coding/references/mobile-remote.md) · [VS Code 원격 터널 공식 문서](https://code.visualstudio.com/docs/remote/tunnels)
+
+## 만든 사람
+
+**AI찬우쌤**이 교실에서 쓰려고 만들었습니다. 수업 자료를 직접 만들다 보면 코드보다 환경 설정에서 먼저 막히는데, 그 벽을 학생과 선생님 대신 AI가 넘어주게 하자는 생각에서 출발했습니다.
+
+- **클래스똑딱** — [classddok.com](https://classddok.com/) · 교사를 위한 에듀테크 연구회이자 수업 도구 모음입니다. AI 받아쓰기, 워드서치, 퀴즈·게임, OMR 채점, AI 실시간 토론 게시판 등을 바로 쓸 수 있고 [교원 연수](https://classddok.com/trainings)도 운영합니다.
+- **AI찬우쌤 유튜브** — [채널 바로가기](https://www.youtube.com/channel/UCnmcRReKbadpjJmueG1nzvw) · AI 도구를 수업에 실제로 적용하는 과정을 다룹니다.
+
+교실이든 개인 프로젝트든, 환경 설정 때문에 시작을 미루는 사람이 줄어들면 좋겠습니다. 써보고 막히는 지점이 있으면 [이슈](https://github.com/ARTHONG1/vsstudiovibecoding/issues)로 알려주세요.
