@@ -33,6 +33,12 @@ const requiredFiles = [
   'vibe-coding/references/execution.md',
   'vibe-coding/references/verification.md',
   'vibe-coding/references/mobile-remote.md',
+  'vibe-coding/references/agent-tools.md',
+  'vibe-coding/references/codex-startup.md',
+  'vibe-coding/references/playwright.md',
+  'vibe-coding/references/context7.md',
+  'vibe-coding/references/chrome-devtools.md',
+  'vibe-coding/assets/agent-tool-guidance.md',
   'vibe-coding/assets/sample.html',
   'vibe-coding/assets/workspace-extension/extension/package.json',
   'vibe-coding/assets/workspace-extension/extension/extension.js',
@@ -61,6 +67,8 @@ try {
     success(`Version aligned: v${rootPkg.version}`);
   }
 
+  const manifest = fs.readFileSync(path.join(ROOT, 'vibe-coding/assets/workspace-extension/extension.vsixmanifest'), 'utf8');
+  if (!manifest.includes('Version="' + rootPkg.version + '"')) error('VSIX manifest version mismatch');
   const expectedDownloadUrl = `/releases/download/v${rootPkg.version}/vibe-coding-${rootPkg.version}.zip`;
   if (!readmeText.includes(expectedDownloadUrl)) {
     error(`README.md does not reference the exact release download URL: ${expectedDownloadUrl}`);

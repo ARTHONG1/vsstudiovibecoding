@@ -6,6 +6,7 @@ param(
   [string]$Root = (Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'VibeCoding'),
   [string]$CodePath,
   [string]$CodexPath,
+  [string[]]$CodexArgs,
   [string]$DesktopPath = [Environment]::GetFolderPath('Desktop'),
   [string]$SkillRoot,
   [switch]$CreateSample,
@@ -213,6 +214,7 @@ Save-Json $keybindingsPath $keys
 $wsSettings = $workspace.settings
 if (!$wsSettings) { $wsSettings = [pscustomobject]@{} }
 Set-Key $wsSettings 'vibe.enabled' $true
+if ($PSBoundParameters.ContainsKey('CodexArgs')) { Set-Key $wsSettings 'vibe.codexArgs' @($CodexArgs) }
 Set-Key $wsSettings 'vibe.codexPath' $(if ($CodexPath) {$CodexPath} else {''})
 Set-Key $wsSettings 'vibe.entryFile' $EntryFile
 Set-Key $wsSettings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
@@ -289,8 +291,8 @@ $link.Save()
 if ($RegisterContextMenu) {
   try {
     $regScript = Join-Path $SkillRoot 'scripts\setup.ps1'
-    $cmdStr = 'powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -Command "& ''' + $regScript + ''' -ProjectPath ''%V'' -Apply -Launch"'
-    $bgCmdStr = 'powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -Command "& ''' + $regScript + ''' -ProjectPath ''%W'' -Apply -Launch"'
+    $cmdStr = 'powershell.exe -WindowStyle Hidden -Command "& ''' + $regScript + ''' -ProjectPath ''%V'' -Apply -Launch"'
+    $bgCmdStr = 'powershell.exe -WindowStyle Hidden -Command "& ''' + $regScript + ''' -ProjectPath ''%W'' -Apply -Launch"'
     $regDirs = @("HKCU:\Software\Classes\Directory\shell\VibeCoding", "HKCU:\Software\Classes\Directory\Background\shell\VibeCoding")
     foreach ($regPath in $regDirs) {
       New-Item -Path $regPath -Force | Out-Null
@@ -300,7 +302,7 @@ if ($RegisterContextMenu) {
       $val = if ($regPath -like "*Background*") { $bgCmdStr } else { $cmdStr }
       Set-ItemProperty -Path "$regPath\command" -Name "(Default)" -Value $val -Force
     }
-  } catch {}
+  } catch { Write-Warning ("Context menu registration failed: " + $_.Exception.Message) }
 }
 if ($Launch -and (Test-Path -LiteralPath $shortcutPath)) {
   Start-Process $shortcutPath

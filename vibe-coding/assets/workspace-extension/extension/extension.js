@@ -17,13 +17,13 @@ function checkPortReachable(urlStr) {
       const host = (u.hostname === 'localhost') ? '127.0.0.1' : (u.hostname || '127.0.0.1');
       const req = client.get({ hostname: host, port, path: u.pathname || '/', timeout: 600 }, res => {
         res.resume();
-        resolve(true);
+        resolve(res.statusCode >= 200 && res.statusCode < 400);
       });
       req.on('error', () => {
         if (host === '127.0.0.1') {
           const fb = client.get({ hostname: 'localhost', port, path: u.pathname || '/', timeout: 400 }, res => {
             res.resume();
-            resolve(true);
+            resolve(res.statusCode >= 200 && res.statusCode < 400);
           });
           fb.on('error', () => resolve(false));
           fb.on('timeout', () => { fb.destroy(); resolve(false); });
@@ -187,7 +187,7 @@ function activate(context) {
         terminal = vscode.window.createTerminal({
           name: 'Codex',
           shellPath: executable,
-          shellArgs: [],
+          shellArgs: vscode.workspace.getConfiguration('vibe').get('codexArgs', []),
           cwd: vscode.workspace.workspaceFolders[0].uri.fsPath,
           location: vscode.TerminalLocation.Panel,
           env: {
@@ -528,6 +528,11 @@ function activate(context) {
     fs.writeFileSync(path.join(dir, 'checkpoints.json'), JSON.stringify(list.slice(0, 50), null, 2), 'utf8');
   }
 
+  function protectCheckpoint(p, ref, sha) {
+    execFileSync('git', ['update-ref', ref, sha], { cwd: p, stdio: 'ignore' });
+    const actual = execFileSync('git', ['rev-parse', '--verify', ref], { cwd: p, encoding: 'utf8' }).trim();
+    if (actual !== sha) throw new Error('Checkpoint protection verification failed: ' + ref);
+  }
   function createShadowCheckpoint(p, customLabel) {
     try {
       initGit(p);
@@ -565,8 +570,8 @@ function activate(context) {
           list[0].timestamp = now.toISOString();
           list[0].fileSummary = fileSummary;
           list[0].changedCount = changedFiles.length;
+          protectCheckpoint(p, 'refs/vibe/checkpoints/' + list[0].id, commitSha);
           try {
-            execFileSync('git', ['update-ref', 'refs/vibe/checkpoints/' + list[0].id, commitSha], { cwd: p, stdio: 'ignore' });
             if (oldId && oldId !== list[0].id) {
               execFileSync('git', ['update-ref', '-d', 'refs/vibe/checkpoints/' + oldId], { cwd: p, stdio: 'ignore' });
             }
@@ -580,10 +585,10 @@ function activate(context) {
       const commitSha = execFileSync('git', ['commit-tree', treeSha, '-m', commitMsg], { cwd: p, encoding: 'utf8' }).trim();
       const record = { id: commitSha.slice(0, 7), commitSha, treeSha, title, turnId: turnId || null, fileSummary, changedCount: changedFiles.length, timestamp: now.toISOString(), timeStr };
       list.unshift(record);
-      try { execFileSync('git', ['update-ref', 'refs/vibe/checkpoints/' + record.id, commitSha], { cwd: p, stdio: 'ignore' }); } catch {}
+      protectCheckpoint(p, 'refs/vibe/checkpoints/' + record.id, commitSha);
       saveCheckpoints(p, list);
       return record;
-    } catch (e) { return null; }
+    } catch (e) { vscode.window.showErrorMessage('체크포인트 저장 실패: ' + e.message); return null; }
   }
 
   async function restoreShadowCheckpoint(p, targetSha, targetTitle) {
@@ -600,7 +605,7 @@ function activate(context) {
         commitSha = execFileSync('git', ['commit-tree', treeSha, '-m', 'Vibe Safety Backup'], { cwd: p, encoding: 'utf8' }).trim();
         const now = new Date();
         const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-        try { execFileSync('git', ['update-ref', 'refs/vibe/safety', commitSha], { cwd: p, stdio: 'ignore' }); } catch {}
+        protectCheckpoint(p, 'refs/vibe/safety', commitSha);
         const safetyFile = path.join(p, '.vibe', 'safety.json');
         fs.writeFileSync(safetyFile, JSON.stringify({ sha: commitSha, title: '롤백 직전 코드 (취소/Redo용)', timeStr }), 'utf8');
       } catch (err) {
@@ -639,8 +644,7 @@ function activate(context) {
     if (!list || list.length === 0) {
       const act = await vscode.window.showInformationMessage('저장된 대화 시점이 없습니다. 현재 상태를 스냅샷으로 저장하시겠습니까?', '스냅샷 저장');
       if (act === '스냅샷 저장') {
-        createShadowCheckpoint(p, '최초 수동 스냅샷');
-        vscode.window.showInformationMessage('현재 시점의 스냅샷이 저장되었습니다.');
+        if (createShadowCheckpoint(p, '최초 수동 스냅샷')) vscode.window.showInformationMessage('현재 시점의 스냅샷이 저장되었습니다.');
       }
       return;
     }
@@ -684,8 +688,7 @@ function activate(context) {
     if (selected.isCreate) {
       const input = await vscode.window.showInputBox({ prompt: '스냅샷 이름을 입력하세요', placeHolder: '예: 메인 레이아웃 완성 시점' });
       if (input) {
-        createShadowCheckpoint(p, input);
-        vscode.window.showInformationMessage('스냅샷 [' + input + '] 저장 완료');
+        if (createShadowCheckpoint(p, input)) vscode.window.showInformationMessage('스냅샷 [' + input + '] 저장 완료');
       }
       return;
     }
@@ -751,8 +754,7 @@ function activate(context) {
       const p = vscode.workspace.workspaceFolders[0].uri.fsPath;
       const input = await vscode.window.showInputBox({ prompt: '스냅샷 이름을 입력하세요', placeHolder: '예: 결제창 수정 전' });
       if (input) {
-        createShadowCheckpoint(p, input);
-        vscode.window.showInformationMessage('스냅샷 [' + input + '] 저장 완료');
+        if (createShadowCheckpoint(p, input)) vscode.window.showInformationMessage('스냅샷 [' + input + '] 저장 완료');
       }
     })),
     vscode.window.onDidCloseTerminal(t => { if (t === terminal) terminal = undefined; }),

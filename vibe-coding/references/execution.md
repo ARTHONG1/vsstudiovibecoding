@@ -14,7 +14,11 @@ The bundled setup creates a temporary visibility marker and compares SHA256 hash
 
 Version equality is not sufficient: `scripts/setup-files.ps1` compares installed extension content with the skill source (allowing VS Code installation metadata). A same-version stale installation must be updated and verified. If installation does not converge, stop before creating/replacing the shortcut. Preserve unsaved VS Code Backups and lock files; deleting them cannot repair files hidden by virtualization.
 
+The optional context-menu launcher uses the current PowerShell execution policy. If that policy blocks the script, report the restriction; do not bypass it.
+
 ## Inputs and agent usage
+
+`setup.ps1` prepares the VS Code layout, extensions and launcher. Full skill execution also requires the setup agent to follow [agent-tools.md](agent-tools.md): prepare all three default development tools, merge project usage guidance, and verify them in the actual coding client. Running the PowerShell helper alone does not complete that tool setup.
 
 Run from the skill's directory or use an absolute script path. Discover real values; these are examples, not paths to copy:
 
@@ -31,7 +35,7 @@ Run from the skill's directory or use an absolute script path. Discover real val
 
 Optional `-Root`, `-CodePath`, `-CodexPath`, `-DesktopPath` override discovered physical paths. `-SkillRoot` supports scriptblock invocation when PSScriptRoot is unavailable. If local policy blocks script files, use a supported shell invocation of the inspected script text only when that is allowed by policy; do not change the machine's execution policy or evade organizational restrictions.
 
-Existing settings must be parseable JSON for the bundled merger. If JSONC/comments are present, preserve the original and use a JSONC-aware parser or targeted edit before continuing; do not overwrite settings with defaults. Existing user keybindings are 100% preserved. Native VS Code F12 (Go to Definition) is completely untouched. Screen toggling is operated via the dedicated Status Bar button (or Command Palette vibe.toggleTerminal).
+Existing settings must be parseable JSON for the bundled merger. If JSONC/comments are present, preserve the original and use a JSONC-aware parser or targeted edit before continuing; do not overwrite settings with defaults. The setup preserves existing user keybindings and does not assign F12 (Go to Definition). Screen toggling is operated via the dedicated Status Bar button (or Command Palette vibe.toggleTerminal).
 
 ## Framework and Python server lifecycle with tasks.json
 
@@ -97,7 +101,7 @@ To support dynamic frameworks (Vite, Next.js, Astro) and backend servers (Stream
 }
 ```
 
-When the user double-clicks the generated desktop shortcut, VS Code natively starts the background task, the server binds to localhost, and Column 1 (Live Preview) connects immediately with zero `ERR_CONNECTION_REFUSED` errors.
+On shortcut launch, VS Code attempts the configured background task. Verify its output, port ownership and the expected application response before reporting the preview ready; startup can fail or take time.
 
 Discover the requested Codex CLI and verify its --version before apply. Resolve and verify official OpenAI Codex CLI. Do not infer authentication, model access, or computer control from a successful --version. Use current official instructions for missing software; do not assume administrator rights or winget.
 

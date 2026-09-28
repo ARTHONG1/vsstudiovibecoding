@@ -1,0 +1,11 @@
+# Codex startup and recovery
+
+The setup agent chooses and verifies the CLI; the extension runs the chosen executable and arguments. Do not hardcode a user's app build directory or silently change models, credentials or permission settings.
+
+1. Inspect the configured executable, package provenance and current command help. File existence and --version do not establish interactive readiness. Prefer a complete supported CLI installation with a stable install location, separate from the application project's dependencies. An app-bundled executable can work, but may disappear on update or lack a complete CLI package.
+2. Start from the actual project under the intended Windows user, in a real terminal. Observe a usable input prompt and absence of immediate exit. Do not send a paid/model request merely to validate startup. Then reopen the generated shortcut and verify the same result.
+3. On failure, retain the exit code and sanitized error. Missing path: rediscover a complete installation. Incomplete package: install the official CLI through verified official documentation. Daemon install/start failure: inspect help and, where supported, test --no-daemon for this workspace only. This disables shared-background-server operation and may affect cross-client session continuity; it is not a universal default or proof that remote continuation works.
+4. Pass confirmed arguments using setup.ps1 -CodexArgs, which writes workspace vibe.codexArgs; omit it to retain existing arguments. Never concatenate arguments into the executable path. If the selected command is a shell wrapper, verify VS Code can launch it or resolve the package's native executable.
+5. Verify the actual coding client's MCP discovery again after changing the CLI. Restart only the affected session with unsaved work preserved. Do not disable security settings, auto-login, or terminate unrelated terminals. If two bounded recovery attempts fail, keep the workspace usable and report the exact blocker rather than repeatedly opening preview tabs.
+
+Report executable/package version, arguments, interactive startup, shortcut relaunch and authenticated model response separately. A prompt verifies startup, not a successful model response. Keep deployment source and installed extension versions aligned; avoid leaving an untracked installation-only hotfix.

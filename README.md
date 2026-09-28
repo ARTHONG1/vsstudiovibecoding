@@ -1,6 +1,6 @@
 # Vibe Coding
 
-[![Version](https://img.shields.io/badge/version-2.7.1-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
+[![Version](https://img.shields.io/badge/version-2.8.0-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6.svg?logo=windows)](https://github.com/ARTHONG1/vsstudiovibecoding)
 [![CI](https://github.com/ARTHONG1/vsstudiovibecoding/actions/workflows/ci.yml/badge.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/actions)
@@ -11,11 +11,19 @@
 
 바이브 코딩을 시작할 때 진짜 어려운 건 코드가 아니라 **환경**입니다. 어떤 확장을 깔아야 하는지, 개발 서버 포트는 몇 번인지, 미리보기를 어디에 붙여야 하는지, 터미널 한글은 왜 깨지는지. 이 스킬은 그 과정을 사람이 배우게 하지 않고 **AI 에이전트에게 위임합니다.**
 
-한 문장만 던지면 에이전트가 프로젝트를 열어 구조를 읽고, 실행 명령과 미리보기 주소를 직접 찾아내고, 기존 VS Code를 건드리지 않는 전용 작업 환경을 만들고, 바탕화면 바로가기까지 만든 뒤 화면이 실제로 뜨는지 확인합니다. 사용자가 할 일은 아이콘을 누르는 것뿐입니다.
+한 문장만 던지면 에이전트가 프로젝트를 열어 구조를 읽고, 실행 명령과 미리보기 주소를 직접 찾아내고, 기존 VS Code와 분리된 전용 작업 환경을 만들고, 바탕화면 바로가기까지 만든 뒤 화면이 실제로 뜨는지 확인합니다. 필요한 로그인·프로젝트 신뢰 승인은 사용자가 확인합니다.
+
+Codex 실행 오류 복구 절차와 프로젝트별 실행 인수, 타임머신 보호 참조 검증을 보강했습니다. 실제 새 에이전트·모바일 검증 범위는 [TESTING.md](TESTING.md)에 구분해 기록합니다.
+
+### 기본 AI 작업 도구 — 기본 도구 세팅
+
+전체 환경 세팅을 맡은 AI 에이전트는 **Playwright CLI + 공식 Skill, Context7 MCP, Chrome DevTools MCP**를 기본으로 설치·연결합니다. 이미 정상 작동하면 재사용하고, 실제 VS Code의 Codex에서 사용할 수 있는지 확인합니다. 화면 동작 확인, 필요한 라이브러리 문서 조회, 브라우저 오류 진단에 적절히 쓰도록 프로젝트의 `AGENTS.md` 또는 연결된 지침도 보존·보완합니다. 모든 작업에 세 도구를 강제로 실행하지는 않습니다.
+
+이 절차는 [스킬의 도구 세팅 지침](vibe-coding/references/agent-tools.md)을 읽은 **AI 에이전트가 수행**합니다. `setup.ps1`이나 VS Code 확장만 실행해서는 설치되지 않습니다. Node·브라우저 설치, 외부 문서 서비스의 인증/호출 제한, Codex 프로젝트 신뢰에 따라 일부 단계가 대기할 수 있으며 설치·클라이언트 인식·실제 호출을 구분해 보고합니다.
 
 열리는 화면은 왼쪽 **미리보기**, 가운데 **코드**, 오른쪽 **Codex** 세 칸입니다. 상태바 버튼으로 [3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체]를 오가고, [📱 모바일]로 휴대폰에서 같은 프로젝트를 이어서 작업합니다. 작업 중에는 대화 단위로 스냅샷이 쌓여 원하는 과거 시점으로 되돌릴 수 있습니다. 에디터의 `F12`는 VS Code 기본 동작(정의로 이동) 그대로 둡니다.
 
-**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.7.1/vibe-coding-2.7.1.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
+**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.8.0/vibe-coding-2.8.0.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
 
 ## 가장 쉬운 시작
 
@@ -26,6 +34,8 @@ https://github.com/ARTHONG1/vsstudiovibecoding 의 vibe-coding 폴더를
 내 AI 도구의 스킬 폴더에 설치하고 SKILL.md를 읽어 실행해줘.
 Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
 필수 확장, 미리보기 | 코드 | Codex 3열 화면과 상태바 토글 버튼까지 설정해줘.
+Playwright·Context7·Chrome DevTools 세 가지를 기본 준비하고,
+Codex에서의 사용 가능 여부와 프로젝트의 도구 사용 지침도 확인해줘.
 기존 설정과 파일은 보존하고 실제 화면, 버튼, 3대 모드 전환,
 바로가기 재실행을 검증해줘. 보안 승인과 로그인이 필요하면
 정확히 어떤 버튼을 내가 눌러야 하는지 알려줘.
@@ -67,9 +77,10 @@ Windows에서 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
 3. 화면 우측 하단 상태바의 **[ 🗖 터미널 전체 ]** 클릭 시 Codex 터미널 100% 확대, **[ ⊞ 3열 복원 ]** 클릭 시 원래대로 복귀함을 확인합니다.
 4. **[ 🌐 미리보기 전체 ]** 클릭 시 웹 미리보기 100% 확대(Computer Use / 1:1 검수용), **[ ⊞ 3열 복원 ]** 클릭 시 50:50 분할 복귀를 확인합니다.
 5. 에디터에서 `F12`를 눌렀을 때 터미널이 가로채지 않고 순정 **[함수/변수 정의로 이동]**이 정상 작동함을 확인합니다.
-6. 생성된 **Vibe Coding - 프로젝트명-식별자** 바탕화면 바로가기 또는 윈도우 탐색기 폴더 우클릭 **[ Vibe Coding으로 열기 ]**로 다시 열어도 완벽히 복원돼야 합니다.
+6. 생성된 **Vibe Coding - 프로젝트명-식별자** 바탕화면 바로가기 또는 윈도우 탐색기 폴더 우클릭 **[ Vibe Coding으로 열기 ]**로 다시 열어도 의도한 프로젝트와 화면 배치가 복원되는지 확인합니다.
 7. 코드 에디터 우측 상단 툴바의 **[ ↗ 외부 브라우저에서 열기 ]** 클릭 시 시스템 기본 브라우저(Chrome/Edge)가 뜨며 순정 F12 개발자 도구(Network, Application/쿠키) 및 실시간 디버깅이 연결됨을 확인합니다.
 8. 터미널에서 `Ctrl+V`로 클립보드 텍스트가 즉시 붙여넣어지고 마우스 선택 시 자동 복사되며, `Alt+V`(또는 상단 📷 아이콘)로 클립보드 캡처 이미지가 파일로 자동 저장되어 터미널에 경로가 즉시 입력됨을 확인합니다.
+9. 세 가지 기본 도구의 설치·실제 Codex 인식·호출 결과와 프로젝트 사용 지침을 확인합니다. 인증·신뢰·새 세션이 필요하면 해당 도구를 미완료로 표시하고 정확한 다음 단계를 안내합니다.
 
 설치 성공 로그만으로 완료로 판단하지 않습니다. 화면 도구가 없으면 화면 검증은 미완료로 표시합니다. Codex 입력창 표시와 실제 인증된 AI 응답도 구분합니다.
 
@@ -135,7 +146,7 @@ AI가 코드를 고치다 멀쩡하던 기능을 망가뜨렸을 때, 대화 턴
 
 2026-09-18, Windows 11 x64 / VS Code 1.138.0 / Codex CLI / Live Preview 0.4.20에서 샘플 3열·한글·버튼·F12 왕복·정상 종료/재실행과 미리보기 제목 변경 수정 후 복원을 실제 화면 및 로그로 확인했습니다. 다른 PC와 모든 프레임워크에서 성공을 보장하는 결과는 아닙니다. [검증 범위](TESTING.md)를 확인하세요.
 
-## 휴대폰에서 원격으로 작업하기 (v2.7.1)
+## 휴대폰에서 원격으로 작업하기 (v2.8.0)
 
 상태바 **[📱 모바일]** 버튼을 누르면 마이크로소프트 공식 `code tunnel` 엔진이 백그라운드에서 프로젝트 전용 `vscode.dev` 주소를 만들고, **스마트폰 카메라로 바로 스캔할 수 있는 QR 코드**를 띄웁니다. 휴대폰에서 최초 1회 PC와 같은 GitHub 계정으로 로그인하면 내 PC의 프로젝트가 그대로 열립니다.
 

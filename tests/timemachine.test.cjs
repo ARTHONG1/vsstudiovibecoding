@@ -22,6 +22,9 @@ test('createShadowCheckpoint does NOT pollute user git index or modify staged fi
     assert.ok(statusBefore.includes('A  staged.txt'), 'staged.txt must be staged in user index');
     assert.ok(statusBefore.includes('?? unstaged.txt'), 'unstaged.txt must be untracked');
 
+    let failRef = false;
+    const errors = [], successes = [];
+    const childProcess = require('node:child_process');
     // Load extension module with mocked vscode
     const vscode = {
       workspace: {
@@ -31,8 +34,8 @@ test('createShadowCheckpoint does NOT pollute user git index or modify staged fi
       window: {
       createOutputChannel: () => ({ appendLine() {} }),
       createStatusBarItem: () => ({ show() {}, dispose() {} }),
-      showErrorMessage: () => {},
-      showInformationMessage: () => {},
+      showErrorMessage: message => errors.push(message),
+      showInformationMessage: message => successes.push(message),
         showInputBox: async () => '테스트 체크포인트',
         terminals: [],
         onDidCloseTerminal: () => ({ dispose() {} })
@@ -57,7 +60,7 @@ test('createShadowCheckpoint does NOT pollute user git index or modify staged fi
     const code = fs.readFileSync(path.join(__dirname, '../vibe-coding/assets/workspace-extension/extension/extension.js'), 'utf8');
     vm.runInNewContext(code, {
       module, exports: module.exports,
-      require: name => (name === 'vscode' ? vscode : name.startsWith('.') ? require(path.join(__dirname, '../vibe-coding/assets/workspace-extension/extension', name)) : require(name)),
+      require: name => (name === 'vscode' ? vscode : name === 'child_process' ? { ...childProcess, execFileSync: (file, args, options) => { if (failRef && args[0] === 'update-ref' && args[1] !== '-d') throw new Error('injected ref failure'); return childProcess.execFileSync(file, args, options); } } : name.startsWith('.') ? require(path.join(__dirname, '../vibe-coding/assets/workspace-extension/extension', name)) : require(name)),
       setTimeout: fn => fn(),
       clearTimeout: () => {},
       process, console, Buffer, URL
@@ -88,7 +91,16 @@ test('createShadowCheckpoint does NOT pollute user git index or modify staged fi
     const targetCheckpoint = list[0];
     // Mock showQuickPick to select targetCheckpoint (must provide sha and title)
     vscode.window.showQuickPick = async () => ({ sha: targetCheckpoint.commitSha, title: targetCheckpoint.title, label: targetCheckpoint.title });
+    const indexBefore = fs.readFileSync(path.join(tempDir, '.git', 'index'));
+    failRef = true;
     await commands.get('vibe.restoreCheckpoint')();
+    assert.equal(fs.readFileSync(path.join(tempDir, 'unstaged.txt'), 'utf8'), 'modified-before-rollback');
+    assert.ok(fs.existsSync(path.join(tempDir, 'new_rogue.txt')), 'Failed safety ref must not clean new files');
+    assert.deepEqual(fs.readFileSync(path.join(tempDir, '.git', 'index')), indexBefore);
+    assert.ok(errors.some(message => message.includes('injected ref failure')));
+    failRef = false;
+    await commands.get('vibe.restoreCheckpoint')();
+    assert.deepEqual(fs.readFileSync(path.join(tempDir, '.git', 'index')), indexBefore);
 
     // Verify user staged file is STILL staged after restore AND working tree genuinely rolled back AND new file removed
     const statusAfterRestore = execSync('git status --porcelain', { cwd: tempDir, encoding: 'utf8' }).trim();
@@ -97,7 +109,7 @@ test('createShadowCheckpoint does NOT pollute user git index or modify staged fi
     assert.equal(rolledBackContent, 'unstaged content', 'Working tree file must be genuinely rolled back to checkpoint content');
     assert.equal(fs.existsSync(path.join(tempDir, 'new_rogue.txt')), false, 'Newly created file after checkpoint must be cleanly removed on rollback');
 
-    // Verify old ref cleanup on same-turn checkpoint update
+    // Verify manual checkpoint special-character labels (not the automatic same-turn path)
     const initialRef = list[0].id;
     fs.writeFileSync(path.join(tempDir, 'unstaged.txt'), 'same-turn-update');
     // create checkpoint with identical turn/title
@@ -108,6 +120,13 @@ test('createShadowCheckpoint does NOT pollute user git index or modify staged fi
     assert.notEqual(initialRef, newRef, 'Updated checkpoint should have new id');
     assert.equal(execSync('git rev-parse refs/vibe/checkpoints/' + newRef, { cwd: tempDir, encoding: 'utf8' }).trim(), updatedList[0].commitSha);
 
+    const beforeFailedSave = fs.readFileSync(checkpointsFile, 'utf8');
+    const successCount = successes.length;
+    failRef = true;
+    await commands.get('vibe.createCheckpoint')();
+    assert.equal(fs.readFileSync(checkpointsFile, 'utf8'), beforeFailedSave);
+    assert.equal(successes.length, successCount, 'Failed checkpoint must not report success');
+    assert.ok(errors.some(message => message.includes('체크포인트 저장 실패')));
     fs.rmSync(storageDir, { recursive: true, force: true });
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });

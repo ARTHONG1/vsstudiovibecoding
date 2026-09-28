@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const path = require('node:path');
 
 function createMockVSCode(config = {}) {
-  const commands = new Map(), events = [], terminals = [];
+  const commands = new Map(), events = [], terminals = [], tunnelCalls = [];
   let openedUrl = null;
   const tab = { label: '127.0.0.1:3000', isActive: true };
   const group = { viewColumn: 1, tabs: [tab] };
@@ -64,14 +64,19 @@ function createMockVSCode(config = {}) {
     {
       module,
       exports: module.exports,
-      require: name => (name === 'vscode' ? vscode : name === 'fs' ? { existsSync: () => true, mkdirSync() {}, appendFileSync() {} } : name.startsWith('.') ? require(path.join(__dirname, '../vibe-coding/assets/workspace-extension/extension', name)) : require(name)),
+      require: name => (name === 'vscode' ? vscode : name === './tunnel-manager' ? {
+        getOrStartTunnel: async (project, options) => {
+          tunnelCalls.push({ project, options });
+          return { url: 'https://vscode.dev/tunnel/test/C:/project', tunnelName: 'test' };
+        }
+      } : name === 'fs' ? { existsSync: () => true, mkdirSync() {}, appendFileSync() {} } : name.startsWith('.') ? require(path.join(__dirname, '../vibe-coding/assets/workspace-extension/extension', name)) : require(name)),
       setTimeout: fn => fn(),
       clearTimeout: () => {},
       URL
     }
   );
 
-  return { vscode, commands, events, terminals, getOpenedUrl: () => openedUrl, module };
+  return { vscode, commands, events, terminals, tunnelCalls, getOpenedUrl: () => openedUrl, module };
 }
 
 test('3-mode viewport: togglePreview and toggleTerminal transitions', async () => {
@@ -146,6 +151,9 @@ test('openExternalBrowser opens system default browser with dev server URL', asy
     assert.equal(panelOptions.enableScripts, true);
     assert.equal(env.terminals.length, terminalsBefore);
     assert.deepEqual(calls, []);
+    assert.equal(env.tunnelCalls.length, 2);
+    assert.equal(env.tunnelCalls[0].project, 'C:/project');
+    assert.ok(panel.webview.html.includes('https://vscode.dev/tunnel/test/C:/project'));
   });
 
 test('remote web startup opens terminal without desktop split layout', async () => {
@@ -179,4 +187,13 @@ test('web controls stay compact and switch directly without desktop restore', as
  await env.commands.get('vibe.toggleTerminal')();
  assert.equal(calls.filter(c=>c[0]==='workbench.action.toggleMaximizedPanel').length,count);
  assert.ok(!calls.some(c=>c[0]==='vscode.setEditorLayout'));
+});
+
+test('Codex startup arguments retain spaces and do not change defaults', async () => {
+  for (const args of [[], ['--no-daemon', '--config', 'example="한글 공백"']]) {
+    const env = createMockVSCode({codexArgs: args});
+    await env.module.exports.activate({subscriptions:[],globalStorageUri:{fsPath:'C:/test'}});
+    assert.deepEqual(Array.from(env.terminals[0].creationOptions.shellArgs), args);
+    assert.equal(env.terminals[0].creationOptions.shellPath, 'C:/tools/codex.exe');
+  }
 });
