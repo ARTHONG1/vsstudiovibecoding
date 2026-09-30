@@ -419,8 +419,6 @@ function activate(context) {
     } catch {
       try {
         execSync('git init', { cwd: p, stdio: 'ignore' });
-        execSync('git config user.name "Vibe Coding"', { cwd: p, stdio: 'ignore' });
-        execSync('git config user.email "vibe@local"', { cwd: p, stdio: 'ignore' });
         gitDir = path.join(p, '.git');
       } catch {}
     }
@@ -533,6 +531,22 @@ function activate(context) {
     const actual = execFileSync('git', ['rev-parse', '--verify', ref], { cwd: p, encoding: 'utf8' }).trim();
     if (actual !== sha) throw new Error('Checkpoint protection verification failed: ' + ref);
   }
+  // Checkpoint snapshots are internal objects. Supply their author identity only
+  // to this process so commit-tree works without a user.name/user.email setting
+  // and without writing anything to the user's Git config.
+  const CHECKPOINT_IDENTITY = {
+    GIT_AUTHOR_NAME: 'Vibe Coding Time Machine',
+    GIT_AUTHOR_EMAIL: 'timemachine@vibe-coding.invalid',
+    GIT_COMMITTER_NAME: 'Vibe Coding Time Machine',
+    GIT_COMMITTER_EMAIL: 'timemachine@vibe-coding.invalid'
+  };
+  function commitCheckpointTree(p, treeSha, message) {
+    return execFileSync('git', ['commit-tree', treeSha, '-m', message], {
+      cwd: p,
+      encoding: 'utf8',
+      env: { ...process.env, ...CHECKPOINT_IDENTITY }
+    }).trim();
+  }
   function createShadowCheckpoint(p, customLabel) {
     try {
       initGit(p);
@@ -562,7 +576,7 @@ function activate(context) {
         const isSameTurn = (turnId && list[0].turnId === turnId) || (list[0].title === title);
         if (isSameTurn) {
           const commitMsg = 'Vibe Checkpoint: ' + title + ' (' + timeStr + ')';
-          const commitSha = execFileSync('git', ['commit-tree', treeSha, '-m', commitMsg], { cwd: p, encoding: 'utf8' }).trim();
+          const commitSha = commitCheckpointTree(p, treeSha, commitMsg);
           list[0].id = commitSha.slice(0, 7);
           list[0].commitSha = commitSha;
           list[0].treeSha = treeSha;
@@ -582,7 +596,7 @@ function activate(context) {
       }
 
       const commitMsg = 'Vibe Checkpoint: ' + title + ' (' + timeStr + ')';
-      const commitSha = execFileSync('git', ['commit-tree', treeSha, '-m', commitMsg], { cwd: p, encoding: 'utf8' }).trim();
+      const commitSha = commitCheckpointTree(p, treeSha, commitMsg);
       const record = { id: commitSha.slice(0, 7), commitSha, treeSha, title, turnId: turnId || null, fileSummary, changedCount: changedFiles.length, timestamp: now.toISOString(), timeStr };
       list.unshift(record);
       protectCheckpoint(p, 'refs/vibe/checkpoints/' + record.id, commitSha);
@@ -602,7 +616,7 @@ function activate(context) {
       try {
         execSync('git add -A -- .', { cwd: p, env: gitEnv, stdio: 'ignore' });
         const treeSha = execSync('git write-tree', { cwd: p, env: gitEnv, encoding: 'utf8' }).trim();
-        commitSha = execFileSync('git', ['commit-tree', treeSha, '-m', 'Vibe Safety Backup'], { cwd: p, encoding: 'utf8' }).trim();
+        commitSha = commitCheckpointTree(p, treeSha, 'Vibe Safety Backup');
         const now = new Date();
         const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
         protectCheckpoint(p, 'refs/vibe/safety', commitSha);

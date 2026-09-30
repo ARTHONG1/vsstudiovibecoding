@@ -105,10 +105,10 @@
 
     <main>
       <section>
-        <h2>최신 버전 v2.8.0 · AI가 준비하는 개발 도구와 실행·백업 안정화</h2>
-        <p>[📱 모바일] 버튼을 누르면 Microsoft 공식 <code>code tunnel</code> 엔진이 프로젝트 전용 <code>vscode.dev</code> 주소를 만들고 <strong>스마트폰 카메라로 바로 스캔할 수 있는 QR 코드</strong>를 띄웁니다. 휴대폰 화면에서는 상태바 왼쪽의 <strong>[ 터미널 ]</strong> 로 AI에게 지시하고 <strong>[ 미리보기 ]</strong> 로 내 사이트 결과를 확인합니다. 좁은 화면에서 3열을 거치지 않고 두 화면을 곧바로 오갑니다.</p>
-        <p>연결 주소는 한글·공백이 없는 <code>.code-workspace</code> 파일을 가리켜, <code>vscode.dev</code>가 한글 경로를 폴더 이름으로 잘못 읽어 프로젝트가 열리지 않던 문제를 해결했습니다.</p>
-        <p><a href="https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.8.0/vibe-coding-2.8.0.zip">v2.8.0 스킬 ZIP 다운로드</a> · <a href="https://github.com/ARTHONG1/vsstudiovibecoding/releases/tag/v2.8.0">릴리스 노트 보기</a></p>
+        <h2>최신 버전 v2.8.1 · Git 설정 없이도 저장되는 타임머신</h2>
+        <p>Git 사용자 이름·이메일을 한 번도 설정하지 않은 PC에서는 타임머신이 <strong>"체크포인트 저장 실패"</strong>를 띄우며 스냅샷을 남기지 못했습니다. Git을 처음 설치한 PC는 대부분 이 상태입니다. v2.8.1부터는 스냅샷을 전용 작성자 정보로 저장하므로 이런 PC에서도 대화 단위 되돌리기를 쓸 수 있고, 사용자의 Git 설정은 바꾸지 않습니다.</p>
+        <p>AI 에이전트가 Playwright·Context7·Chrome DevTools를 기본으로 준비하고, <strong>[📱 모바일]</strong> 버튼으로 휴대폰에서도 같은 프로젝트를 이어서 작업할 수 있습니다.</p>
+        <p><a href="https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.8.1/vibe-coding-2.8.1.zip">v2.8.1 스킬 ZIP 다운로드</a> · <a href="https://github.com/ARTHONG1/vsstudiovibecoding/releases/tag/v2.8.1">릴리스 노트 보기</a></p>
       </section>
     <section>
       <h2>🚀 1분 만에 세팅하기 (AI에게 요청)</h2>
@@ -146,8 +146,8 @@ Codex에서의 사용 가능 여부와 프로젝트의 도구 사용 지침도 �
       </div>
       <div class="grid">
         <div class="step-card">
-          <h3>📁 다중 프로젝트 & 우클릭 메뉴</h3>
-          <p>탐색기에서 아무 폴더나 <strong>우클릭 ➔ [Vibe Coding으로 열기]</strong>를 누르면 해당 프로젝트 전용 3열 환경이 즉시 실행됩니다. 프로젝트별 독립 해시 워크스페이스가 적용되어 서로 간섭하지 않습니다.</p>
+          <h3>📁 프로젝트마다 전용 창</h3>
+          <p>새 프로젝트도 에이전트에게 <strong>"이 폴더도 바이브 코딩으로 세팅해줘"</strong>라고 말하면 됩니다. 프로젝트마다 작업 영역과 바탕화면 바로가기가 따로 생겨 서로 간섭하지 않습니다. 탐색기 폴더 우클릭 메뉴 <strong>[Vibe Coding으로 열기]</strong>는 요청할 때만 등록하며, PC의 PowerShell 실행 정책에 따라 작동하지 않을 수 있습니다.</p>
         </div>
         <div class="step-card">
           <h3>🤖 공식 OpenAI Codex 연동</h3>
@@ -155,7 +155,7 @@ Codex에서의 사용 가능 여부와 프로젝트의 도구 사용 지침도 �
         </div>
         <div class="step-card">
           <h3>화면 확인·문서 조회·오류 진단 도구</h3>
-          <p>v2.8.0 스킬은 AI 에이전트가 <strong>Playwright·Context7·Chrome DevTools</strong>를 기본 준비하고 프로젝트 지침에 사용 기준을 연결하도록 안내합니다. 기존 도구를 재사용하며 설치·Codex 인식·실제 호출을 구분해 확인합니다. 로그인이나 프로젝트 신뢰가 필요하면 해당 단계를 안내합니다.</p>
+          <p>v2.8.0부터 스킬은 AI 에이전트가 <strong>Playwright·Context7·Chrome DevTools</strong>를 기본 준비하고 프로젝트 지침에 사용 기준을 연결하도록 안내합니다. 기존 도구를 재사용하며 설치·Codex 인식·실제 호출을 구분해 확인합니다. 로그인이나 프로젝트 신뢰가 필요하면 해당 단계를 안내합니다.</p>
         </div>
       </div>
       <div class="grid">
@@ -164,8 +164,8 @@ Codex에서의 사용 가능 여부와 프로젝트의 도구 사용 지침도 �
           <p>상태바의 <strong>[📱 모바일]</strong> 버튼을 누르고 QR을 휴대폰 카메라로 스캔하세요. 최초 1회만 PC와 같은 GitHub 계정으로 로그인하면 내 프로젝트가 그대로 열립니다. 이후에는 <strong>[ 터미널 ]</strong> 과 <strong>[ 미리보기 ]</strong> 두 버튼으로 지시와 확인을 반복하면 됩니다.</p>
         </div>
         <div class="step-card">
-          <h3>⏪ 무오염 Vibe 타임머신 (Alt+Z)</h3>
-          <p>AI가 코드를 수정할 때마다 대화 단위 섀도우 스냅샷이 자동 적립됩니다. <code>GIT_INDEX_FILE</code> 격리와 <code>refs/vibe</code> 숨은 참조를 통해 Git GC(가비지 컬렉션)의 커밋 삭제를 영구 차단하고, 사용자의 기존 Git Staged 상태를 전혀 건드리지 않고 작업 소스 및 신규 생성 파일을 안전하게 롤백합니다.</p>
+          <h3>⏪ Vibe 타임머신 (Alt+Z)</h3>
+          <p>AI에게 요청한 대화 단위로 작업 파일 스냅샷이 자동으로 쌓이고, 원하는 시점으로 되돌릴 수 있습니다. 스냅샷은 <code>refs/vibe</code> 아래에 따로 보관되어 브랜치 커밋 기록에 나타나지 않고, 복원할 때는 별도 인덱스를 써서 <code>git add</code>로 올려둔 상태를 유지합니다. Git 사용자 이름·이메일을 설정하지 않은 PC에서도 저장됩니다.</p>
         </div>
       </div>
     </section>
@@ -177,8 +177,8 @@ Codex에서의 사용 가능 여부와 프로젝트의 도구 사용 지침도 �
       </div>
       
       <div class="step-card">
-        <h4>1. 작업 공간 신뢰 (Workspace Trust)</h4>
-        <p>VS Code 실행 후 <em>"Do you trust the authors of the files in this workspace?"</em> 팝업이 뜨면 <strong>[Trust Workspace & Continue]</strong>를 눌러주세요. (제한 모드에서는 Live Preview 및 확장이 실행되지 않습니다)</p>
+        <h4>1. 작업 영역 신뢰</h4>
+        <p>VS Code가 열리면서 <em>"이 작업 영역에 있는 파일의 작성자를 신뢰합니까?"</em>라고 물으면, 직접 만들었거나 출처를 아는 프로젝트일 때 <strong>[예, 작성자를 신뢰합니다]</strong>를 눌러주세요. 이미 창을 닫았다면 위쪽 <strong>제한 모드</strong> 알림줄의 <strong>[관리] → [신뢰]</strong>를 누르면 됩니다. 제한 모드에서는 Vibe 버튼과 미리보기가 작동하지 않습니다.</p>
       </div>
 
       <div class="step-card">
@@ -187,8 +187,8 @@ Codex에서의 사용 가능 여부와 프로젝트의 도구 사용 지침도 �
       </div>
 
       <div class="step-card">
-        <h4>3. AI 모델 및 로그인 확인</h4>
-        <p>오른쪽 3열 터미널에서 공식 Codex가 실행됩니다. 필요 시 로그인 또는 인증 상태를 확인하세요.</p>
+        <h4>3. Codex 로그인과 폴더 신뢰</h4>
+        <p>오른쪽 칸에서 공식 Codex가 실행됩니다. 로그인을 요구하면 직접 로그인하고, Codex가 이 폴더를 신뢰할지 물으면 직접 선택해 주세요. 폴더를 신뢰해야 프로젝트에 설정된 Context7·Chrome DevTools가 켜집니다.</p>
       </div>
     </section>
 
@@ -200,7 +200,7 @@ Codex에서의 사용 가능 여부와 프로젝트의 도구 사용 지침도 �
       </details>
       <details>
         <summary><strong>상태바 버튼이 안 보여요. 어디에 있나요?</strong></summary>
-        <p>화면 맨 아래 오른쪽 구석(알림 종 아이콘과 포트 번호 바로 왼쪽)에 <code>[ 🗖 터미널 전체 ]</code>와 <code>[ 🌐 미리보기 전체 ]</code> 버튼이 항상 노출됩니다. 혹시 보이지 않는다면 <code>Ctrl + Shift + P</code> ➔ <code>Reload Window (창 다시 로드)</code>를 한 번 실행해 주세요.</p>
+        <p>먼저 화면 위쪽에 <strong>제한 모드</strong> 알림줄이 있는지 보세요. 제한 모드에서는 Vibe 버튼이 나타나지 않으니 알림줄의 <strong>[관리] → [신뢰]</strong>를 눌러주세요. 신뢰한 뒤에는 화면 맨 아래 오른쪽에 지금 바꿀 수 있는 화면 버튼(<code>[ 터미널 전체 ]</code>, <code>[ 미리보기 전체 ]</code>, <code>[ 3열 복원 ]</code>)과 <code>[ 타임머신 ]</code>, <code>[ 모바일 ]</code> 버튼이 보입니다. 그래도 보이지 않으면 <code>Ctrl + Shift + P</code> ➔ <code>창 다시 로드</code>를 실행해 주세요.</p>
       </details>
       <details>
         <summary><strong>스마트폰으로 모바일 원격 작업은 어떻게 하나요?</strong></summary>
@@ -208,7 +208,7 @@ Codex에서의 사용 가능 여부와 프로젝트의 도구 사용 지침도 �
       </details>
       <details>
         <summary><strong>새로운 프로젝트마다 어떻게 적용하나요?</strong></summary>
-        <p>윈도우 탐색기에서 원하는 프로젝트 폴더를 <strong>마우스 우클릭 ➔ [Vibe Coding으로 열기]</strong>를 누르거나, AI 에이전트(Codex)에게 <code>"내 프로젝트 C:MyProject를 바이브 코딩으로 열어줘"</code>라고 말하면 끝납니다. 스킬이 진입 파일과 프레임워크 포트를 자동으로 감지하여 전용 3열 창을 띄워줍니다.</p>
+        <p>AI 에이전트(Codex 등)에게 <code>"내 프로젝트 C:\MyProject를 바이브 코딩으로 세팅해줘"</code>라고 말하면 됩니다. 에이전트가 진입 파일과 개발 서버 주소를 찾아 그 프로젝트 전용 3열 창과 바탕화면 바로가기를 만듭니다. 탐색기 우클릭 메뉴는 등록을 요청한 경우에만 생깁니다.</p>
       </details>
     </section>
   </main>

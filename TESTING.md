@@ -111,6 +111,14 @@ Follow the 7-step checklist defined in `vibe-coding/references/verification.md`:
 - Read-only agent scenario review covered blank independent projects, existing-tool reuse, delegated AGENTS.md/AGENT.md and repeated setup, missing project MCP discovery, standalone versus client calls, and task-dependent tool use. This was a document exercise, not a live autonomous coding test.
 - Release verification (2026-09-28): npm run check and all 42 tests passed and exited. Mode tests mock the tunnel manager rather than launching a real tunnel. Regression coverage includes Codex argument arrays, HTTP 404/500 rejection, safety-ref failure preventing restore/clean, failed checkpoint notification, and byte-identical user index after restore. Earlier standalone tool probes and unverified client/E2E layers above remain explicitly separate.
 
+## v2.8.1 Time machine without a Git identity (2026-09-30)
+
+- Reported failure: `체크포인트 저장 실패: Command failed: git commit-tree ...` in a project on a PC with no Git `user.name`/`user.email`. `git commit-tree` refuses to create the checkpoint commit without an author identity.
+- Fix: checkpoint and safety-backup commits receive a dedicated author/committer identity through the environment of the `commit-tree` child process only. `initGit` no longer writes `user.name`/`user.email` into a newly initialized repository.
+- `tests/timemachine-identity.test.cjs` isolates Git configuration (`GIT_CONFIG_GLOBAL` with `user.useConfigOnly`, `GIT_CONFIG_NOSYSTEM`, cleared identity variables), confirms that a plain `commit-tree` fails, then checks that the checkpoint is saved, that `refs/vibe/checkpoints/<id>` points to the recorded commit, and that repository and global Git config are unchanged. `useConfigOnly` keeps this precondition independent of the host name, so CI reproduces the same state. The test fails against the v2.8.0 extension and passes with the fix.
+- Reporting PC (no Git identity configured): after the fix, an existing Next.js project recorded new checkpoints whose hidden refs carry the `Vibe Coding Time Machine` author. A rollback through the UI was not repeated for this release.
+- Release verification: npm run check and all 43 tests passed locally before tagging.
+
 ## v2.7.1 Mobile connection target & phone-first mode switching validation
 
 - `tests/tunnel.test.cjs` verifies that the connection URL is rebuilt from the tunnel name plus a pure-ASCII target: an existing `.code-workspace` file is preferred, an ASCII project path is accepted, a missing workspace file is rejected, and the emitted URL never contains percent escapes or falls back to the tunnel root. This reproduces the reported failure where `vscode.dev` displayed `%EA%B3%BC%EC%A0%84%EA%B0%95` as a literal folder and reported a missing workspace.
