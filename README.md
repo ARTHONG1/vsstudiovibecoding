@@ -9,6 +9,8 @@
 
 > Let an AI agent set up your whole Windows VS Code vibe-coding workspace: preview, code, and Codex side by side, plus one-tap mobile access.
 
+![VS Code 세팅, AI에게 맡기세요. 미리보기, 코드, Codex 3열로 나뉜 VS Code 화면](images/vibe-coding-hero.webp)
+
 바이브 코딩을 시작할 때 진짜 어려운 건 코드가 아니라 **환경**입니다. 어떤 확장을 깔아야 하는지, 개발 서버 포트는 몇 번인지, 미리보기를 어디에 붙여야 하는지, 터미널 한글은 왜 깨지는지. 이 스킬은 그 과정을 사람이 배우게 하지 않고 **AI 에이전트에게 위임합니다.**
 
 한 문장만 던지면 에이전트가 프로젝트를 열어 구조를 읽고, 실행 명령과 미리보기 주소를 직접 찾아내고, 기존 VS Code와 분리된 전용 작업 환경을 만들고, 바탕화면 바로가기까지 만든 뒤 화면이 실제로 뜨는지 확인합니다. 필요한 로그인·프로젝트 신뢰 승인은 사용자가 확인합니다.
@@ -17,15 +19,23 @@ v2.8.1에서는 Git 사용자 이름·이메일을 설정하지 않은 PC에서 
 
 ### 기본 AI 작업 도구 — 기본 도구 세팅
 
+![화면 확인 Playwright, 문서 조회 Context7, 오류 진단 Chrome DevTools](images/vibe-coding-agent-tools.webp)
+
 전체 환경 세팅을 맡은 AI 에이전트는 **Playwright CLI + 공식 Skill, Context7 MCP, Chrome DevTools MCP**를 기본으로 설치·연결합니다. 이미 정상 작동하면 재사용하고, 실제 VS Code의 Codex에서 사용할 수 있는지 확인합니다. 화면 동작 확인, 필요한 라이브러리 문서 조회, 브라우저 오류 진단에 적절히 쓰도록 프로젝트의 `AGENTS.md` 또는 연결된 지침도 보존·보완합니다. 모든 작업에 세 도구를 강제로 실행하지는 않습니다.
 
 이 절차는 [스킬의 도구 세팅 지침](vibe-coding/references/agent-tools.md)을 읽은 **AI 에이전트가 수행**합니다. `setup.ps1`이나 VS Code 확장만 실행해서는 설치되지 않습니다. Node·브라우저 설치, 외부 문서 서비스의 인증/호출 제한, Codex 프로젝트 신뢰에 따라 일부 단계가 대기할 수 있으며 설치·클라이언트 인식·실제 호출을 구분해 보고합니다.
 
 열리는 화면은 왼쪽 **미리보기**, 가운데 **코드**, 오른쪽 **Codex** 세 칸입니다. 상태바 버튼으로 [3열 분할] ↔ [터미널 전체] ↔ [미리보기 전체]를 오가고, [📱 모바일]로 휴대폰에서 같은 프로젝트를 이어서 작업합니다. 작업 중에는 대화 단위로 스냅샷이 쌓여 원하는 과거 시점으로 되돌릴 수 있습니다. 에디터의 `F12`는 VS Code 기본 동작(정의로 이동) 그대로 둡니다.
 
+![왼쪽 미리보기, 가운데 코드, 오른쪽 Codex로 나뉜 VS Code 3열 화면](images/vibe-coding-3-column-layout.webp)
+
+![3열 분할, 터미널 전체, 미리보기 전체 세 가지 화면 모드와 상태바 버튼](images/vibe-coding-view-modes.webp)
+
 **[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.8.1/vibe-coding-2.8.1.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
 
 ## 가장 쉬운 시작
+
+![요청하기, 에이전트가 세팅, 아이콘으로 시작의 세 단계 흐름](images/vibe-coding-agent-setup-flow.webp)
 
 로컬 파일과 프로그램을 다룰 수 있는 AI 에이전트에 아래 문장을 붙여 넣으세요. 일반 웹 채팅만으로는 PC 설정을 변경할 수 없습니다.
 
@@ -106,6 +116,8 @@ Codex에서의 사용 가능 여부와 프로젝트의 도구 사용 지침도 �
 
 ## ⏪ Vibe 타임머신 (대화 단위 되돌리기)
 
+![대화 제목으로 저장된 시점을 고르는 Vibe 타임머신 선택 창](images/vibe-coding-time-machine.webp)
+
 AI가 코드를 고치다 멀쩡하던 기능을 망가뜨렸을 때, 대화 턴 단위로 과거 시점을 골라 작업 파일을 되돌립니다. 초보자가 Git 명령을 배우지 않아도 "아까 그 상태로"가 가능하도록 만든 장치입니다.
 
 - **브랜치 기록을 건드리지 않음**: `git commit`이나 `git stash` 대신 저수준 명령(`commit-tree`)으로 별도 스냅샷을 만들고 `refs/vibe` 아래에 보관합니다. main 브랜치 커밋 로그에는 아무것도 추가되지 않습니다. 스냅샷 객체 자체는 프로젝트의 `.git` 안에 저장됩니다.
@@ -150,6 +162,8 @@ AI가 코드를 고치다 멀쩡하던 기능을 망가뜨렸을 때, 대화 턴
 
 ## 휴대폰에서 원격으로 작업하기
 
+![QR 코드로 연결하고 휴대폰에서 터미널과 미리보기 두 버튼으로 작업하는 모습](images/vibe-coding-mobile-remote.webp)
+
 상태바 **[📱 모바일]** 버튼을 누르면 마이크로소프트 공식 `code tunnel` 엔진이 백그라운드에서 프로젝트 전용 `vscode.dev` 주소를 만들고, **스마트폰 카메라로 바로 스캔할 수 있는 QR 코드**를 띄웁니다. 휴대폰에서 최초 1회 PC와 같은 GitHub 계정으로 로그인하면 내 PC의 프로젝트가 그대로 열립니다.
 
 휴대폰 화면에서는 상태바 왼쪽에 **[ 터미널 ]** 과 **[ 미리보기 ]** 두 버튼만 크게 노출됩니다. [터미널]은 Codex 입력 화면으로, [미리보기]는 개발 서버가 그리는 실제 결과 화면으로 한 번에 전환합니다. 좁은 화면에서 3열을 거치지 않으므로 이동 중에도 바로 지시하고 결과를 확인할 수 있습니다.
@@ -162,9 +176,13 @@ PC가 켜져 있고 온라인이어야 하며, `--no-sleep` 플래그로 터널 
 
 ## 만든 사람
 
-**AI찬우쌤**이 교실에서 쓰려고 만들었습니다. 수업 자료를 직접 만들다 보면 코드보다 환경 설정에서 먼저 막히는데, 그 벽을 학생과 선생님 대신 AI가 넘어주게 하자는 생각에서 출발했습니다.
+![만든 사람 AI찬우쌤. 현직 초등 교사, 클래스똑딱(ACE 연구회) 운영](images/ai-chanwoo-ssam-maker.webp)
 
-- **클래스똑딱** — [classddok.com](https://classddok.com/) · 교사를 위한 에듀테크 연구회이자 수업 도구 모음입니다. AI 받아쓰기, 워드서치, 퀴즈·게임, OMR 채점, AI 실시간 토론 게시판 등을 바로 쓸 수 있고 [교원 연수](https://classddok.com/trainings)도 운영합니다.
+**AI찬우쌤**은 교실에서 AI를 직접 쓰고 수업·업무 도구를 만드는 현직 초등 교사입니다. 수업 자료를 직접 만들다 보면 코드보다 환경 설정에서 먼저 막히는데, 그 벽을 학생과 선생님 대신 AI가 넘어주게 하자는 생각에서 이 스킬을 만들었습니다. 『바로 배워서 바로 써먹는 바이브 코딩』과 『바로 배워서 바로 써먹는 AI 에이전트』를 함께 쓴 공동 저자이기도 합니다.
+
+- **클래스똑딱** — [classddok.com](https://classddok.com/) · AI찬우쌤이 운영하는 교사 연구회 ACE 연구회의 에듀테크 도구 모음입니다. AI 워드서치 학습지, 우리 반 AI 받아쓰기, 실시간 AI 토론 게시판, AI 퀴즈 제작, OMR 자동 채점, AI 품의서 생성기 등을 설치 없이 웹에서 바로 쓸 수 있고 [교원 연수(지식샘터)](https://classddok.com/trainings)도 운영합니다.
 - **AI찬우쌤 유튜브** — [채널 바로가기](https://www.youtube.com/channel/UCnmcRReKbadpjJmueG1nzvw) · AI 도구를 수업에 실제로 적용하는 과정을 다룹니다.
+
+![클래스똑딱 classddok.com 웹사이트 첫 화면과 교사용 AI 앱 목록](images/classddok-com.webp)
 
 교실이든 개인 프로젝트든, 환경 설정 때문에 시작을 미루는 사람이 줄어들면 좋겠습니다. 써보고 막히는 지점이 있으면 [이슈](https://github.com/ARTHONG1/vsstudiovibecoding/issues)로 알려주세요.
