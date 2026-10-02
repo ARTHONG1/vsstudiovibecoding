@@ -11,6 +11,9 @@ Current release: v2.8.2. This is environment automation, not a model, hosted cod
 - [Release](https://github.com/ARTHONG1/vsstudiovibecoding/releases/tag/v2.8.2): Windows skill ZIP.
 - [Verification and limitations](https://github.com/ARTHONG1/vsstudiovibecoding/blob/main/TESTING.md): Automated checks are distinct from real phone rendering.
 
+- [English quick start](https://github.com/ARTHONG1/vsstudiovibecoding/blob/main/README.en.md): Installation, capabilities and boundaries.
+- [Media and descriptions](https://github.com/ARTHONG1/vsstudiovibecoding/blob/main/SHARING.md): Copy-ready Korean and English descriptions.
+
 ## What the agent prepares
 Inspect the actual project, identify its startup command and verified preview URL, install an isolated VS Code environment, prepare Preview / Code / Codex layout and a desktop shortcut. Full setup includes Playwright CLI and its skill, Context7 MCP, Chrome DevTools MCP, and contextual project instructions. Login, trust prompts, external-service access, and human approvals remain separate.
 

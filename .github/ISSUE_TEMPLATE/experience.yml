@@ -1,0 +1,18 @@
+name: 사용 후기 · 개선 제안 / Experience or idea
+description: 어떤 작업에 도움이 됐는지, 어느 단계가 어려웠는지 알려주세요.
+title: "[Feedback] "
+body:
+  - type: textarea
+    id: experience
+    attributes:
+      label: 사용한 상황 / Use case
+      description: 어떤 프로젝트를 어떤 AI 도구로 세팅했나요? 개인정보는 적지 마세요.
+    validations:
+      required: true
+  - type: textarea
+    id: improvement
+    attributes:
+      label: 좋았던 점 또는 바라는 변화 / Feedback
+      description: 구체적인 경험이나 원하는 동작을 적어주세요.
+    validations:
+      required: true

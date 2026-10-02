@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 처음 시작하기 · 소개 영상 / Get started
+    url: https://arthong1.github.io/vsstudiovibecoding/
+    about: 영상과 설치 요청문을 먼저 확인하세요.
+  - name: English quick start
+    url: https://github.com/ARTHONG1/vsstudiovibecoding/blob/main/README.en.md
+    about: Setup instructions, capabilities and limitations in English.

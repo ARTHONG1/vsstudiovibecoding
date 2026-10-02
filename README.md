@@ -9,6 +9,18 @@
 
 > Let an AI agent set up your whole Windows VS Code vibe-coding workspace: preview, code, and Codex side by side, plus one-tap mobile access.
 
+**[바로 시작하기](#가장-쉬운-시작)** · [English](README.en.md) · [소개 페이지](https://arthong1.github.io/vsstudiovibecoding/) · [공유 문구](SHARING.md) · [사용 후기 / 아이디어](https://github.com/ARTHONG1/vsstudiovibecoding/issues/new/choose)
+
+### 35초로 보는 Vibe Coding
+
+https://github.com/user-attachments/assets/05ad2995-62e7-4ae0-baa9-389ecaa69941
+
+[고화질 영상과 시작 안내](https://arthong1.github.io/vsstudiovibecoding/#intro-video) · [최신 스킬 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/latest) · [AI가 읽는 요약](https://arthong1.github.io/vsstudiovibecoding/llms.txt)
+
+만든 사람 **AI찬우쌤** · [클래스똑딱(classddok.com)](https://classddok.com/) · [유튜브](https://www.youtube.com/channel/UCnmcRReKbadpjJmueG1nzvw)
+
+써보고 도움이 됐다면 저장소 오른쪽 위 **Star**로 보관하거나, [공유 문구](SHARING.md)를 가져가 소개해주세요. 실제 사용 경험은 다음 개선에 도움이 됩니다.
+
 ![VS Code 세팅, AI에게 맡기세요. 미리보기, 코드, Codex 3열로 나뉜 VS Code 화면](images/vibe-coding-hero.webp)
 
 바이브 코딩을 시작할 때 진짜 어려운 건 코드가 아니라 **환경**입니다. 어떤 확장을 깔아야 하는지, 개발 서버 포트는 몇 번인지, 미리보기를 어디에 붙여야 하는지, 터미널 한글은 왜 깨지는지. 이 스킬은 그 과정을 사람이 배우게 하지 않고 **AI 에이전트에게 위임합니다.**
@@ -16,10 +28,6 @@
 한 문장만 던지면 에이전트가 프로젝트를 열어 구조를 읽고, 실행 명령과 미리보기 주소를 직접 찾아내고, 기존 VS Code와 분리된 전용 작업 환경을 만들고, 바탕화면 바로가기까지 만든 뒤 화면이 실제로 뜨는지 확인합니다. 필요한 로그인·프로젝트 신뢰 승인은 사용자가 확인합니다.
 
 v2.8.2에서는 느린 서버의 미리보기 응답 검사와 Private 모바일 미리보기를 보완했습니다. 저장된 주소 유지와 한글 경로 보존도 정리했습니다. 검증 결과와 실제 휴대폰 검증 범위는 [TESTING.md](TESTING.md)에 구분해 기록합니다.
-
-[![35초 소개 영상](media/vibe-coding-intro-poster.webp)](https://arthong1.github.io/vsstudiovibecoding/#intro-video)
-
-**[소개 영상 보기](https://arthong1.github.io/vsstudiovibecoding/#intro-video)** · [AI가 읽는 요약](https://arthong1.github.io/vsstudiovibecoding/llms.txt)
 
 ### 기본 AI 작업 도구 — 기본 도구 세팅
 

@@ -1,0 +1,28 @@
+name: 오류 신고 / Bug report
+description: 실제로 막힌 단계와 재현 방법을 알려주세요.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "계정 정보, API 키, 인증 코드, 개인 경로는 제거해주세요. / Remove secrets and private paths."
+  - type: textarea
+    id: environment
+    attributes:
+      label: 환경 / Environment
+      description: Windows, VS Code, Vibe Coding 버전과 프로젝트 종류. 모바일이면 브라우저도 적어주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 재현 단계 / Steps to reproduce
+      description: 무엇을 눌렀고 어떤 결과를 기대했나요?
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: 실제 결과 / Actual result
+      description: 민감정보를 가린 오류 내용이나 화면을 첨부해주세요.
+    validations:
+      required: true
