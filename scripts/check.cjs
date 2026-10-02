@@ -44,7 +44,8 @@ const requiredFiles = [
   'vibe-coding/assets/workspace-extension/extension/extension.js',
   'vibe-coding/assets/workspace-extension/extension/qrcode.js',
   'vibe-coding/assets/workspace-extension/extension/tunnel-manager.js',
-  'vibe-coding/assets/workspace-extension/extension/mobile-tunnel.js'
+  'vibe-coding/assets/workspace-extension/extension/mobile-tunnel.js',
+  'vibe-coding/assets/workspace-extension/extension/preview-forwarding.js'
 ];
 
 for (const rel of requiredFiles) {
@@ -84,6 +85,8 @@ const jsFilesToCheck = [
   'vibe-coding/assets/workspace-extension/extension/extension.js',
   'vibe-coding/assets/workspace-extension/extension/qrcode.js',
   'vibe-coding/assets/workspace-extension/extension/tunnel-manager.js',
+  'vibe-coding/assets/workspace-extension/extension/preview-forwarding.js',
+  'site.js',
   'scripts/check.cjs'
 ];
 

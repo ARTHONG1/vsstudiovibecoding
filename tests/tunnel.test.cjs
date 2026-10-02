@@ -136,7 +136,7 @@ test("getOrStartTunnel invokes spawn with shell: false and handles spaces in CLI
   assert.equal(spawnArgsRecord.options.cwd, projectWithKorean);
   assert.ok(Array.isArray(spawnArgsRecord.args), "args must be passed as an array");
   assert.ok(spawnArgsRecord.args.includes("tunnel"));
-  assert.ok(spawnArgsRecord.args.includes("--install-extension"));
+  assert.ok(!spawnArgsRecord.args.includes("--install-extension"), 'Windows reconnect must not enter the CLI bash-based extension installation path');
 
   resetTunnelState();
 });

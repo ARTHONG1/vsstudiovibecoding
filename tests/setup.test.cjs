@@ -72,3 +72,15 @@ test('setup.ps1 preserves existing project and does not touch project .vscode/se
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
 });
+
+test('setup retains saved preview route when PreviewUrl is omitted', () => {
+  const tempDir=fs.mkdtempSync(path.join(os.tmpdir(),'vibe-saved-preview-'));
+  try {
+    fs.writeFileSync(path.join(tempDir,'index.html'),'<html></html>');
+    fs.writeFileSync(path.join(tempDir,'package.json'),JSON.stringify({dependencies:{vite:'^5.0.0'}}));
+    fs.mkdirSync(path.join(tempDir,'.vibe'));
+    fs.writeFileSync(path.join(tempDir,'.vibe','remote-config.json'),JSON.stringify({previewUrl:'http://127.0.0.1:8080/studio'}));
+    assert.equal(JSON.parse(runPowerShell(`-ProjectPath "${tempDir}"`)).previewUrl,'http://127.0.0.1:8080/studio');
+    assert.equal(JSON.parse(runPowerShell(`-ProjectPath "${tempDir}" -PreviewUrl "http://127.0.0.1:9090"`)).previewUrl,'http://127.0.0.1:9090');
+  } finally { fs.rmSync(tempDir,{recursive:true,force:true}); }
+});

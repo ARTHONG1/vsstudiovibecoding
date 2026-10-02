@@ -28,7 +28,7 @@ Never fall back to the tunnel root. A bare `https://vscode.dev/tunnel/<name>/` o
 
 ### 3. Install the extension on the remote server
 
-The tunnel runs a separate VS Code server with its own extension directory under the user profile `.vscode-server` folder. Installing the extension only into the desktop environment leaves the phone with no Vibe buttons and no layout. Install the packaged VSIX into the remote server as well, then confirm the extension id appears in that server extension list and that its `extension.js` matches the desktop copy by hash.
+The tunnel runs a separate VS Code server with its own extension directory under the user profile `.vscode-server` folder. Installing the extension only into the desktop environment leaves the phone with no Vibe buttons and no layout. Do not pass --install-extension to the long-running Windows tunnel: its running-server reconnect installation path invokes bash. Install the VSIX separately through the Windows server node.exe/out/server-main.js CLI before starting or reusing the tunnel. Install the packaged VSIX into the remote server as well, then confirm the extension id appears in that server extension list and that its `extension.js` matches the desktop copy by hash.
 
 ### 4. Shape the phone layout
 
@@ -36,7 +36,7 @@ A phone screen truncates the right side of the status bar, so place the two mode
 
 On startup in a web client, close the side bars, move the panel to the bottom and open the Codex terminal maximized. Do not apply the desktop 3-column layout: two half-width editors are unusable on a phone. Each button switches directly to its own mode, and pressing the active button again does not toggle back into a split view.
 
-Resolve the preview address through `vscode.env.asExternalUri` so the forwarded URL works over mobile networks, and open it in the Simple Browser in the first editor column.
+Resolve the preview address through `vscode.env.asExternalUri`, require an HTTP(S) address with a non-loopback host, and open it in the Simple Browser in the first editor column. If resolution still returns localhost/127.0.0.1, keep the terminal visible and report port forwarding as pending instead of opening a blank phone iframe.
 
 ### 5. Keep background tasks out of the way
 
@@ -44,9 +44,19 @@ A `folderOpen` dev-server task claims the terminal panel and can cover the Codex
 
 ### 6. Visual feedback in chat
 
+### Private preview forwarding
+
+On web clients, `asExternalUri` can return the same loopback address. The bundled `preview-forwarding.js` then uses the installed Microsoft CLI `tunnel forward-internal --provider github`, the same version-dependent protocol used by Microsoft's built-in port forwarding extension. It sends only `{number, privacy: private, protocol: http}` port entries and reads the returned `port_format`. Existing CLI credentials stay in the official CLI; do not read credential stores or print tokens. The process belongs to this preview controller and is disposed with it. Failed/closed processes invalidate the address and the next preview request starts a fresh connection.
+
+During requested mobile setup, the agent verifies server response, CLI support, Private address issuance and authenticated rendering separately. The phone may need to authenticate the devtunnels.ms origin even when vscode.dev is signed in. The preview button opens Private devtunnels in a top-level browser tab every time; authenticate there and return to vscode.dev to continue terminal work. Keep access Private. An authentication redirect proves transport only, not app rendering. Browser cookie restrictions and application frame headers can require external-browser preview; do not claim universal in-editor support. Static projects also need a real local HTTP preview URL; identify and verify the Live Preview server or configure an appropriate static server rather than assuming an empty URL works.
+
 When the user asks for UI changes from the phone, perform the edits, confirm the dev server responds, then capture a mobile-viewport screenshot with Windows native Edge headless at a 412x915 window size, writing the PNG under the project `.vibe/previews` directory. Embed that image in the completion response so the result is visible without switching applications.
 
 ## Verification and completion
+
+Reuse the host's existing tunnel using `code-tunnel.exe tunnel status` before starting another. A shared startup lock prevents concurrent VS Code windows from launching competing tunnels. A disconnected existing tunnel is reported rather than killed. Connection status and `has_editor_link` confirm transport readiness only; the gateway is started on demand and phone rendering still needs verification. The QR guide periodically checks transport status and stops showing a stale success card after disconnection. Startup output is saved, with secrets masked, to the project's `.vibe/tunnel.log`.
+
+For the web client's preview button, first check the configured development server over HTTP. Keep the terminal visible if it does not respond. Private devtunnels leave the terminal intact and open externally. For other embeddable forwarded URLs, restore the panel size before hiding it and reduce editors to one group. This prevents terminal/preview round trips from reversing the panel maximization state. A successfully invoked browser command is logged as an open request, not proof of rendered content.
 
 Track each fact separately rather than collapsing them into one success flag.
 
@@ -71,3 +81,6 @@ The host must stay awake and online; the `--no-sleep` flag covers sleep during a
 - Failed dev-server task covering the prompt: fix the task presentation; do not kill the user terminals.
 - Desktop window: keep the 3-column layout, time machine and mobile buttons unchanged.
 
+Project URL recovery: setup retains the project's saved preview URL when the parameter is omitted. A blank workspace URL falls back to `.vibe/remote-config.json`; no port is guessed. The setup agent must provide a real HTTP server even for static projects requested on a phone, verify project ownership and route, and configure startup. Missing URL and unreachable server are separate errors and preserve the terminal.
+
+Private devtunnels previews now open as a top-level browser page on every click, with the Codex terminal preserved. This avoids the embedded browser's authentication/frame limitations and does not make the port Public. The local HTTP probe allows 15 seconds for on-demand compilation; a responding TCP port alone is insufficient. Phone sign-in and actual rendered output still require real-device verification.

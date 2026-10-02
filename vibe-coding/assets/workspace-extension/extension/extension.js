@@ -6,7 +6,8 @@ const http = require('http');
 const https = require('https');
 const { execSync, execFileSync } = require('child_process');
 const { getMobileTunnelWebviewHtml } = require('./mobile-tunnel');
-const { getOrStartTunnel } = require('./tunnel-manager');
+const { getOrStartTunnel, getTunnelStatus } = require('./tunnel-manager');
+const { createPreviewForwarder } = require('./preview-forwarding');
 
 function checkPortReachable(urlStr) {
   return new Promise(resolve => {
@@ -15,13 +16,13 @@ function checkPortReachable(urlStr) {
       const port = Number(u.port) || (u.protocol === 'https:' ? 443 : 80);
       const client = u.protocol === 'https:' ? https : http;
       const host = (u.hostname === 'localhost') ? '127.0.0.1' : (u.hostname || '127.0.0.1');
-      const req = client.get({ hostname: host, port, path: u.pathname || '/', timeout: 600 }, res => {
+      const req = client.get({ hostname: host, port, path: (u.pathname || '/') + u.search, timeout: 15000 }, res => {
         res.resume();
         resolve(res.statusCode >= 200 && res.statusCode < 400);
       });
       req.on('error', () => {
         if (host === '127.0.0.1') {
-          const fb = client.get({ hostname: 'localhost', port, path: u.pathname || '/', timeout: 400 }, res => {
+          const fb = client.get({ hostname: 'localhost', port, path: (u.pathname || '/') + u.search, timeout: 15000 }, res => {
             res.resume();
             resolve(res.statusCode >= 200 && res.statusCode < 400);
           });
@@ -47,6 +48,9 @@ function activate(context) {
   let currentMode = context.workspaceState?.get?.('vibeMode', 'split') || 'split'; // 'split' | 'terminal' | 'preview'
  let busy = false;
   let mobileWebviewPanel;
+  let mobileStatusTimer;
+  const previewForwarder = createPreviewForwarder();
+  context.subscriptions.push(previewForwarder);
   const exec = (command, ...args) => vscode.commands.executeCommand(command, ...args);
 
   const isWebClient = !!(vscode.UIKind && vscode.env.uiKind === vscode.UIKind.Web);
@@ -350,17 +354,52 @@ function activate(context) {
     setMode('terminal');
     record('terminal-full', { mode: currentMode });
   }
+  function resolvePreviewUrl() {
+    const configured = vscode.workspace.getConfiguration('vibe').get('previewUrl', '');
+    if (configured && configured.trim()) return configured.trim();
+    try {
+      const projectPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+      const saved = JSON.parse(fs.readFileSync(path.join(projectPath, '.vibe', 'remote-config.json'), 'utf8')).previewUrl;
+      const parsed = new URL(saved);
+      if (['http:', 'https:'].includes(parsed.protocol) && ['127.0.0.1', 'localhost', '[::1]'].includes(parsed.hostname)) return parsed.toString();
+    } catch {}
+    return '';
+  }
   async function togglePreview() {
     if (isWebClient) {
-      const url = vscode.workspace.getConfiguration('vibe').get('previewUrl', '');
-      if (!url) throw new Error('미리보기 주소가 설정되지 않았습니다.');
+      const url = resolvePreviewUrl();
+      if (!url) throw new Error('이 프로젝트의 미리보기 서버 주소가 설정되지 않았습니다. AI에게 현재 프로젝트의 서버를 확인하고 Vibe Coding 모바일 미리보기를 설정해달라고 요청해주세요. 터미널 화면을 유지합니다.');
+      if (!(await checkPortReachable(url))) {
+        throw new Error('개발 서버가 응답하지 않습니다: ' + url + '. PC에서 미리보기 서버 작업을 확인해주세요. 터미널 화면을 유지합니다.');
+      }
       const external = await vscode.env.asExternalUri(vscode.Uri.parse(url));
+      let forwardedUrl = external.toString();
+      let forwarded = new URL(forwardedUrl);
+      if (['localhost', '127.0.0.1', '[::1]', '0.0.0.0'].includes(forwarded.hostname)) {
+        forwardedUrl = await previewForwarder.resolve(url);
+        forwarded = new URL(forwardedUrl);
+      }
+      if (!['https:', 'http:'].includes(forwarded.protocol) || ['localhost', '127.0.0.1', '[::1]', '0.0.0.0'].includes(forwarded.hostname)) {
+        throw new Error('공식 포트 전달 주소가 아직 준비되지 않았습니다. 휴대폰에서 127.0.0.1은 PC 주소가 아닙니다. VS Code 포트(Ports)에서 ' + new URL(url).port + ' 포트를 Private으로 전달한 뒤 미리보기를 다시 눌러주세요.');
+      }
+      // Private tunnel authentication may refuse iframe embedding or third-party
+      // cookies. Use a top-level browser page and leave the Codex terminal intact.
+      if (forwarded.hostname.endsWith('.devtunnels.ms')) {
+        const opened = await vscode.env.openExternal(vscode.Uri.parse(forwardedUrl));
+        if (!opened) throw new Error('미리보기 브라우저를 열지 못했습니다. 외부 연결 확인 창에서 주소를 확인하고 허용해주세요.');
+        record('preview-external-requested', { serverResponding: true, mobileRenderingVerified: false });
+        return;
+      }
+      // Closing a maximized panel keeps its maximized state in VS Code.
+      // Restore its size first, otherwise the next terminal button shrinks it.
+      if (currentMode === 'terminal') await exec('workbench.action.toggleMaximizedPanel');
       await exec('workbench.action.closeSidebar');
       await exec('workbench.action.closeAuxiliaryBar');
       await exec('workbench.action.closePanel');
-      await exec('simpleBrowser.show', external.toString(), { viewColumn: vscode.ViewColumn.One, preserveFocus: false });
+      await exec('vscode.setEditorLayout', { orientation: 0, groups: [{}] });
+      await exec('simpleBrowser.show', forwardedUrl, { viewColumn: vscode.ViewColumn.One, preserveFocus: false });
       setMode('preview');
-      record('preview-full', { mode: currentMode });
+      record('preview-open-requested', { mode: currentMode, serverResponding: true, mobileRenderingVerified: false });
       return;
     }
     if (currentMode === 'preview') {
@@ -726,7 +765,7 @@ function activate(context) {
         'vibeMobileRemote', '📱 Vibe Coding 모바일 원격 작업',
         vscode.ViewColumn.One, { enableScripts: true, localResourceRoots: [] }
       );
-      mobileWebviewPanel.onDidDispose(() => { mobileWebviewPanel = null; });
+      mobileWebviewPanel.onDidDispose(() => { mobileWebviewPanel = null; clearInterval(mobileStatusTimer); });
       mobileWebviewPanel.webview.onDidReceiveMessage(async message => {
         if (message && message.command === 'copy') {
           await vscode.env.clipboard.writeText(message.text || '');
@@ -742,6 +781,23 @@ function activate(context) {
         mobileWebviewPanel.webview.html = getMobileTunnelWebviewHtml({ projectPath: p, tunnelUrl: tunnelInfo.url, tunnelName: tunnelInfo.tunnelName });
       }
       record('mobile-remote-tunnel-ready', { url: tunnelInfo.url });
+      if (mobileStatusTimer) clearInterval(mobileStatusTimer);
+      let checking = false;
+      mobileStatusTimer = setInterval(async () => {
+        if (checking || !mobileWebviewPanel) return;
+        checking = true;
+        try {
+          const status = await getTunnelStatus();
+          if (!status.tunnel || status.tunnel.tunnel !== 'Connected' || !status.tunnel.has_editor_link) {
+            mobileWebviewPanel.webview.html = getMobileTunnelWebviewHtml({ error: '터널 연결이 끊겼거나 원격 서버 연결을 준비 중입니다. PC의 모바일 버튼을 다시 눌러 상태를 확인해주세요.' });
+            clearInterval(mobileStatusTimer);
+          }
+        } catch (error) {
+          if (mobileWebviewPanel) mobileWebviewPanel.webview.html = getMobileTunnelWebviewHtml({ error: error.message });
+          clearInterval(mobileStatusTimer);
+        } finally { checking = false; }
+      }, 10000);
+      context.subscriptions.push({ dispose() { clearInterval(mobileStatusTimer); } });
     } catch (err) {
       if (mobileWebviewPanel) {
         mobileWebviewPanel.webview.html = getMobileTunnelWebviewHtml({ projectPath: p, error: err.message });

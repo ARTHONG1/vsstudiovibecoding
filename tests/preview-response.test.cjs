@@ -10,3 +10,12 @@ test('preview readiness rejects HTTP failures', async () => {
  try {for(const status of [200,404,500]) assert.equal(await scope.module.exports.probe('http://127.0.0.1:'+server.address().port+'/'+status),status===200);}
  finally {await new Promise(resolve=>server.close(resolve));}
 });
+
+test('preview readiness accepts a compiling server slower than 600ms', async () => {
+ const source=fs.readFileSync(path.join(__dirname,'../vibe-coding/assets/workspace-extension/extension/extension.js'),'utf8');
+ const scope={require:name=>name==='vscode'||name.startsWith('.')?{}:require(name),URL,module:{exports:{}}};
+ vm.runInNewContext(source+'\nmodule.exports.probe=checkPortReachable;',scope);
+ const server=http.createServer((req,res)=>setTimeout(()=>res.end('ready'),900));
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ try{assert.equal(await scope.module.exports.probe('http://127.0.0.1:'+server.address().port),true);}finally{await new Promise(resolve=>server.close(resolve));}
+});

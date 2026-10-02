@@ -1,6 +1,6 @@
 # Vibe Coding
 
-[![Version](https://img.shields.io/badge/version-2.8.1-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
+[![Version](https://img.shields.io/badge/version-2.8.2-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6.svg?logo=windows)](https://github.com/ARTHONG1/vsstudiovibecoding)
 [![CI](https://github.com/ARTHONG1/vsstudiovibecoding/actions/workflows/ci.yml/badge.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/actions)
@@ -15,7 +15,11 @@
 
 한 문장만 던지면 에이전트가 프로젝트를 열어 구조를 읽고, 실행 명령과 미리보기 주소를 직접 찾아내고, 기존 VS Code와 분리된 전용 작업 환경을 만들고, 바탕화면 바로가기까지 만든 뒤 화면이 실제로 뜨는지 확인합니다. 필요한 로그인·프로젝트 신뢰 승인은 사용자가 확인합니다.
 
-v2.8.1에서는 Git 사용자 이름·이메일을 설정하지 않은 PC에서 타임머신 체크포인트가 저장되지 않던 문제를 고쳤습니다. 실제 새 에이전트·모바일 검증 범위는 [TESTING.md](TESTING.md)에 구분해 기록합니다.
+v2.8.2에서는 느린 서버의 미리보기 응답 검사와 Private 모바일 미리보기를 보완했습니다. 저장된 주소 유지와 한글 경로 보존도 정리했습니다. 검증 결과와 실제 휴대폰 검증 범위는 [TESTING.md](TESTING.md)에 구분해 기록합니다.
+
+[![35초 소개 영상](media/vibe-coding-intro-poster.webp)](https://arthong1.github.io/vsstudiovibecoding/#intro-video)
+
+**[소개 영상 보기](https://arthong1.github.io/vsstudiovibecoding/#intro-video)** · [AI가 읽는 요약](https://arthong1.github.io/vsstudiovibecoding/llms.txt)
 
 ### 기본 AI 작업 도구 — 기본 도구 세팅
 
@@ -31,7 +35,7 @@ v2.8.1에서는 Git 사용자 이름·이메일을 설정하지 않은 PC에서 
 
 ![3열 분할, 터미널 전체, 미리보기 전체 세 가지 화면 모드와 상태바 버튼](images/vibe-coding-view-modes.webp)
 
-**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.8.1/vibe-coding-2.8.1.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
+**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.8.2/vibe-coding-2.8.2.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
 
 ## 가장 쉬운 시작
 
@@ -166,13 +170,15 @@ AI가 코드를 고치다 멀쩡하던 기능을 망가뜨렸을 때, 대화 턴
 
 상태바 **[📱 모바일]** 버튼을 누르면 마이크로소프트 공식 `code tunnel` 엔진이 백그라운드에서 프로젝트 전용 `vscode.dev` 주소를 만들고, **스마트폰 카메라로 바로 스캔할 수 있는 QR 코드**를 띄웁니다. 휴대폰에서 최초 1회 PC와 같은 GitHub 계정으로 로그인하면 내 PC의 프로젝트가 그대로 열립니다.
 
-휴대폰 화면에서는 상태바 왼쪽에 **[ 터미널 ]** 과 **[ 미리보기 ]** 두 버튼만 크게 노출됩니다. [터미널]은 Codex 입력 화면으로, [미리보기]는 개발 서버가 그리는 실제 결과 화면으로 한 번에 전환합니다. 좁은 화면에서 3열을 거치지 않으므로 이동 중에도 바로 지시하고 결과를 확인할 수 있습니다.
+휴대폰 화면에서는 상태바 왼쪽에 **[ 터미널 ]** 과 **[ 미리보기 ]** 두 버튼만 크게 노출됩니다. [터미널]은 Codex 입력 화면으로, [미리보기]는 Private 개발 서버의 결과를 별도 브라우저 탭으로 엽니다. 작업을 계속하려면 VS Code 탭으로 돌아옵니다. 좁은 화면에서 3열을 거치지 않으므로 이동 중에도 바로 지시하고 결과를 확인할 수 있습니다.
 
 연결 주소는 한글·공백이 없는 `.code-workspace` 파일을 가리킵니다. `vscode.dev`가 주소에 담긴 한글을 그대로 폴더 이름으로 취급해 프로젝트가 열리지 않던 문제를 피하기 위해서입니다. 워크스페이스 파일이 프로젝트 폴더와 미리보기 주소를 함께 담고 있어 휴대폰에서도 같은 설정이 적용됩니다.
 
 PC가 켜져 있고 온라인이어야 하며, `--no-sleep` 플래그로 터널 동작 중 절전이 방지됩니다. 원격 창에도 Vibe 확장이 설치돼야 두 버튼이 보입니다. 휴대폰과 PC에서 같은 파일을 동시에 편집하지 마세요.
 
 [AI의 모바일 설정 절차](vibe-coding/references/mobile-remote.md) · [VS Code 원격 터널 공식 문서](https://code.visualstudio.com/docs/remote/tunnels)
+
+모바일 미리보기는 PC 개발 서버를 Private HTTPS 주소로 전달합니다. 기본 원격 주소가 localhost로 남으면 확장이 Microsoft CLI의 포트 전달을 준비합니다. 최초 미리보기 인증은 vscode.dev 로그인과 별도로 필요할 수 있습니다. Private 연결은 매번 별도 브라우저 탭으로 열어 인증과 앱 화면을 표시합니다. 앱의 iframe 정책이나 브라우저 쿠키 제한에 따라 외부 브라우저에서 확인해야 할 수 있습니다. 연결 주소 발급과 실제 휴대폰 화면 검증은 별개입니다.
 
 ## 만든 사람
 
@@ -186,3 +192,5 @@ PC가 켜져 있고 온라인이어야 하며, `--no-sleep` 플래그로 터널 
 ![클래스똑딱 classddok.com 웹사이트 첫 화면과 교사용 AI 앱 목록](images/classddok-com.webp)
 
 교실이든 개인 프로젝트든, 환경 설정 때문에 시작을 미루는 사람이 줄어들면 좋겠습니다. 써보고 막히는 지점이 있으면 [이슈](https://github.com/ARTHONG1/vsstudiovibecoding/issues)로 알려주세요.
+
+모바일 미리보기는 프로젝트의 실제 HTTP 서버 주소가 필요합니다. 재설정 시 저장된 주소를 유지하며, 작업 공간 주소가 비어 있으면 해당 프로젝트의 저장 설정을 확인합니다. 서버가 없는 경우 AI가 실행 방법과 주소를 확인해야 합니다.

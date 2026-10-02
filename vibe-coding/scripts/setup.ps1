@@ -44,6 +44,12 @@ if (!$EntryFile) {
 $entryPath = [IO.Path]::GetFullPath((Join-Path $ProjectPath $EntryFile))
 if (!$entryPath.StartsWith($ProjectPath.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'EntryFile must stay within the project.' }
 if (!$CreateSample -and !(Test-Path -LiteralPath $entryPath -PathType Leaf)) { throw "Entry file does not exist: $entryPath" }
+if (!$PSBoundParameters.ContainsKey('PreviewUrl')) {
+  $savedRemotePath = Join-Path $ProjectPath '.vibe\remote-config.json'
+  if (Test-Path -LiteralPath $savedRemotePath -PathType Leaf) {
+    try { $PreviewUrl = (Get-Content -LiteralPath $savedRemotePath -Raw -Encoding UTF8 | ConvertFrom-Json).previewUrl } catch {}
+  }
+}
 if (!$PreviewUrl -and (Test-Path -LiteralPath (Join-Path $ProjectPath 'package.json') -PathType Leaf)) {
   try {
     $pkgText = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $ProjectPath 'package.json')

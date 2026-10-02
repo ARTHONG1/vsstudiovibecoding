@@ -127,3 +127,12 @@ Follow the 7-step checklist defined in `vibe-coding/references/verification.md`:
 - Preview tab discovery now matches `simpleBrowser.view` directly, because a Korean VS Code UI labels the tab `간단한 브라우저` and the previous English-only title match left the first column empty.
 - The auto-start dev server task received a `reveal: never` presentation block after a failed task covered the Codex prompt on the phone. Dev server reachability was confirmed separately over HTTP; a failed task and an unreachable server remain distinct findings.
 - Phone-side acceptance of the two buttons and the forwarded preview remains assigned to the user and is not claimed as automated end-to-end coverage.
+# 2026-10-02 로컬 모바일 미리보기 보완
+
+- 포트 전달 프로세스의 Private 요청, URL 경로·쿼리 보존, 시간 초과 정리, 종료 후 재연결 및 웹 버튼의 포트 전달 폴백을 회귀 테스트로 확인했습니다.
+- 이 PC의 공식 `code-tunnel.exe tunnel forward-internal`에서 3012 포트 HTTPS 주소 발급과 인증 전 HTTP 302 응답을 확인했습니다. 앱 화면이 아니라 인증 경로까지의 확인입니다.
+- Android/iOS에서 인증 후 내부 미리보기 렌더링과 터미널 왕복은 사용자 검증 대기입니다. CLI 내부 프로토콜은 버전에 따라 달라질 수 있습니다.
+
+2026-10-02 추가 검증: 빈 workspace previewUrl의 프로젝트 remote-config 복구와 setup 재실행의 저장 주소 유지 회귀 테스트를 추가했다. npm run check 및 53개 테스트 통과. 실제 사용자 WMI 컨텍스트에서 음악2 workspace/remote-config를 http://127.0.0.1:8080/로 맞추고 VSIX를 desktop/remote에 설치하여 확장 파일 4곳의 SHA256 일치를 확인했다. 로컬 음악2 응답 HTTP 200 확인. 휴대폰의 Private 로그인 및 iframe 렌더링은 검증 대기.
+
+2026-10-02 포토부스 추가 진단: 실제 HTTP 200 응답이 3.9~4.4초 걸려 기존 600ms 검사에서 실패했다. 제한을 15초로 늘리고 900ms 응답 회귀 테스트를 추가했다. Private devtunnels URL은 iframe 대신 매번 외부 브라우저로 요청하여 기존 터미널을 유지한다. openExternal 반환값은 화면 렌더링 완료 증거가 아니다.

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://arthong1.github.io/vsstudiovibecoding/sitemap.xml

@@ -1,5 +1,5 @@
 'use strict';
-const { spawn, execSync } = require('child_process');
+const { spawn, execSync, execFile } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -90,7 +90,7 @@ function findVsixPath() {
 }
 
 async function getOrStartTunnel(projectPath, options = {}) {
-  if (activeTunnel && activeTunnel.url) {
+  if (options.spawn && !options.getStatus && activeTunnel && activeTunnel.url) {
     return { ...activeTunnel, url: buildProjectTunnelUrl(activeTunnel.url, projectPath, options.workspaceFile) };
   }
   if (startingPromise) {
@@ -98,15 +98,100 @@ async function getOrStartTunnel(projectPath, options = {}) {
   }
 
   startingPromise = (async () => {
+    let releaseLock = () => {};
     try {
+      const cli = (options.findCli || findCodeTunnelCli)();
+      if (!cli) throw new Error('VS Code 터널 실행 파일(code-tunnel.exe)을 찾을 수 없습니다.');
+      if (!options.spawn) ensureRemoteExtension();
+      // Injected children are isolated tests. Real windows share CLI state and
+      // an exclusive startup lock, instead of launching one tunnel per host.
+      const readStatus = options.getStatus || (options.spawn ? async () => ({}) : () => getTunnelStatus(cli));
+      if (!options.spawn) releaseLock = await acquireStartupLock();
+      const status = await readStatus();
+      if (status.tunnel) {
+        if (status.tunnel.tunnel !== 'Connected' || !status.tunnel.has_editor_link) {
+          throw new Error('기존 터널의 연결이 준비되지 않았습니다. 잠시 후 모바일 버튼을 다시 눌러주세요. 다른 터널은 종료하지 않았습니다.');
+        }
+        return { url: buildProjectTunnelUrl('https://vscode.dev/tunnel/' + status.tunnel.name + '/', projectPath, options.workspaceFile), tunnelName: status.tunnel.name, reused: true };
+      }
+      activeTunnel = null;
       const result = await startTunnelProcess(projectPath, options);
+      if (!options.spawn) {
+        let connected = false;
+        for (let attempt = 0; attempt < 20; attempt++) {
+          const next = await readStatus();
+          if (next.tunnel && next.tunnel.name === result.tunnelName && next.tunnel.tunnel === 'Connected' && next.tunnel.has_editor_link) {
+            connected = true;
+            break;
+          }
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        if (!connected) {
+          stopTunnel();
+          throw new Error('터널 URL은 생성됐지만 연결 상태가 준비되지 않았습니다. .vibe/tunnel.log에서 원인을 확인해주세요.');
+        }
+      }
       return result;
     } finally {
+      releaseLock();
       startingPromise = null;
     }
   })();
 
   return startingPromise;
+}
+
+function getTunnelStatus(cli = findCodeTunnelCli()) {
+  return new Promise((resolve, reject) => {
+    if (!cli) return reject(new Error('code-tunnel.exe를 찾을 수 없습니다.'));
+    execFile(cli, ['tunnel', 'status'], { windowsHide: true, timeout: 8000, encoding: 'utf8' }, (error, stdout, stderr) => {
+      if (error) return reject(new Error('터널 상태 확인 실패: ' + sanitizeErrorText(stderr || error.message)));
+      try { resolve(JSON.parse(stdout.trim())); }
+      catch { reject(new Error('터널 상태 응답을 해석하지 못했습니다.')); }
+    });
+  });
+}
+
+function ensureRemoteExtension() {
+  const home = os.homedir();
+  const extensionRoot = path.join(home, '.vscode-server', 'extensions');
+  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
+  const installed = path.join(extensionRoot, manifest.publisher + '.' + manifest.name + '-' + manifest.version);
+  const files = ['extension.js', 'tunnel-manager.js', 'mobile-tunnel.js', 'preview-forwarding.js'];
+  if (files.every(file => fs.existsSync(path.join(installed, file)) && fs.readFileSync(path.join(installed, file)).equals(fs.readFileSync(path.join(__dirname, file))))) return;
+  const servers = path.join(home, '.vscode', 'cli', 'servers');
+  const candidates = fs.existsSync(servers) ? fs.readdirSync(servers).map(name => path.join(servers, name, 'server'))
+    .filter(dir => fs.existsSync(path.join(dir, 'node.exe')) && fs.existsSync(path.join(dir, 'out', 'server-main.js')))
+    .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs) : [];
+  const vsix = findVsixPath();
+  if (!candidates.length || !vsix) throw new Error('원격 서버용 Vibe 확장 설치가 필요합니다. AI에게 모바일 초기 설정을 요청해주세요. 연결 중 자동 설치는 Windows bash 오류 때문에 사용하지 않습니다.');
+  const { execFileSync } = require('child_process');
+  execFileSync(path.join(candidates[0], 'node.exe'), [path.join(candidates[0], 'out', 'server-main.js'), '--extensions-dir', extensionRoot, '--install-extension', vsix, '--force'], { windowsHide: true, timeout: 30000, stdio: 'pipe' });
+}
+
+async function acquireStartupLock() {
+  const dir = path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'VibeCoding');
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, 'tunnel-start.lock');
+  for (let attempt = 0; attempt < 80; attempt++) {
+    try {
+      const fd = fs.openSync(file, 'wx');
+      fs.writeFileSync(fd, String(process.pid));
+      fs.closeSync(fd);
+      return () => { try { if (fs.readFileSync(file, 'utf8') === String(process.pid)) fs.unlinkSync(file); } catch {} };
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      try {
+        const owner = Number(fs.readFileSync(file, 'utf8'));
+        if (owner > 0) {
+          try { process.kill(owner, 0); }
+          catch (probeError) { if (probeError.code === 'ESRCH') fs.unlinkSync(file); }
+        }
+      } catch {}
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+  throw new Error('다른 VS Code 창에서 터널을 준비 중입니다. 잠시 후 다시 시도해주세요.');
 }
 
 
@@ -118,10 +203,10 @@ function ensureCliInstallDir(codeCli) {
       execFileSync(codeCli, ['version', 'use', 'stable', '--install-dir', installDir], {
         stdio: 'ignore',
         windowsHide: true,
-        timeout: 5000
+        timeout: 15000
       });
     }
-  } catch {}
+  } catch (error) { throw new Error('VS Code 터널 설치 경로 등록 실패: ' + sanitizeErrorText(error.message)); }
 }
 
 function startTunnelProcess(projectPath, options = {}) {
@@ -140,8 +225,6 @@ function startTunnelProcess(projectPath, options = {}) {
   }
 
 
-  const vsixPathFn = options.findVsix || findVsixPath;
-  const vsixPath = vsixPathFn();
   const cleanHost = (os.hostname() || 'pc').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 15);
   const tunnelName = 'vibe-' + (cleanHost || 'pc');
 
@@ -151,9 +234,8 @@ function startTunnelProcess(projectPath, options = {}) {
     '--accept-server-license-terms',
     '--no-sleep'
   ];
-  if (vsixPath) {
-    args.push('--install-extension', vsixPath);
-  }
+  // Installing into an already-running server invokes bash in the CLI,
+  // even on Windows. Install explicitly beforehand, never on reconnection.
 
   const spawnFn = options.spawn || spawn;
   const timeoutMs = options.timeoutMs || 30000;
@@ -189,6 +271,9 @@ function startTunnelProcess(projectPath, options = {}) {
 
     function onData(chunk) {
       stdoutBuffer += chunk.toString();
+      if (!options.spawn) {
+        try { fs.appendFileSync(path.join(vibeDir, 'tunnel.log'), sanitizeErrorText(chunk.toString()), 'utf8'); } catch {}
+      }
       const rawUrl = extractTunnelUrl(stdoutBuffer);
       let detected;
       try {
@@ -255,6 +340,7 @@ module.exports = {
   buildProjectTunnelUrl,
   ensureCliInstallDir,
   getOrStartTunnel,
+  getTunnelStatus,
   stopTunnel,
   resetTunnelState,
   extractTunnelUrl,

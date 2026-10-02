@@ -64,14 +64,16 @@ function createMockVSCode(config = {}) {
     {
       module,
       exports: module.exports,
-      require: name => (name === 'vscode' ? vscode : name === './tunnel-manager' ? {
+      require: name => (name === 'vscode' ? vscode : name === './preview-forwarding' ? {createPreviewForwarder:()=>({resolve:async()=>{if(config.forwardedUrl)return config.forwardedUrl;throw new Error('포트 전달 실패');},dispose(){}})} : name === './tunnel-manager' ? {
         getOrStartTunnel: async (project, options) => {
           tunnelCalls.push({ project, options });
           return { url: 'https://vscode.dev/tunnel/test/C:/project', tunnelName: 'test' };
         }
-      } : name === 'fs' ? { existsSync: () => true, mkdirSync() {}, appendFileSync() {} } : name.startsWith('.') ? require(path.join(__dirname, '../vibe-coding/assets/workspace-extension/extension', name)) : require(name)),
+      } : name === 'fs' ? { existsSync: () => true, readFileSync: () => JSON.stringify({previewUrl: config.savedPreviewUrl}), mkdirSync() {}, appendFileSync() {} } : name.startsWith('.') ? require(path.join(__dirname, '../vibe-coding/assets/workspace-extension/extension', name)) : require(name)),
       setTimeout: fn => fn(),
       clearTimeout: () => {},
+      setInterval: () => 1,
+      clearInterval: () => {},
       URL
     }
   );
@@ -169,8 +171,11 @@ test('remote web startup opens terminal without desktop split layout', async () 
  assert.ok(env.events.some(e=>e.event==='terminal-full'));
 });
 
-test('web controls stay compact and switch directly without desktop restore', async () => {
- const env=createMockVSCode({previewUrl:'http://localhost:5173'});
+test('web controls stay compact and switch directly without desktop restore', async t => {
+ const server=require('http').createServer((req,res)=>res.end('preview'));
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const env=createMockVSCode({previewUrl:'http://127.0.0.1:'+server.address().port});
  env.vscode.UIKind={Web:2};env.vscode.env.uiKind=2;
  const items=[];env.vscode.window.createStatusBarItem=(id,alignment,priority)=>{const item={id,alignment,priority,show(){this.visible=true},hide(){this.visible=false},dispose(){}};items.push(item);return item;};
  env.vscode.env.asExternalUri=async()=>({toString:()=> 'https://forwarded.example/'});
@@ -184,9 +189,12 @@ test('web controls stay compact and switch directly without desktop restore', as
  assert.ok(calls.some(c=>c[0]==='simpleBrowser.show' && c[1]==='https://forwarded.example/'));
  await env.commands.get('vibe.toggleTerminal')();
  const count=calls.filter(c=>c[0]==='workbench.action.toggleMaximizedPanel').length;
+ assert.equal(count,3,'startup maximizes, preview restores size, terminal maximizes again');
  await env.commands.get('vibe.toggleTerminal')();
  assert.equal(calls.filter(c=>c[0]==='workbench.action.toggleMaximizedPanel').length,count);
- assert.ok(!calls.some(c=>c[0]==='vscode.setEditorLayout'));
+ const layouts=calls.filter(c=>c[0]==='vscode.setEditorLayout');
+ assert.equal(layouts.length,1);
+ assert.equal(layouts[0][1].groups.length,1);
 });
 
 test('Codex startup arguments retain spaces and do not change defaults', async () => {
@@ -196,4 +204,71 @@ test('Codex startup arguments retain spaces and do not change defaults', async (
     assert.deepEqual(Array.from(env.terminals[0].creationOptions.shellArgs), args);
     assert.equal(env.terminals[0].creationOptions.shellPath, 'C:/tools/codex.exe');
   }
+});
+
+test('web preview failure preserves terminal and reports server failure', async () => {
+  const env = createMockVSCode({previewUrl:'http://127.0.0.1:1'});
+  env.vscode.UIKind={Web:2}; env.vscode.env.uiKind=2;
+  env.vscode.window.createStatusBarItem=()=>({show(){},hide(){}});
+  env.vscode.env.asExternalUri=async()=>({toString:()=> 'https://forwarded.example/'});
+  const errors=[], calls=[];
+  env.vscode.window.showErrorMessage=message=>errors.push(message);
+  env.vscode.commands.executeCommand=async(...args)=>calls.push(args);
+  await env.module.exports.activate({subscriptions:[],globalStorageUri:{fsPath:'C:/test'}});
+  calls.length=0;
+  await env.commands.get('vibe.togglePreview')();
+  assert.ok(errors.some(message=>message.includes('응답')));
+  assert.ok(!calls.some(c=>c[0]==='workbench.action.closePanel'));
+  assert.ok(!calls.some(c=>c[0]==='simpleBrowser.show'));
+});
+
+test('web preview rejects an unresolved loopback address instead of showing a blank phone frame', async t => {
+  const server=require('http').createServer((req,res)=>res.end('preview'));
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  t.after(()=>new Promise(resolve=>server.close(resolve)));
+  const url='http://127.0.0.1:'+server.address().port;
+  const env=createMockVSCode({previewUrl:url});
+  env.vscode.UIKind={Web:2};env.vscode.env.uiKind=2;
+  env.vscode.window.createStatusBarItem=()=>({show(){},hide(){}});
+  env.vscode.env.asExternalUri=async()=>({toString:()=>url});
+  const errors=[],calls=[];
+  env.vscode.window.showErrorMessage=message=>errors.push(message);
+  env.vscode.commands.executeCommand=async(...args)=>calls.push(args);
+  await env.module.exports.activate({subscriptions:[],globalStorageUri:{fsPath:'C:/test'}});
+  calls.length=0;
+  await env.commands.get('vibe.togglePreview')();
+  assert.ok(errors.some(message=>message.includes('포트 전달')));
+  assert.ok(!calls.some(c=>c[0]==='simpleBrowser.show'));
+  assert.ok(!calls.some(c=>c[0]==='workbench.action.closePanel'));
+});
+
+test('web preview creates private forwarding when native address remains loopback', async t => {
+  const server=require('http').createServer((req,res)=>res.end('preview'));
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  t.after(()=>new Promise(resolve=>server.close(resolve)));
+  const url='http://127.0.0.1:'+server.address().port+'/studio';
+  const env=createMockVSCode({previewUrl:url,forwardedUrl:'https://test-3012.jpe1.devtunnels.ms/studio'});
+  env.vscode.UIKind={Web:2};env.vscode.env.uiKind=2;
+  env.vscode.window.createStatusBarItem=()=>({show(){},hide(){}});
+  env.vscode.env.asExternalUri=async()=>({toString:()=>url});
+  const calls=[];env.vscode.commands.executeCommand=async(...args)=>calls.push(args);
+  await env.module.exports.activate({subscriptions:[],globalStorageUri:{fsPath:'C:/test'}});
+  await env.commands.get('vibe.togglePreview')();
+  assert.equal(env.getOpenedUrl(),'https://test-3012.jpe1.devtunnels.ms/studio');
+  assert.ok(!calls.some(c=>c[0]==='simpleBrowser.show' || c[0]==='workbench.action.closePanel'));
+});
+
+test('web preview recovers saved project URL when workspace URL is blank', async t => {
+  const server=require('http').createServer((req,res)=>res.end('preview'));
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  t.after(()=>new Promise(resolve=>server.close(resolve)));
+  const url='http://127.0.0.1:'+server.address().port+'/studio';
+  const env=createMockVSCode({previewUrl:'',savedPreviewUrl:url,forwardedUrl:'https://test-3012.jpe1.devtunnels.ms/studio'});
+  env.vscode.UIKind={Web:2};env.vscode.env.uiKind=2;
+  env.vscode.window.createStatusBarItem=()=>({show(){},hide(){}});
+  env.vscode.env.asExternalUri=async()=>({toString:()=>url});
+  const calls=[];env.vscode.commands.executeCommand=async(...args)=>calls.push(args);
+  await env.module.exports.activate({subscriptions:[],globalStorageUri:{fsPath:'C:/test'}});
+  await env.commands.get('vibe.togglePreview')();
+  assert.equal(env.getOpenedUrl(),'https://test-3012.jpe1.devtunnels.ms/studio');
 });

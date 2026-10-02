@@ -119,3 +119,6 @@ Discover the requested Codex CLI and verify its --version before apply. Resolve 
 | existing instance retains stale state | Save/preserve buffers and close/reopen the affected isolated workspace through UI. Do not kill all Code processes. |
 
 The original demo/HTML workflow is the empirically tested baseline. Server-URL support and different VS Code versions still require the same on-machine visual acceptance checks.
+
+## Preserve Korean paths in Windows PowerShell
+When editing a BOM-less UTF-8 workspace or JSON file, use `[IO.File]::ReadAllText(path, [Text.Encoding]::UTF8)` or `Get-Content -Encoding UTF8`; Windows PowerShell 5.1's default decoding can corrupt Korean paths. Back up first, write UTF-8 explicitly, then read the saved bytes back and verify every workspace folder still exists in the real user context. A successful JSON parse does not prove path preservation. Never rewrite a whole workspace from a default-encoded read.
