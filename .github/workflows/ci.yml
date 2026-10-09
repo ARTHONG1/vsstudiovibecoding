@@ -29,3 +29,6 @@ jobs:
         shell: powershell
         run: powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1
 
+  macos:
+    uses: ./.github/workflows/macos-e2e.yml
+

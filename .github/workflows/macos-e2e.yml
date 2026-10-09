@@ -1,0 +1,82 @@
+name: macOS end-to-end
+
+# Installs the official VS Code and Codex CLI on a clean macOS runner, applies
+# the skill to a sample project, opens the desktop launcher and checks the
+# resulting workspace. Called by CI and Release.
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  macos:
+    name: macOS setup and launch
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run repository integrity & version checks
+        run: npm run check
+
+      - name: Run automated test suite
+        run: npm test
+
+      - name: Install VS Code from the official archive
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/vscode.zip" "https://update.code.visualstudio.com/latest/darwin-universal/stable"
+          mkdir -p "$HOME/Applications"
+          ditto -x -k "$RUNNER_TEMP/vscode.zip" "$HOME/Applications"
+          test -x "$HOME/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
+
+      - name: Install the OpenAI Codex CLI
+        run: |
+          npm install -g @openai/codex
+          codex --version
+
+      - name: Plan with the JavaScript runtime bundled in VS Code
+        run: |
+          CODEX_BIN="$(command -v codex)"
+          env PATH=/usr/bin:/bin:/usr/sbin:/sbin sh vibe-coding/scripts/setup-macos.sh --create-sample --codex "$CODEX_BIN" --desktop "$RUNNER_TEMP/Desktop" > "$RUNNER_TEMP/plan.json"
+          cat "$RUNNER_TEMP/plan.json"
+          node scripts/ci-macos-verify.cjs plan "$RUNNER_TEMP/plan.json"
+
+      - name: Apply the setup to a sample project
+        run: |
+          mkdir -p "$RUNNER_TEMP/Desktop"
+          sh vibe-coding/scripts/setup-macos.sh --create-sample --codex "$(command -v codex)" --desktop "$RUNNER_TEMP/Desktop" --apply > "$RUNNER_TEMP/apply.json"
+          cat "$RUNNER_TEMP/apply.json"
+          node scripts/ci-macos-verify.cjs install "$RUNNER_TEMP/apply.json"
+
+      - name: Apply again without duplicating the installation
+        run: |
+          sh vibe-coding/scripts/setup-macos.sh --create-sample --codex "$(command -v codex)" --desktop "$RUNNER_TEMP/Desktop" --apply > "$RUNNER_TEMP/apply-again.json"
+          node scripts/ci-macos-verify.cjs install "$RUNNER_TEMP/apply-again.json"
+
+      - name: Open the desktop launcher and wait for the 3-column layout
+        run: node scripts/ci-macos-verify.cjs launch "$RUNNER_TEMP/apply.json"
+
+      - name: Capture the screen
+        if: always()
+        run: screencapture -x "$RUNNER_TEMP/vibe-macos.png" || true
+
+      - name: Check clipboard image paste and the bundled tunnel CLI
+        run: |
+          node scripts/ci-macos-verify.cjs clipboard
+          node scripts/ci-macos-verify.cjs tunnel "$RUNNER_TEMP/apply.json"
+
+      - name: Upload macOS evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-evidence
+          path: |
+            ${{ runner.temp }}/*.json
+            ${{ runner.temp }}/*.png
+            ~/Library/VibeCoding/VSCodeUserData/User/globalStorage/local-vibe.vibe-workspace/status.jsonl
+          if-no-files-found: ignore

@@ -1,0 +1,2 @@
+# Shell scripts must keep LF endings, also in the Windows-built release ZIP.
+*.sh text eol=lf

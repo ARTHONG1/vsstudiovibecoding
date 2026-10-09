@@ -1,11 +1,16 @@
 'use strict';
-const { spawn, execSync, execFile } = require('child_process');
+const { spawn, execFile } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const platform = require('./platform');
 
 let activeTunnel = null;
 let startingPromise = null;
+
+function tunnelBinaryName(options = {}) {
+  return platform.currentPlatform(options) === 'win32' ? 'code-tunnel.exe' : 'code-tunnel';
+}
 
 function extractTunnelUrl(text) {
   if (!text) return null;
@@ -15,16 +20,17 @@ function extractTunnelUrl(text) {
 
 // vscode.dev may preserve percent-encoded path segments literally. Prefer the
 // existing ASCII workspace file so its folders and settings are loaded together.
+// Windows paths become /c:/..., POSIX paths keep their single leading slash.
 function buildProjectTunnelUrl(detectedUrl, projectPath, workspaceFile) {
   const match = String(detectedUrl).match(/^https:\/\/vscode\.dev\/tunnel\/([a-z0-9-]+)(?:\/|$)/i);
   if (!match) throw new Error('Invalid VS Code tunnel URL');
-  const safe = value => typeof value === 'string' && /^[a-z]:[\\/][a-z0-9_./:\\-]+$/i.test(value);
+  const safe = value => typeof value === 'string' && (/^[a-z]:[\\/][a-z0-9_./:\\-]+$/i.test(value) || (/^\/[a-z0-9_./-]+$/i.test(value) && !value.split('/').includes('..')));
   let target = projectPath;
   if (workspaceFile && safe(workspaceFile) && fs.existsSync(workspaceFile) && /\.code-workspace$/i.test(workspaceFile)) {
     target = workspaceFile;
   }
   if (!safe(target)) throw new Error('모바일 연결에는 공백·한글이 없는 경로의 .code-workspace 파일이 필요합니다. Vibe Coding 작업 영역으로 열어주세요.');
-  return 'https://vscode.dev/tunnel/' + match[1] + '/' + target.replace(/\\/g, '/');
+  return 'https://vscode.dev/tunnel/' + match[1] + '/' + target.replace(/\\/g, '/').replace(/^\/+/, '');
 }
 
 function sanitizeErrorText(text) {
@@ -33,58 +39,23 @@ function sanitizeErrorText(text) {
     .replace(/(token|secret|password|bearer|auth[_-]?code)[=:\s]+[A-Za-z0-9_\-\.]{8,}/gi, '$1=***');
 }
 
-function findCodeTunnelCli() {
-  const localAppData = process.env.LOCALAPPDATA || '';
-  const programFiles = process.env.ProgramFiles || '';
-  const programFilesX86 = process.env['ProgramFiles(x86)'] || '';
-  const candidates = [
-    path.join(localAppData, 'Programs', 'Microsoft VS Code', 'bin', 'code-tunnel.exe'),
-    path.join(programFiles, 'Microsoft VS Code', 'bin', 'code-tunnel.exe'),
-    path.join(programFilesX86, 'Microsoft VS Code', 'bin', 'code-tunnel.exe'),
-    path.join(localAppData, 'Programs', 'Microsoft VS Code', 'code-tunnel.exe'),
-    path.join(programFiles, 'Microsoft VS Code', 'code-tunnel.exe'),
-    'code-tunnel.exe',
-    'code-tunnel'
-  ];
-
-  for (const c of candidates) {
-    if (!c) continue;
-    if (c.includes(path.sep)) {
-      if (fs.existsSync(c)) return c;
-    } else {
-      try {
-        const checkCmd = process.platform === 'win32' ? 'where.exe' : 'which';
-        const out = execSync(checkCmd + ' ' + c, { stdio: ['ignore', 'pipe', 'ignore'], encoding: 'utf8' }).trim();
-        if (out) {
-          const first = out.split(/\r?\n/)[0].trim();
-          if (first && fs.existsSync(first)) return first;
-        }
-      } catch {}
-    }
-  }
-  return null;
+// Windows: <VS Code>\bin\code-tunnel.exe
+// macOS:   Visual Studio Code.app/Contents/Resources/app/bin/code-tunnel
+function findCodeTunnelCli(options = {}) {
+  return platform.findCodeTunnelExecutable(options);
 }
 
-function findCodeCli() {
-  const tunnelCli = findCodeTunnelCli();
+function findCodeCli(options = {}) {
+  const tunnelCli = findCodeTunnelCli(options);
   if (tunnelCli) return tunnelCli;
-
-  const localAppData = process.env.LOCALAPPDATA || '';
-  const programFiles = process.env.ProgramFiles || '';
-  const candidates = [
-    path.join(localAppData, 'Programs', 'Microsoft VS Code', 'bin', 'code.cmd'),
-    path.join(programFiles, 'Microsoft VS Code', 'bin', 'code.cmd'),
-    'code.cmd'
-  ];
-  for (const c of candidates) {
+  for (const c of platform.codeCliCandidates(options)) {
     if (c && fs.existsSync(c)) return c;
   }
-  return 'code-tunnel.exe';
+  return platform.currentPlatform(options) === 'win32' ? 'code-tunnel.exe' : 'code-tunnel';
 }
 
-function findVsixPath() {
-  const localAppData = process.env.LOCALAPPDATA || '';
-  const candidate = path.join(localAppData, 'VibeCoding', 'vibe-workspace.vsix');
+function findVsixPath(options = {}) {
+  const candidate = path.join(platform.vibeRoot(options), 'vibe-workspace.vsix');
   if (fs.existsSync(candidate)) return candidate;
   return null;
 }
@@ -101,7 +72,7 @@ async function getOrStartTunnel(projectPath, options = {}) {
     let releaseLock = () => {};
     try {
       const cli = (options.findCli || findCodeTunnelCli)();
-      if (!cli) throw new Error('VS Code 터널 실행 파일(code-tunnel.exe)을 찾을 수 없습니다.');
+      if (!cli) throw new Error('VS Code 터널 실행 파일(' + tunnelBinaryName(options) + ')을 찾을 수 없습니다.');
       if (!options.spawn) ensureRemoteExtension();
       // Injected children are isolated tests. Real windows share CLI state and
       // an exclusive startup lock, instead of launching one tunnel per host.
@@ -143,7 +114,7 @@ async function getOrStartTunnel(projectPath, options = {}) {
 
 function getTunnelStatus(cli = findCodeTunnelCli()) {
   return new Promise((resolve, reject) => {
-    if (!cli) return reject(new Error('code-tunnel.exe를 찾을 수 없습니다.'));
+    if (!cli) return reject(new Error('VS Code 터널 실행 파일(' + tunnelBinaryName() + ')을 찾을 수 없습니다.'));
     execFile(cli, ['tunnel', 'status'], { windowsHide: true, timeout: 8000, encoding: 'utf8' }, (error, stdout, stderr) => {
       if (error) return reject(new Error('터널 상태 확인 실패: ' + sanitizeErrorText(stderr || error.message)));
       try { resolve(JSON.parse(stdout.trim())); }
@@ -152,25 +123,31 @@ function getTunnelStatus(cli = findCodeTunnelCli()) {
   });
 }
 
-function ensureRemoteExtension() {
-  const home = os.homedir();
+// Returns true when the remote server already has the current Vibe files.
+// On macOS a server that was never downloaded is not an error: the tunnel is
+// then started with --install-extension, which the CLI runs through bash.
+function ensureRemoteExtension(options = {}) {
+  const home = options.home || os.homedir();
+  const hostPlatform = platform.currentPlatform(options);
   const extensionRoot = path.join(home, '.vscode-server', 'extensions');
   const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
   const installed = path.join(extensionRoot, manifest.publisher + '.' + manifest.name + '-' + manifest.version);
-  const files = ['extension.js', 'tunnel-manager.js', 'mobile-tunnel.js', 'preview-forwarding.js'];
-  if (files.every(file => fs.existsSync(path.join(installed, file)) && fs.readFileSync(path.join(installed, file)).equals(fs.readFileSync(path.join(__dirname, file))))) return;
+  const files = ['extension.js', 'tunnel-manager.js', 'mobile-tunnel.js', 'preview-forwarding.js', 'platform.js', 'qrcode.js'];
+  if (files.every(file => fs.existsSync(path.join(installed, file)) && fs.readFileSync(path.join(installed, file)).equals(fs.readFileSync(path.join(__dirname, file))))) return true;
   const servers = path.join(home, '.vscode', 'cli', 'servers');
   const candidates = fs.existsSync(servers) ? fs.readdirSync(servers).map(name => path.join(servers, name, 'server'))
-    .filter(dir => fs.existsSync(path.join(dir, 'node.exe')) && fs.existsSync(path.join(dir, 'out', 'server-main.js')))
+    .filter(dir => fs.existsSync(platform.remoteServerNode(dir, options)) && fs.existsSync(path.join(dir, 'out', 'server-main.js')))
     .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs) : [];
-  const vsix = findVsixPath();
+  const vsix = findVsixPath(options);
+  if (!candidates.length && vsix && hostPlatform === 'darwin') return false;
   if (!candidates.length || !vsix) throw new Error('원격 서버용 Vibe 확장 설치가 필요합니다. AI에게 모바일 초기 설정을 요청해주세요. 연결 중 자동 설치는 Windows bash 오류 때문에 사용하지 않습니다.');
   const { execFileSync } = require('child_process');
-  execFileSync(path.join(candidates[0], 'node.exe'), [path.join(candidates[0], 'out', 'server-main.js'), '--extensions-dir', extensionRoot, '--install-extension', vsix, '--force'], { windowsHide: true, timeout: 30000, stdio: 'pipe' });
+  execFileSync(platform.remoteServerNode(candidates[0], options), [path.join(candidates[0], 'out', 'server-main.js'), '--extensions-dir', extensionRoot, '--install-extension', vsix, '--force'], { windowsHide: true, timeout: 30000, stdio: 'pipe' });
+  return true;
 }
 
-async function acquireStartupLock() {
-  const dir = path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'VibeCoding');
+async function acquireStartupLock(options = {}) {
+  const dir = platform.vibeRoot(options);
   fs.mkdirSync(dir, { recursive: true });
   const file = path.join(dir, 'tunnel-start.lock');
   for (let attempt = 0; attempt < 80; attempt++) {
@@ -217,7 +194,7 @@ function startTunnelProcess(projectPath, options = {}) {
   const findCliFn = options.findCli || findCodeTunnelCli;
   const codeCli = findCliFn();
   if (!codeCli) {
-    return Promise.reject(new Error('VS Code 터널 실행 파일(code-tunnel.exe)을 찾을 수 없습니다. VS Code가 정상적으로 설치되어 있는지 확인해주세요.'));
+    return Promise.reject(new Error('VS Code 터널 실행 파일(' + tunnelBinaryName(options) + ')을 찾을 수 없습니다. VS Code가 정상적으로 설치되어 있는지 확인해주세요.'));
   }
 
   if (!options.skipInstallDirConfig) {
@@ -235,7 +212,12 @@ function startTunnelProcess(projectPath, options = {}) {
     '--no-sleep'
   ];
   // Installing into an already-running server invokes bash in the CLI,
-  // even on Windows. Install explicitly beforehand, never on reconnection.
+  // even on Windows. Windows installs explicitly beforehand. macOS has bash,
+  // so a new tunnel asks the CLI to install the packaged Vibe extension.
+  if (platform.currentPlatform(options) === 'darwin') {
+    const vsix = (options.findVsix || findVsixPath)();
+    if (vsix) args.push('--install-extension', vsix);
+  }
 
   const spawnFn = options.spawn || spawn;
   const timeoutMs = options.timeoutMs || 30000;
