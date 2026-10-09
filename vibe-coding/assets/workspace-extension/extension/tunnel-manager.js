@@ -71,13 +71,13 @@ async function getOrStartTunnel(projectPath, options = {}) {
   startingPromise = (async () => {
     let releaseLock = () => {};
     try {
-      const cli = (options.findCli || findCodeTunnelCli)();
+      const cli = (options.findCli || findCodeTunnelCli)(options);
       if (!cli) throw new Error('VS Code 터널 실행 파일(' + tunnelBinaryName(options) + ')을 찾을 수 없습니다.');
-      if (!options.spawn) ensureRemoteExtension();
+      if (!options.spawn) ensureRemoteExtension(options);
       // Injected children are isolated tests. Real windows share CLI state and
       // an exclusive startup lock, instead of launching one tunnel per host.
       const readStatus = options.getStatus || (options.spawn ? async () => ({}) : () => getTunnelStatus(cli));
-      if (!options.spawn) releaseLock = await acquireStartupLock();
+      if (!options.spawn) releaseLock = await acquireStartupLock(options);
       const status = await readStatus();
       if (status.tunnel) {
         if (status.tunnel.tunnel !== 'Connected' || !status.tunnel.has_editor_link) {
@@ -132,7 +132,8 @@ function ensureRemoteExtension(options = {}) {
   const extensionRoot = path.join(home, '.vscode-server', 'extensions');
   const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
   const installed = path.join(extensionRoot, manifest.publisher + '.' + manifest.name + '-' + manifest.version);
-  const files = ['extension.js', 'tunnel-manager.js', 'mobile-tunnel.js', 'preview-forwarding.js', 'platform.js', 'qrcode.js'];
+  const files = ['extension.js', 'tunnel-manager.js', 'mobile-tunnel.js', 'preview-forwarding.js', 'platform.js', 'qrcode.js', 'jsonc.js',
+    ...['main.js', 'impl/edit.js', 'impl/format.js', 'impl/parser.js', 'impl/scanner.js', 'impl/string-intern.js'].map(file => 'vendor/jsonc-parser/lib/umd/' + file)];
   if (files.every(file => fs.existsSync(path.join(installed, file)) && fs.readFileSync(path.join(installed, file)).equals(fs.readFileSync(path.join(__dirname, file))))) return true;
   const servers = path.join(home, '.vscode', 'cli', 'servers');
   const candidates = fs.existsSync(servers) ? fs.readdirSync(servers).map(name => path.join(servers, name, 'server'))
@@ -192,7 +193,7 @@ function startTunnelProcess(projectPath, options = {}) {
   try { fs.mkdirSync(vibeDir, { recursive: true }); } catch {}
 
   const findCliFn = options.findCli || findCodeTunnelCli;
-  const codeCli = findCliFn();
+  const codeCli = findCliFn(options);
   if (!codeCli) {
     return Promise.reject(new Error('VS Code 터널 실행 파일(' + tunnelBinaryName(options) + ')을 찾을 수 없습니다. VS Code가 정상적으로 설치되어 있는지 확인해주세요.'));
   }
@@ -215,7 +216,7 @@ function startTunnelProcess(projectPath, options = {}) {
   // even on Windows. Windows installs explicitly beforehand. macOS has bash,
   // so a new tunnel asks the CLI to install the packaged Vibe extension.
   if (platform.currentPlatform(options) === 'darwin') {
-    const vsix = (options.findVsix || findVsixPath)();
+    const vsix = (options.findVsix || findVsixPath)(options);
     if (vsix) args.push('--install-extension', vsix);
   }
 

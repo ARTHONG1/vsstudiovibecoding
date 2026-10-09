@@ -1,8 +1,8 @@
 name: macOS end-to-end
 
 # Installs the official VS Code and Codex CLI on a clean macOS runner, applies
-# the skill to a sample project, opens the desktop launcher and checks the
-# resulting workspace. Called by CI and Release.
+# the skill to a sample and an existing Korean project, opens the sample's
+# desktop launcher and checks the resulting workspace. Called by CI and Release.
 on:
   workflow_call:
   workflow_dispatch:
@@ -58,6 +58,9 @@ jobs:
           sh vibe-coding/scripts/setup-macos.sh --create-sample --codex "$(command -v codex)" --desktop "$RUNNER_TEMP/Desktop" --apply > "$RUNNER_TEMP/apply-again.json"
           node scripts/ci-macos-verify.cjs install "$RUNNER_TEMP/apply-again.json"
 
+      - name: Apply and reapply to an existing Korean project with a custom data root
+        run: node scripts/ci-macos-verify.cjs existing-project "$RUNNER_TEMP/apply-again.json" "$RUNNER_TEMP/existing-project.json"
+
       - name: Open the desktop launcher and wait for the 3-column layout
         run: node scripts/ci-macos-verify.cjs launch "$RUNNER_TEMP/apply.json"
 
@@ -72,7 +75,7 @@ jobs:
           done
           ls -l "$RUNNER_TEMP/vibe-macos.png" || echo "no screenshot captured"
 
-      - name: Check clipboard image paste and the bundled tunnel CLI
+      - name: Check clipboard image paste and the bundled tunnel CLI version/help
         run: |
           node scripts/ci-macos-verify.cjs clipboard
           node scripts/ci-macos-verify.cjs tunnel "$RUNNER_TEMP/apply.json"

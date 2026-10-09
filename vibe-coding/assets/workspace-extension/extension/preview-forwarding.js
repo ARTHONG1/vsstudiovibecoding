@@ -7,10 +7,10 @@ const {findCodeTunnelCli} = require('./tunnel-manager');
 // a hostname or switch to public access. CLI account credentials remain in CLI.
 function createPreviewForwarder(options = {}) {
   let active, pending, startingChild, disposed=false;
-  const ports=new Set();
-  const send = p => p.stdin.write(JSON.stringify([...ports].map(number=>({number,privacy:'private',protocol:'http'})))+'\n');
+  const ports=new Map();
+  const send = p => p.stdin.write(JSON.stringify([...ports].map(([number,protocol])=>({number,privacy:'private',protocol})))+'\n');
   async function start() {
-    const cli=(options.findCli || findCodeTunnelCli)();
+    const cli=(options.findCli || findCodeTunnelCli)(options);
     if (!cli) throw new Error('미리보기 포트 전달용 VS Code 터널 실행 파일(code-tunnel)을 찾을 수 없습니다.');
     return new Promise((resolve,reject)=>{
       const p=(options.spawn || spawn)(cli,['tunnel','forward-internal','--provider','github'],{shell:false,windowsHide:true,stdio:['pipe','pipe','pipe']});
@@ -42,12 +42,13 @@ function createPreviewForwarder(options = {}) {
     async resolve(localUrl) {
       if(disposed)throw new Error('미리보기 연결이 종료되었습니다.');
       const local=new URL(localUrl);
-      if(local.protocol!=='http:' || !['localhost','127.0.0.1','[::1]'].includes(local.hostname))throw new Error('자동 포트 전달은 로컬 HTTP 개발 서버에만 사용합니다.');
-      ports.add(Number(local.port)||80);
+      if(!['http:','https:'].includes(local.protocol) || !['localhost','127.0.0.1','[::1]'].includes(local.hostname))throw new Error('자동 포트 전달은 로컬 HTTP(S) 개발 서버에만 사용합니다.');
+      const port=Number(local.port)||(local.protocol==='https:'?443:80);
+      ports.set(port,local.protocol.slice(0,-1));
       if(!active){if(!pending)pending=start().finally(()=>{pending=null;});await pending;}
       if(!active)throw new Error('미리보기 포트 전달 연결이 끊겼습니다. 다시 눌러주세요.');
       send(active.child);
-      const target=new URL(active.format.replace('{port}',String(Number(local.port)||80)));
+      const target=new URL(active.format.replace('{port}',String(port)));
       target.pathname=local.pathname;target.search=local.search;target.hash=local.hash;
       return target.toString();
     },

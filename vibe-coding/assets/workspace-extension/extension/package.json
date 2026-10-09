@@ -2,7 +2,7 @@
     "name": "vibe-workspace",
     "displayName": "Vibe Coding Workspace",
     "publisher": "local-vibe",
-    "version": "2.9.0",
+    "version": "2.9.1",
     "engines": {
         "vscode": "^1.94.0"
     },
@@ -126,6 +126,16 @@
                 "vibe.codexPath": {
                     "type": "string",
                     "default": ""
+                },
+                "vibe.dataRoot": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Resolved isolated setup directory used for packages and tunnel state."
+                },
+                "vibe.codePath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Resolved VS Code app location for remote CLI discovery."
                 },
                 "vibe.entryFile": {
                     "default": "index.html",

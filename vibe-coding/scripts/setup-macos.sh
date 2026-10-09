@@ -15,7 +15,29 @@ if command -v node >/dev/null 2>&1 && node -e 'process.exit(Number(process.versi
   exec node "$SCRIPT_DIR/setup-macos.cjs" "$@"
 fi
 
-for app in "${VIBE_CODE_APP:-}" "/Applications/Visual Studio Code.app" "$HOME/Applications/Visual Studio Code.app"; do
+# Inspect a copy of the arguments so the selected runtime receives them intact.
+# Skip other options' values: --codex-arg may itself contain "--code-app".
+requested_code_app() {
+  requested_app=
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --code-app)
+        [ "$#" -ge 2 ] || break
+        requested_app=$2
+        shift 2
+        ;;
+      --project|--project-path|--entry|--entry-file|--preview-url|--codex|--codex-path|--codex-arg|--root|--desktop|--skill-root)
+        [ "$#" -ge 2 ] || break
+        shift 2
+        ;;
+      *) shift ;;
+    esac
+  done
+  printf '%s' "$requested_app"
+}
+
+requested_app=$(requested_code_app "$@")
+for app in "$requested_app" "${VIBE_CODE_APP:-}" "/Applications/Visual Studio Code.app" "$HOME/Applications/Visual Studio Code.app"; do
   if [ -z "$app" ] || [ ! -d "$app" ]; then
     continue
   fi

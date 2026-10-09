@@ -7,6 +7,13 @@ const path = require('path');
 const childProcess = require('child_process');
 
 let appRootHint = null;
+let dataRootHint = null;
+let codeAppHint = null;
+
+function setWorkspacePaths(dataRoot, codeApp) {
+  dataRootHint = typeof dataRoot === 'string' && path.isAbsolute(dataRoot) ? dataRoot : null;
+  codeAppHint = typeof codeApp === 'string' && codeApp ? codeApp : null;
+}
 
 function currentPlatform(options = {}) {
   return options.platform || process.platform;
@@ -23,6 +30,9 @@ function homeDir(options = {}) {
 function isFile(candidate) {
   try { return !!candidate && fs.statSync(candidate).isFile(); } catch { return false; }
 }
+function isExecutable(candidate) {
+  try { fs.accessSync(candidate, fs.constants.X_OK); return isFile(candidate); } catch { return false; }
+}
 
 // VS Code reports its bundled application folder (vscode.env.appRoot).
 // Bundled CLI tools are located relative to it on every platform.
@@ -35,6 +45,8 @@ function vibeRoot(options = {}) {
   const env = options.env || process.env;
   const home = homeDir(options);
   const p = pathFor(platform);
+  const configured = options.dataRoot || (options.env ? null : dataRootHint);
+  if (typeof configured === 'string' && p.isAbsolute(configured)) return p.normalize(configured);
   if (platform === 'win32') return p.join(env.LOCALAPPDATA || p.join(home, 'AppData', 'Local'), 'VibeCoding');
   // No spaces: tunnel URLs and launcher arguments embed this path.
   if (platform === 'darwin') return p.join(home, 'Library', 'VibeCoding');
@@ -47,7 +59,7 @@ function vibeRoot(options = {}) {
 function findOnPath(names, options = {}) {
   const platform = currentPlatform(options);
   const env = options.env || process.env;
-  const exists = options.exists || isFile;
+  const exists = options.exists || (platform === 'win32' ? isFile : isExecutable);
   const p = pathFor(platform);
   const dirs = String(env.PATH || env.Path || '').split(platform === 'win32' ? ';' : ':').map(d => d.trim().replace(/^"|"$/g, '')).filter(Boolean);
   const extensions = platform === 'win32'
@@ -68,6 +80,8 @@ function findOnPath(names, options = {}) {
 function macVsCodeApps(options = {}) {
   const home = homeDir(options);
   const apps = [];
+  const configured = options.codeApp || (options.env ? null : codeAppHint);
+  if (configured) apps.push(configured);
   const shellCommand = findOnPath(['code'], { ...options, platform: 'darwin' });
   if (shellCommand) {
     try {
@@ -109,7 +123,7 @@ function codeTunnelCandidates(options = {}) {
 }
 
 function findCodeTunnelExecutable(options = {}) {
-  const exists = options.exists || isFile;
+  const exists = options.exists || (currentPlatform(options) === 'win32' ? isFile : isExecutable);
   return codeTunnelCandidates(options).find(candidate => exists(candidate)) || null;
 }
 
@@ -153,7 +167,7 @@ function codexCandidates(options = {}) {
 }
 
 function findCodexExecutable(options = {}) {
-  const exists = options.exists || isFile;
+  const exists = options.exists || (currentPlatform(options) === 'win32' ? isFile : isExecutable);
   return codexCandidates(options).find(candidate => exists(candidate)) || null;
 }
 
@@ -239,7 +253,7 @@ function gitUnavailableReason(options = {}) {
 function comparablePath(value, options = {}) {
   const platform = currentPlatform(options);
   let result = pathFor(platform).normalize(String(value || '')).normalize('NFC').replace(/[\\/]+$/, '');
-  if (platform === 'win32' || platform === 'darwin') result = result.toLowerCase();
+  if (platform === 'win32') result = result.toLowerCase();
   return result;
 }
 
@@ -258,5 +272,6 @@ module.exports = {
   remoteServerNode,
   saveClipboardImage,
   setAppRoot,
+  setWorkspacePaths,
   vibeRoot
 };

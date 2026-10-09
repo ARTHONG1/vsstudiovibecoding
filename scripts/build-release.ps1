@@ -63,7 +63,7 @@ $check = [IO.Compression.ZipFile]::OpenRead($zipPath)
 try {
   $names = @($check.Entries | ForEach-Object { $_.FullName })
   if (@($names | Where-Object { $_.Contains('\') }).Count) { throw 'Archive contains backslash entry names.' }
-  foreach ($required in @('vibe-coding/SKILL.md', 'vibe-coding/scripts/setup.ps1', 'vibe-coding/scripts/setup-macos.sh', 'vibe-coding/scripts/setup-macos.cjs')) {
+  foreach ($required in @('vibe-coding/SKILL.md', 'vibe-coding/scripts/setup.ps1', 'vibe-coding/scripts/setup-macos.sh', 'vibe-coding/scripts/setup-macos.cjs', 'vibe-coding/scripts/jsonc.cjs', 'vibe-coding/assets/workspace-extension/extension/vendor/jsonc-parser/lib/umd/main.js', 'vibe-coding/assets/workspace-extension/extension/vendor/jsonc-parser/LICENSE.md')) {
     if ($names -notcontains $required) { throw "Archive is missing $required" }
   }
   $reader = New-Object IO.StreamReader(($check.GetEntry('vibe-coding/scripts/setup-macos.sh')).Open())

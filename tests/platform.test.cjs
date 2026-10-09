@@ -8,6 +8,13 @@ test('data root: LocalAppData on Windows, a space-free Library folder on macOS',
   assert.equal(platform.vibeRoot({ platform: 'darwin', home: '/Users/me', env: {} }), '/Users/me/Library/VibeCoding');
 });
 
+test('configured macOS data root and VS Code app are used by remote modules', () => {
+  const root='/Volumes/작업 폴더/Vibe';
+  assert.equal(platform.vibeRoot({platform:'darwin',home:'/Users/me',dataRoot:root}),root);
+  const options={platform:'darwin',home:'/Users/me',env:{PATH:''},appRoot:'/Users/me/.vscode/cli/servers/Stable/server',codeApp:'/Volumes/Apps/VS Code.app'};
+  assert.ok(platform.codeTunnelCandidates(options).includes('/Volumes/Apps/VS Code.app/Contents/Resources/app/bin/code-tunnel'));
+});
+
 test('macOS code-tunnel is resolved inside the VS Code app bundle', () => {
   const list = platform.codeTunnelCandidates({ platform: 'darwin', home: '/Users/me', env: { PATH: '' }, appRoot: '/Applications/Visual Studio Code.app/Contents/Resources/app' });
   assert.equal(list[0], '/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code-tunnel');
@@ -42,7 +49,8 @@ test('Codex terminal keeps the inherited PATH order and appends only missing fol
 test('Korean folder names compare equal across Unicode normalization forms', () => {
   const decomposed = '/Users/me/Documents/과전강'.normalize('NFD');
   assert.notEqual(decomposed, '/Users/me/Documents/과전강');
-  assert.equal(platform.comparablePath(decomposed, { platform: 'darwin' }), platform.comparablePath('/Users/Me/Documents/과전강/', { platform: 'darwin' }));
+  assert.equal(platform.comparablePath(decomposed, { platform: 'darwin' }), platform.comparablePath('/Users/me/Documents/과전강/', { platform: 'darwin' }));
+  assert.notEqual(platform.comparablePath('/Projects/Music', {platform:'darwin'}),platform.comparablePath('/Projects/music',{platform:'darwin'}));
 });
 
 test('missing Command Line Tools is detected without running the git stub', () => {

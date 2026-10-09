@@ -17,7 +17,7 @@ AI가 코드를 수정할 때마다 대화/작업 단위로 그림자 스냅샷�
 ## Scope and preservation
 
 - Windows and macOS are supported. On macOS use `scripts/setup-macos.sh` and read [macos.md](references/macos.md). A clean macOS CI run is evidence for installation and startup, not for the user's own Mac with its permissions and accounts. Linux requires adaptation, not an untested success claim.
-- Keep VS Code user data and extensions isolated under the real interactive user's LocalAppData/VibeCoding on Windows or `~/Library/VibeCoding` on macOS. Keep existing projects in their original locations. Never replace their index.html with a demo.
+- Keep VS Code user data and extensions isolated under the real interactive user's LocalAppData/VibeCoding on Windows or `~/Library/VibeCoding` (or the resolved custom root) on macOS. Keep existing projects in their original locations. Never replace their index.html with a demo. On Mac, preserve JSONC comments and separate port-setting scopes; the setup creates a private ASCII mobile workspace alias when needed without renaming the user's folders. Verify the workspace's data-root/app paths match the actual installation.
 - Preserve unrelated VS Code settings, installed extensions, project files, unsaved buffers, model selections, and credentials. Back up each file before changing it; merge managed keys.
 - Do not change OS security policy or disable workspace trust to get the task working. Follow the available tools' permission/authentication rules. Agent ownership does not authorize bypassing denied actions.
 - Skill paths: The primary recommended user skill location is `$HOME/.agents/skills/vibe-coding` (or repository `.agents/skills/vibe-coding`), with legacy `$HOME/.codex/skills/vibe-coding` supported for backward compatibility.

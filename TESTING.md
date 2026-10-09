@@ -1,5 +1,14 @@
 # Testing and Verification Guide
 
+## v2.9.1 macOS reliability regressions
+
+- JSONC editing is tested with comments, trailing commas, nested fields, literal punctuation inside strings, deletions, BOM and CRLF. The vendored Microsoft jsonc-parser 3.3.1 retains its MIT license and requires no runtime package installation.
+- Mac setup regressions cover malformed argv failing before managed writes, separate user/workspace port attributes, remote-config fields and backups, custom data roots with spaces/Korean, Unicode home planning, preservation of matching legacy workspaces, incomplete launcher compilation, and stale language-pack translation paths.
+- POSIX executable-bit checks and native macOS wrapper tests run on Mac. Case-distinct sibling tests require a volume that actually distinguishes case; they are skipped when that condition is unavailable and are not counted as verified on a normal insensitive volume.
+- The native `existing-project` CI stage applies and re-applies to an existing Korean/space web project and custom Korean data root, verifies JSONC comments and exact backup bytes, validates the compiled/signed launcher, and checks an owned Node HTTP server route before/after setup. Evidence is saved in `existing-project.json`.
+- Mobile unit tests check custom VSIX lookup and private HTTP/HTTPS forwarding protocol/route handling. The bundled tunnel CLI is checked with version/help. **No authenticated Mac tunnel, actual phone preview rendering, authenticated Codex response, or Intel Mac is claimed by these tests.** Existing sample GUI/clipboard/checkpoint checks remain separate.
+
+
 This document outlines the testing architecture, automated regression suites, and acceptance criteria for the **Vibe Coding** environment on Windows and macOS.
 
 ## 1. Core Testing Philosophy

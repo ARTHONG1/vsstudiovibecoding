@@ -64,7 +64,7 @@ function createMockVSCode(config = {}) {
     {
       module,
       exports: module.exports,
-      require: name => (name === 'vscode' ? vscode : name === './preview-forwarding' ? {createPreviewForwarder:()=>({resolve:async()=>{if(config.forwardedUrl)return config.forwardedUrl;throw new Error('포트 전달 실패');},dispose(){}})} : name === './tunnel-manager' ? {
+      require: name => (name === 'vscode' ? vscode : name === './jsonc' ? {readObject: () => ({previewUrl: config.savedPreviewUrl})} : name === './preview-forwarding' ? {createPreviewForwarder:()=>({resolve:async()=>{if(config.forwardedUrl)return config.forwardedUrl;throw new Error('포트 전달 실패');},dispose(){}})} : name === './tunnel-manager' ? {
         getOrStartTunnel: async (project, options) => {
           tunnelCalls.push({ project, options });
           return { url: 'https://vscode.dev/tunnel/test/C:/project', tunnelName: 'test' };

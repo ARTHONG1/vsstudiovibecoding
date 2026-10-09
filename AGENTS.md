@@ -60,7 +60,7 @@ VSIX는 `setup-macos.cjs`의 `createZip`(슬래시 경로)으로 다시 묶는�
 - **문서-코드 불일치**: 기능을 바꾸면 README, `index.html`, `SKILL.md`, `references/`를 같은 커밋에서 고쳐라. 과거에 문서가 구현과 정반대를 말한 적이 있다.
 - **사용자 터미널**: Vibe가 만들지 않은 터미널을 `dispose()`하지 마라.
 - **맥 실행 앱**: 바탕화면 앱은 `open -n -a`로 VS Code를 띄운다. `code` 명령으로 띄우면 VS Code가 로그인 셸 PATH를 읽지 않아 Homebrew·nvm의 `node`, `codex`를 찾지 못한다.
-- **맥 데이터 폴더**: `~/Library/VibeCoding`은 공백이 없어야 한다. 휴대폰 링크와 실행 앱 인수에 경로가 그대로 들어간다.
+- **맥 데이터 폴더**: 한글·공백 경로를 보존한다. 모바일 진입용 작업 영역만 필요할 때 사용자 소유의 `/Users/Shared/VibeCoding-<uid>-<path-hash>`에 둔다. 확장은 `vibe.dataRoot`와 `vibe.codePath`로 실제 설치 위치를 사용한다. 공유 별칭의 소유권·심볼릭 링크 검사를 유지한다.
 - **QR 생성기**: 내장 생성기를 고치면 실제 디코더(zxing-cpp 등)로 여러 길이를 읽어 확인하라. 이전 버전은 형식 정보와 블록 구조가 어긋나 어떤 길이도 읽히지 않았다.
 - **릴리스 ZIP**: 항목 이름은 `vibe-coding/`로 시작하는 슬래시 경로여야 하고 `.sh`는 LF여야 한다. `scripts/build-release.ps1`이 확인한다.
 
