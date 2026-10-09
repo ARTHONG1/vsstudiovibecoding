@@ -38,12 +38,13 @@ Options mirror setup.ps1: `--entry`, `--preview-url`, `--codex`, `--codex-arg` (
 
 Setup writes:
 
-- isolated VS Code user data and extensions in `~/Library/VibeCoding`. The folder has no spaces because phone links and launcher arguments embed it; `--root` must also be an ASCII path without spaces;
-- the project workspace `~/Library/VibeCoding/Workspaces/vibe-<id>.code-workspace` and `.vibe/remote-config.json` in the project;
+- isolated VS Code user data and extensions in `~/Library/VibeCoding`, or the selected `--root`. Korean names and spaces are supported in the home, project, app and data paths;
+- the project workspace `<root>/Workspaces/vibe-<id>.code-workspace`. When that path cannot be used directly in a phone URL, setup puts only the workspace in a private user-owned `/Users/Shared/VibeCoding-<user-id>-<home-hash>/Workspaces` directory. The project and data stay in their original locations. Setup rejects a shared alias owned by another user or a symlink;
+- `.vibe/remote-config.json` in the project. Workspace settings and this file record `vibe.dataRoot` / `dataRoot` and the selected VS Code app so remote modules find the correct VSIX and CLI;
 - `.vscode/tasks.json` for an npm dev server only when the file does not exist;
 - the launcher `~/Desktop/Vibe Coding - <project>-<id>.app`.
 
-Changed files are backed up to `~/Library/VibeCoding/Backups/setup-<time>`; an existing launcher is moved there before the new one is created. Keybindings are not changed: macOS keeps ⌘C / ⌘V in the terminal. The time machine uses ⌥Z and image paste uses ⌥V.
+Changed files are backed up to `<root>/Backups/setup-<time>`, including the project remote config. Existing JSONC settings, runtime arguments and workspace comments are preserved; malformed configuration fails before any managed file is changed. User and workspace port settings are merged separately. The replacement launcher is compiled and signed in a temporary Desktop directory before moving the old launcher to backup. A failed compile keeps the working launcher. Keybindings are not changed: macOS keeps ⌘C / ⌘V in the terminal. The time machine uses ⌥Z and image paste uses ⌥V.
 
 ## The launcher
 
@@ -62,7 +63,8 @@ Open the launcher from Finder or with `open "<launcher>.app"` and verify the win
 ## Phone access from a Mac
 
 - The tunnel CLI is `Visual Studio Code.app/Contents/Resources/app/bin/code-tunnel`.
-- A new tunnel started by the Mobile button passes `--install-extension ~/Library/VibeCoding/vibe-workspace.vsix` so the phone gets the Vibe buttons. When a server already exists, the extension installs the same package through that server's `node out/server-main.js --install-extension`.
+- A new tunnel started by the Mobile button passes `--install-extension <resolved-data-root>/vibe-workspace.vsix` so the phone gets the Vibe buttons. Custom roots and custom VS Code app locations are used in desktop and remote hosts. When a server already exists, the extension installs the same package through that server's `node out/server-main.js --install-extension`.
+- Private forwarding preserves HTTP or HTTPS upstream protocol and the route. HTTPS still requires a certificate trusted by the actual host; do not disable TLS validation to hide a server error. Open private preview links in the phone's external browser, then return to vscode.dev for terminal work.
 - The Mac must stay awake and online. `--no-sleep` prevents idle sleep while the tunnel runs; closing a MacBook lid still puts it to sleep unless the Mac is set up for closed-lid use.
 - Verify sign-in, remote execution and the rendered preview separately, as in [mobile-remote.md](mobile-remote.md).
 

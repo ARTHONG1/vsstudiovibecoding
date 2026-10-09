@@ -26,3 +26,12 @@ test('process exit invalidates address and next request reconnects', async () =>
   await f.resolve('http://localhost:3012');children[0].emit('exit',1);
   await f.resolve('http://localhost:3012');assert.equal(calls,2);f.dispose();
 });
+
+test('private forwarding preserves the HTTPS upstream protocol and default port', async () => {
+  const p=child();const f=createPreviewForwarder({findCli:()=>'/custom/code-tunnel',spawn:()=>{process.nextTick(()=>p.stderr.emit('data','{"port_format":"https://test-{port}.jpe1.devtunnels.ms/"}\n'));return p;}});
+  assert.equal(await f.resolve('https://localhost/studio?a=1#camera'),'https://test-443.jpe1.devtunnels.ms/studio?a=1#camera');
+  assert.deepEqual(p.messages.at(-1),[{number:443,privacy:'private',protocol:'https'}]);
+  await f.resolve('http://localhost:3012');
+  assert.deepEqual(p.messages.at(-1),[{number:443,privacy:'private',protocol:'https'},{number:3012,privacy:'private',protocol:'http'}]);
+  f.dispose();
+});

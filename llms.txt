@@ -2,13 +2,13 @@
 
 > An MIT-licensed skill for delegating VS Code environment setup on Windows and macOS to an AI agent. Made by AI찬우쌤 (Hong Chanwoo), creator of 클래스똑딱 / classddok.com.
 
-Current release: v2.9.0 (macOS support in beta). This is environment automation, not a model, hosted coding service, or replacement for Codex.
+Current release: v2.9.1 (macOS support in beta). This is environment automation, not a model, hosted coding service, or replacement for Codex.
 
 ## Start here
 - [Project and introduction video](https://arthong1.github.io/vsstudiovibecoding/): Korean landing page, 35-second video, installation request, creator links.
 - [Repository](https://github.com/ARTHONG1/vsstudiovibecoding): Source code and issue tracker.
-- [Skill instructions](https://raw.githubusercontent.com/ARTHONG1/vsstudiovibecoding/v2.9.0/vibe-coding/SKILL.md): Read before setup; preserve existing projects and settings.
-- [Release](https://github.com/ARTHONG1/vsstudiovibecoding/releases/tag/v2.9.0): skill ZIP for Windows and macOS.
+- [Skill instructions](https://raw.githubusercontent.com/ARTHONG1/vsstudiovibecoding/v2.9.1/vibe-coding/SKILL.md): Read before setup; preserve existing projects and settings.
+- [Release](https://github.com/ARTHONG1/vsstudiovibecoding/releases/tag/v2.9.1): skill ZIP for Windows and macOS.
 - [macOS setup](https://github.com/ARTHONG1/vsstudiovibecoding/blob/main/vibe-coding/references/macos.md): prerequisites, user approvals, launcher and differences on a Mac.
 - [Verification and limitations](https://github.com/ARTHONG1/vsstudiovibecoding/blob/main/TESTING.md): Automated checks are distinct from real phone rendering.
 

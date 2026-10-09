@@ -43,6 +43,10 @@ function checkPortReachable(urlStr) {
 function activate(context) {
   if (vscode.workspace.getConfiguration('vibe').get('enabled') === false) return;
   try { platform.setAppRoot(vscode.env && vscode.env.appRoot); } catch {}
+  let savedPaths = {};
+  try { savedPaths = JSON.parse(fs.readFileSync(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.vibe', 'remote-config.json'), 'utf8')); } catch {}
+  const pathConfig = vscode.workspace.getConfiguration('vibe');
+  platform.setWorkspacePaths(pathConfig.get('dataRoot') || savedPaths.dataRoot, pathConfig.get('codePath') || savedPaths.codePath);
   const output = vscode.window.createOutputChannel('Vibe Coding');
   context.subscriptions.push(output);
   let terminal;

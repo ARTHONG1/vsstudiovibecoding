@@ -8,6 +8,8 @@ https://github.com/user-attachments/assets/05ad2995-62e7-4ae0-baa9-389ecaa69941
 
 An agent inspects your project, identifies its startup command and preview URL, and prepares an isolated VS Code workspace with Preview, Code, and Codex. A desktop shortcut (a launcher app on macOS) reopens that workspace. This is an MIT-licensed environment setup skill, not a model or a hosted coding service.
 
+v2.9.1 improves macOS setup and reinstallation: Unicode/space paths, custom installation locations, JSONC comments, existing port settings and backups are preserved. A replacement launcher is built before the working app is moved. Native Mac CI includes an existing web project and a verified localhost HTTP route. macOS remains beta; authenticated phone access and Intel Macs require separate verification.
+
 ## What it prepares
 
 - Preview / Code / Codex layout and full-screen terminal and preview modes.

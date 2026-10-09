@@ -320,3 +320,12 @@ test('macOS tunnel links accept ASCII paths and reject spaces or Korean names', 
   assert.throws(() => buildProjectTunnelUrl('https://vscode.dev/tunnel/vibe-mac/', '/Users/me/My Project'));
   assert.throws(() => buildProjectTunnelUrl('https://vscode.dev/tunnel/vibe-mac/', '/Users/me/../etc'));
 });
+
+test('mobile package lookup honors a configured root including spaces and Korean', () => {
+  const path=require('path'),os=require('os');
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'vibe-mobile-'));
+  const root=path.join(dir,'설치 폴더');fs.mkdirSync(root);
+  const vsix=path.join(root,'vibe-workspace.vsix');fs.writeFileSync(vsix,'fixture');
+  const options={platform:process.platform,home:dir,dataRoot:root};
+  assert.equal(require('../vibe-coding/assets/workspace-extension/extension/tunnel-manager').findVsixPath(options),vsix);
+});

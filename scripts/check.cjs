@@ -30,6 +30,9 @@ const requiredFiles = [
   'vibe-coding/scripts/setup.ps1',
   'vibe-coding/scripts/setup-macos.sh',
   'vibe-coding/scripts/setup-macos.cjs',
+  'vibe-coding/scripts/jsonc.cjs',
+  'vibe-coding/scripts/vendor/jsonc-parser/LICENSE.md',
+  'vibe-coding/scripts/vendor/jsonc-parser/lib/umd/main.js',
   'vibe-coding/scripts/native-files.ps1',
   'vibe-coding/scripts/setup-files.ps1',
   'vibe-coding/references/execution.md',
@@ -95,6 +98,7 @@ const jsFilesToCheck = [
   'vibe-coding/assets/workspace-extension/extension/platform.js',
   'site.js',
   'vibe-coding/scripts/setup-macos.cjs',
+  'vibe-coding/scripts/jsonc.cjs',
   'scripts/ci-macos-verify.cjs',
   'scripts/check.cjs'
 ];

@@ -1,6 +1,6 @@
 # Vibe Coding
 
-[![Version](https://img.shields.io/badge/version-2.9.0-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
+[![Version](https://img.shields.io/badge/version-2.9.1-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-0078D6.svg)](https://github.com/ARTHONG1/vsstudiovibecoding)
 [![CI](https://github.com/ARTHONG1/vsstudiovibecoding/actions/workflows/ci.yml/badge.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/actions)
@@ -27,7 +27,7 @@ https://github.com/user-attachments/assets/05ad2995-62e7-4ae0-baa9-389ecaa69941
 
 한 문장만 던지면 에이전트가 프로젝트를 열어 구조를 읽고, 실행 명령과 미리보기 주소를 직접 찾아내고, 기존 VS Code와 분리된 전용 작업 환경을 만들고, 바탕화면 바로가기(맥은 실행 앱)까지 만든 뒤 화면이 실제로 뜨는지 확인합니다. 필요한 로그인·프로젝트 신뢰 승인은 사용자가 확인합니다.
 
-v2.9.0부터 **맥에서도** 같은 환경을 세팅합니다(macOS, 베타). 휴대폰 연결 QR이 일부 PC에서 인식되지 않던 문제와 새 작업 창이 처음 한 번 영어로 열리던 문제도 고쳤습니다. 자동 검증과 실제 기기 검증 범위는 [TESTING.md](TESTING.md)에 구분해 기록합니다.
+**v2.9.1은 맥 설치·재설치 안정성을 보완했습니다.** 한글·공백 경로, 사용자 지정 설치 위치, 기존 설정의 주석·포트 설정을 보존합니다. 실행 앱 교체에 실패하면 기존 앱을 유지하고, 기존 웹 프로젝트 설치·재설치도 맥 자동 검증에 포함합니다. macOS 지원은 베타입니다. 자동 검증과 실제 기기 검증 범위는 [TESTING.md](TESTING.md)에 구분해 기록합니다.
 
 ### 기본 AI 작업 도구 — 기본 도구 세팅
 
@@ -43,7 +43,7 @@ v2.9.0부터 **맥에서도** 같은 환경을 세팅합니다(macOS, 베타). �
 
 ![3열 분할, 터미널 전체, 미리보기 전체 세 가지 화면 모드와 상태바 버튼](images/vibe-coding-view-modes.webp)
 
-**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.9.0/vibe-coding-2.9.0.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
+**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.9.1/vibe-coding-2.9.1.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
 
 ## 가장 쉬운 시작
 

@@ -8,6 +8,7 @@ const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 const childProcess = require('child_process');
+const jsonc = require('./jsonc.cjs');
 
 const USAGE = [
   'Usage: setup-macos.sh (--project <folder> | --create-sample) [options]',
@@ -54,13 +55,14 @@ function parseArgs(argv) {
 }
 
 function isFile(p) { try { return fs.statSync(p).isFile(); } catch { return false; } }
+function isExecutable(p) { try { fs.accessSync(p, fs.constants.X_OK); return isFile(p); } catch { return false; } }
 function isDir(p) { try { return fs.statSync(p).isDirectory(); } catch { return false; } }
 function sha256(data) { return crypto.createHash('sha256').update(data).digest('hex'); }
 
 function findOnPath(name, env) {
   for (const dir of String(env.PATH || '').split(':').filter(Boolean)) {
     const candidate = path.join(dir, name);
-    if (isFile(candidate)) return candidate;
+    if (isExecutable(candidate)) return candidate;
   }
   return null;
 }
@@ -73,7 +75,7 @@ function codeCliOf(app) {
 function findVsCodeApp(opts, deps) {
   if (opts.codeApp) {
     const app = path.resolve(opts.codeApp);
-    return isFile(codeCliOf(app)) ? app : null;
+    return isExecutable(codeCliOf(app)) ? app : null;
   }
   const list = [];
   if (deps.env.VIBE_CODE_APP) list.push(deps.env.VIBE_CODE_APP);
@@ -85,11 +87,11 @@ function findVsCodeApp(opts, deps) {
     } catch {}
   }
   list.push('/Applications/Visual Studio Code.app', path.join(deps.home, 'Applications', 'Visual Studio Code.app'));
-  const known = list.find(app => isFile(codeCliOf(app)));
+  const known = list.find(app => isExecutable(codeCliOf(app)));
   if (known) return known;
   try {
     const found = deps.run('/usr/bin/mdfind', ['kMDItemCFBundleIdentifier == "com.microsoft.VSCode"'], { timeout: 10000 });
-    return found.split('\n').map(line => line.trim()).filter(Boolean).find(app => isFile(codeCliOf(app))) || null;
+    return found.split('\n').map(line => line.trim()).filter(Boolean).find(app => isExecutable(codeCliOf(app))) || null;
   } catch { return null; }
 }
 
@@ -127,8 +129,11 @@ function buildPlan(opts, deps) {
   if (opts.createSample && opts.projectPath) throw new Error('Choose --project OR --create-sample.');
   if (!opts.projectPath && !opts.createSample) throw new Error('Specify --project <folder>, or --create-sample for a new demo.');
   const root = path.resolve(opts.root || path.join(deps.home, 'Library', 'VibeCoding'));
-  // Launcher arguments and phone (vscode.dev) links embed this path.
-  if (!/^[\x21-\x7e]+$/.test(root)) throw new Error('The data folder must be an ASCII path without spaces: ' + root + '. Pass --root <folder>.');
+  // Quoted launcher arguments can use any user path. Only the phone's workspace
+  // URL needs an ASCII path; keep that alias separate from the data directory.
+  const safeRoot = /^[a-z0-9_./:\\-]+$/i.test(root);
+  const uid = deps.uid !== undefined ? deps.uid : (typeof process.getuid === 'function' ? process.getuid() : 'user');
+  const workspaceBase = safeRoot ? null : (deps.workspaceBase || path.join('/Users/Shared', 'VibeCoding-' + uid + '-' + sha256(Buffer.from(deps.home)).slice(0, 10)));
   const projectPath = opts.createSample ? path.join(root, 'SampleProject') : path.resolve(opts.projectPath);
   if (!opts.createSample && !isDir(projectPath)) throw new Error('Project does not exist: ' + projectPath);
 
@@ -163,16 +168,32 @@ function buildPlan(opts, deps) {
   }
 
   const codeApp = findVsCodeApp(opts, deps);
-  const codexPath = opts.codexPath ? path.resolve(opts.codexPath) : (codexCandidates(deps).find(isFile) || null);
+  const codexPath = opts.codexPath ? path.resolve(opts.codexPath) : (codexCandidates(deps).find(isExecutable) || null);
   const missing = [];
   const warnings = [];
   if (!codeApp) missing.push('Visual Studio Code.app (official build in /Applications)');
   else if (/\/AppTranslocation\//.test(codeApp)) missing.push('Visual Studio Code.app runs from a temporary translocated copy; move it to /Applications');
   else if (!/^(\/Applications\/|.*\/Applications\/)/.test(codeApp)) warnings.push('VS Code is outside an Applications folder; move it to /Applications so updates and the launcher keep working.');
-  if (!codexPath || !isFile(codexPath)) missing.push('OpenAI Codex CLI executable (codex)');
+  if (!codexPath || !isExecutable(codexPath)) missing.push('OpenAI Codex CLI with execute permission (codex)');
   if (commandLineToolsMissing(deps)) warnings.push('macOS Command Line Tools are missing. Git and the Vibe time machine need them: run xcode-select --install and let the user approve the installer.');
 
-  const id = sha256(Buffer.from(projectPath.normalize('NFC').toLowerCase(), 'utf8')).slice(0, 10);
+  let identityPath = projectPath;
+  try { identityPath = fs.realpathSync(projectPath); } catch {}
+  let id = sha256(Buffer.from('mac\0' + identityPath.normalize('NFC'), 'utf8')).slice(0, 10);
+  const workspaceDir = path.join(workspaceBase || root, 'Workspaces');
+  // Keep existing launchers/settings when upgrading, but reuse a legacy ID
+  // only if it belongs to this exact directory (not a case-distinct sibling).
+  const legacyId = sha256(Buffer.from(projectPath.normalize('NFC').toLowerCase(), 'utf8')).slice(0, 10);
+  const legacyFile = path.join(workspaceDir, 'vibe-' + legacyId + '.code-workspace');
+  if (fs.existsSync(legacyFile)) {
+    const legacy = readObject(legacyFile);
+    const folder = Array.isArray(legacy.folders) && legacy.folders[0];
+    if (folder && typeof folder.path === 'string') {
+      let legacyPath = path.resolve(path.dirname(legacyFile), folder.path);
+      try { legacyPath = fs.realpathSync(legacyPath); } catch {}
+      if (legacyPath.normalize('NFC') === identityPath.normalize('NFC')) id = legacyId;
+    }
+  }
   const name = path.basename(projectPath).normalize('NFC').replace(/[/:]/g, '_').replace(/^\.+/, '') || 'project';
   const desktop = path.resolve(opts.desktop || path.join(deps.home, 'Desktop'));
   return {
@@ -186,7 +207,8 @@ function buildPlan(opts, deps) {
     codeCli: codeApp ? codeCliOf(codeApp) : null,
     agent: 'Codex',
     codex: codexPath,
-    workspace: path.join(root, 'Workspaces', 'vibe-' + id + '.code-workspace'),
+    workspace: path.join(workspaceDir, 'vibe-' + id + '.code-workspace'),
+    workspaceBase,
     shortcut: path.join(desktop, 'Vibe Coding - ' + name + '-' + id + '.app'),
     desktop,
     missing,
@@ -201,17 +223,12 @@ function stamp(date) {
 }
 
 function readObject(file) {
-  if (!fs.existsSync(file)) return {};
-  let value;
-  try { value = JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')); }
-  catch { throw new Error('Cannot parse ' + file + '. Preserve it and use a JSONC-aware edit; do not overwrite.'); }
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Expected a JSON object: ' + file);
-  return value;
+  return jsonc.readObject(file);
 }
 
 function backupFile(file, backupDir) {
   if (!isFile(file)) return null;
-  const target = path.join(backupDir, sha256(Buffer.from(path.resolve(file).toLowerCase(), 'utf8')) + '-' + path.basename(file));
+  const target = path.join(backupDir, sha256(Buffer.from(path.resolve(file), 'utf8')) + '-' + path.basename(file));
   if (!fs.existsSync(target)) fs.copyFileSync(file, target);
   return target;
 }
@@ -219,7 +236,8 @@ function backupFile(file, backupDir) {
 function saveJson(file, value, backupDir) {
   backupFile(file, backupDir);
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, JSON.stringify(value, null, 4) + '\n', 'utf8');
+  const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  fs.writeFileSync(file, jsonc.updateObjectText(text, value), 'utf8');
 }
 
 function listFiles(dir) {
@@ -366,7 +384,7 @@ function writeLanguagePacks(userDir, extensionsDir) {
   const file = path.join(userDir, 'languagepacks.json');
   let current = {};
   try { current = JSON.parse(fs.readFileSync(file, 'utf8')) || {}; } catch {}
-  if (current.ko && current.ko.hash === packs.ko.hash) return false;
+  if (current.ko && current.ko.hash === packs.ko.hash && JSON.stringify(current.ko.translations) === JSON.stringify(packs.ko.translations)) return false;
   fs.writeFileSync(file, JSON.stringify({ ...current, ...packs }), 'utf8');
   return true;
 }
@@ -400,7 +418,8 @@ function vsCodeIcon(appPath) {
 }
 
 function moveAside(source, backupDir, deps) {
-  const target = path.join(backupDir, path.basename(source));
+  let target = path.join(backupDir, path.basename(source));
+  for (let suffix = 1; fs.existsSync(target); suffix++) target = path.join(backupDir, path.basename(source) + '-' + suffix);
   try { fs.renameSync(source, target); }
   catch (error) {
     if (error.code !== 'EXDEV') throw error;
@@ -414,28 +433,38 @@ function createLauncher(plan, ctx, deps) {
   if (!isDir(plan.desktop)) throw new Error('Desktop folder not found: ' + plan.desktop + '. Pass --desktop <folder>.');
   const sourcePath = path.join(ctx.backup, 'launcher.applescript');
   fs.writeFileSync(sourcePath, launcherSource({ appPath: plan.code, userDir: ctx.userDir, extensionsDir: ctx.extensionsDir, workspacePath: plan.workspace }), 'utf8');
+  const staging = fs.mkdtempSync(path.join(plan.desktop, '.vibe-launcher-'));
+  const stagedApp = path.join(staging, 'launcher.app');
   let previous = null;
-  if (fs.existsSync(plan.shortcut)) previous = moveAside(plan.shortcut, ctx.backup, deps);
   try {
-    deps.run('/usr/bin/osacompile', ['-o', plan.shortcut, sourcePath]);
-  } catch (error) {
-    if (previous && !fs.existsSync(plan.shortcut)) fs.renameSync(previous, plan.shortcut);
-    throw error;
-  }
+    deps.run('/usr/bin/osacompile', ['-o', stagedApp, sourcePath]);
   // Show the VS Code icon; re-sign ad hoc because the icon is part of the bundle seal.
   const icon = vsCodeIcon(plan.code);
-  const appletIcon = path.join(plan.shortcut, 'Contents', 'Resources', 'applet.icns');
+  const appletIcon = path.join(stagedApp, 'Contents', 'Resources', 'applet.icns');
   if (icon && isFile(appletIcon)) {
     const original = fs.readFileSync(appletIcon);
     fs.copyFileSync(icon, appletIcon);
-    try { deps.run('/usr/bin/codesign', ['--force', '--sign', '-', plan.shortcut]); }
+    try { deps.run('/usr/bin/codesign', ['--force', '--sign', '-', stagedApp]); }
     catch {
       fs.writeFileSync(appletIcon, original);
-      try { deps.run('/usr/bin/codesign', ['--force', '--sign', '-', plan.shortcut]); } catch {}
+      try { deps.run('/usr/bin/codesign', ['--force', '--sign', '-', stagedApp]); } catch {}
     }
   }
-  try { const now = new Date(); fs.utimesSync(plan.shortcut, now, now); } catch {}
-  return previous;
+    if (fs.existsSync(plan.shortcut)) previous = moveAside(plan.shortcut, ctx.backup, deps);
+    try { fs.renameSync(stagedApp, plan.shortcut); }
+    catch (error) {
+      if (previous && !fs.existsSync(plan.shortcut)) {
+        try { fs.renameSync(previous, plan.shortcut); }
+        catch (restoreError) {
+          if (restoreError.code !== 'EXDEV') throw restoreError;
+          deps.run('/usr/bin/ditto', [previous, plan.shortcut]);
+        }
+      }
+      throw error;
+    }
+    try { const now = new Date(); fs.utimesSync(plan.shortcut, now, now); } catch {}
+    return previous;
+  } finally { fs.rmSync(staging, { recursive: true, force: true }); }
 }
 
 function applySetup(plan, opts, deps) {
@@ -448,6 +477,22 @@ function applySetup(plan, opts, deps) {
   const settingsPath = path.join(userDir, 'User', 'settings.json');
   const settings = readObject(settingsPath);
   const workspace = readObject(plan.workspace);
+  const argvPath = path.join(userDir, 'argv.json');
+  const argv = readObject(argvPath);
+  const remotePath = path.join(plan.project, '.vibe', 'remote-config.json');
+  const remote = readObject(remotePath);
+  // Reject an unsafe shared alias before changing any user files. This private
+  // directory is owned by the user; never follow another user's planted symlink.
+  if (plan.workspaceBase) {
+    if (!fs.existsSync(plan.workspaceBase)) fs.mkdirSync(plan.workspaceBase, { recursive: true, mode: 0o700 });
+    const stat = fs.lstatSync(plan.workspaceBase);
+    if (!stat.isDirectory() || stat.isSymbolicLink() || (typeof process.getuid === 'function' && stat.uid !== process.getuid())) {
+      throw new Error('Mobile workspace alias must be a private directory owned by the current user: ' + plan.workspaceBase);
+    }
+    if (process.platform === 'darwin') fs.chmodSync(plan.workspaceBase, 0o700);
+    const workspaces = path.join(plan.workspaceBase, 'Workspaces');
+    if (fs.existsSync(workspaces) && fs.lstatSync(workspaces).isSymbolicLink()) throw new Error('Mobile workspace directory cannot be a symlink: ' + workspaces);
+  }
   for (const dir of [path.join(userDir, 'User'), extensionsDir, path.dirname(plan.workspace), backup]) fs.mkdirSync(dir, { recursive: true });
 
   if (opts.createSample) {
@@ -492,6 +537,8 @@ function applySetup(plan, opts, deps) {
     'files.autoSaveDelay': 500,
     'vibe.enabled': true,
     'vibe.codexPath': plan.codex,
+    'vibe.dataRoot': plan.root,
+    'vibe.codePath': plan.code,
     'vibe.entryFile': plan.entryFile,
     'vibe.previewUrl': plan.previewUrl,
     'chat.commandCenter.enabled': false,
@@ -507,6 +554,8 @@ function applySetup(plan, opts, deps) {
   Object.assign(wsSettings, {
     'vibe.enabled': true,
     'vibe.codexPath': plan.codex,
+    'vibe.dataRoot': plan.root,
+    'vibe.codePath': plan.code,
     'vibe.entryFile': plan.entryFile,
     'vibe.previewUrl': plan.previewUrl,
     'task.allowAutomaticTasks': 'on',
@@ -518,16 +567,16 @@ function applySetup(plan, opts, deps) {
   if (plan.previewUrl) {
     const port = new URL(plan.previewUrl).port;
     if (port) {
-      const attributes = wsSettings['remote.portsAttributes'] && typeof wsSettings['remote.portsAttributes'] === 'object' ? wsSettings['remote.portsAttributes'] : {};
-      attributes[port] = { label: 'Vibe Dev Server', onAutoForward: 'notify' };
-      wsSettings['remote.portsAttributes'] = attributes;
-      settings['remote.portsAttributes'] = attributes;
+      for (const scope of [settings, wsSettings]) {
+        const attributes = scope['remote.portsAttributes'] && typeof scope['remote.portsAttributes'] === 'object' && !Array.isArray(scope['remote.portsAttributes']) ? scope['remote.portsAttributes'] : {};
+        const existing = attributes[port] && typeof attributes[port] === 'object' ? attributes[port] : {};
+        attributes[port] = { label: 'Vibe Dev Server', onAutoForward: 'notify', ...existing };
+        scope['remote.portsAttributes'] = attributes;
+      }
     }
   }
   wsSettings['window.title'] = 'Vibe Coding - ' + '$' + '{activeEditorShort}' + '$' + '{separator}' + '$' + '{rootName}';
   saveJson(settingsPath, settings, backup);
-  const argvPath = path.join(userDir, 'argv.json');
-  const argv = readObject(argvPath);
   argv.locale = 'ko';
   saveJson(argvPath, argv, backup);
   const otherFolders = (Array.isArray(workspace.folders) ? workspace.folders : []).filter(folder => folder && folder.path !== plan.project);
@@ -535,10 +584,9 @@ function applySetup(plan, opts, deps) {
   workspace.settings = wsSettings;
   saveJson(plan.workspace, workspace, backup);
 
-  fs.mkdirSync(path.join(plan.project, '.vibe'), { recursive: true });
-  fs.writeFileSync(path.join(plan.project, '.vibe', 'remote-config.json'), JSON.stringify({
-    version: 1, entryFile: plan.entryFile, previewUrl: plan.previewUrl, codexPath: plan.codex, codePath: plan.code
-  }, null, 2) + '\n', 'utf8');
+  saveJson(remotePath, { ...remote,
+    version: 1, entryFile: plan.entryFile, previewUrl: plan.previewUrl, codexPath: plan.codex, codePath: plan.code, dataRoot: plan.root
+  }, backup);
 
   const packageSource = path.join(skillRoot, 'assets', 'workspace-extension');
   const manifest = JSON.parse(fs.readFileSync(path.join(packageSource, 'extension', 'package.json'), 'utf8'));

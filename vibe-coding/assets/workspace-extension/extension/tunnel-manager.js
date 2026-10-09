@@ -71,13 +71,13 @@ async function getOrStartTunnel(projectPath, options = {}) {
   startingPromise = (async () => {
     let releaseLock = () => {};
     try {
-      const cli = (options.findCli || findCodeTunnelCli)();
+      const cli = (options.findCli || findCodeTunnelCli)(options);
       if (!cli) throw new Error('VS Code 터널 실행 파일(' + tunnelBinaryName(options) + ')을 찾을 수 없습니다.');
-      if (!options.spawn) ensureRemoteExtension();
+      if (!options.spawn) ensureRemoteExtension(options);
       // Injected children are isolated tests. Real windows share CLI state and
       // an exclusive startup lock, instead of launching one tunnel per host.
       const readStatus = options.getStatus || (options.spawn ? async () => ({}) : () => getTunnelStatus(cli));
-      if (!options.spawn) releaseLock = await acquireStartupLock();
+      if (!options.spawn) releaseLock = await acquireStartupLock(options);
       const status = await readStatus();
       if (status.tunnel) {
         if (status.tunnel.tunnel !== 'Connected' || !status.tunnel.has_editor_link) {
@@ -192,7 +192,7 @@ function startTunnelProcess(projectPath, options = {}) {
   try { fs.mkdirSync(vibeDir, { recursive: true }); } catch {}
 
   const findCliFn = options.findCli || findCodeTunnelCli;
-  const codeCli = findCliFn();
+  const codeCli = findCliFn(options);
   if (!codeCli) {
     return Promise.reject(new Error('VS Code 터널 실행 파일(' + tunnelBinaryName(options) + ')을 찾을 수 없습니다. VS Code가 정상적으로 설치되어 있는지 확인해주세요.'));
   }
@@ -215,7 +215,7 @@ function startTunnelProcess(projectPath, options = {}) {
   // even on Windows. Windows installs explicitly beforehand. macOS has bash,
   // so a new tunnel asks the CLI to install the packaged Vibe extension.
   if (platform.currentPlatform(options) === 'darwin') {
-    const vsix = (options.findVsix || findVsixPath)();
+    const vsix = (options.findVsix || findVsixPath)(options);
     if (vsix) args.push('--install-extension', vsix);
   }
 
