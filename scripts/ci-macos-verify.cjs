@@ -103,6 +103,22 @@ async function launch(result) {
   await waitFor(() => fs.existsSync(checkpoints), 60000, 'time machine checkpoint');
   log('checkpoints', fs.readFileSync(checkpoints, 'utf8').slice(0, 300));
   log('launch ok');
+  // Diagnostics: environment of the launcher-started VS Code and a second launch.
+  try {
+    const pid = execFileSync('/usr/bin/pgrep', ['-f', 'Contents/MacOS/Code .*' + userDir], { encoding: 'utf8' }).trim().split('\n')[0];
+    const env = execFileSync('/bin/ps', ['eww', '-p', pid], { encoding: 'utf8' }).split(/\s+/).filter(item => /^(LANG|LC_|VSCODE|ELECTRON|__CF|PATH=|PWD|XPC_SERVICE)/.test(item));
+    log('first launch env', env.join(' ').slice(0, 1500));
+  } catch (error) { log('env diagnostics failed', error.message); }
+  log('clp after first launch', fs.existsSync(path.join(userDir, 'clp')));
+  try { execFileSync('/usr/bin/pkill', ['-f', userDir]); } catch {}
+  await sleep(5000);
+  const before = fs.readFileSync(status, 'utf8').split('\n').filter(Boolean).length;
+  execFileSync('/usr/bin/open', [result.shortcut]);
+  const second = await waitFor(() => {
+    const lines = fs.readFileSync(status, 'utf8').trim().split('\n').filter(Boolean).slice(before).map(line => JSON.parse(line));
+    return lines.some(event => event.event === 'layout-ready') ? lines : null;
+  }, 180000, 'second layout-ready');
+  log('second launch language', (second.find(event => event.event === 'activated') || {}).language, 'clp', fs.existsSync(path.join(userDir, 'clp')));
 }
 
 function clipboard() {

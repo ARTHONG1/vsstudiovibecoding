@@ -70,34 +70,6 @@ jobs:
           node scripts/ci-macos-verify.cjs clipboard
           node scripts/ci-macos-verify.cjs tunnel "$RUNNER_TEMP/apply.json"
 
-      - name: Debug locale (temporary)
-        if: always()
-        run: |
-          APP="$HOME/Applications/Visual Studio Code.app"
-          EXT="$HOME/Library/VibeCoding/VSCodeExtensions"
-          WS=$(node -p "require('$RUNNER_TEMP/apply.json').workspace")
-          pkill -f VSCodeUserData || true
-          sleep 3
-          for MODE in open direct; do
-            UD="$RUNNER_TEMP/ud-$MODE"
-            mkdir -p "$UD/User"
-            cp "$HOME/Library/VibeCoding/VSCodeUserData/languagepacks.json" "$UD/"
-            cp "$HOME/Library/VibeCoding/VSCodeUserData/User/settings.json" "$UD/User/"
-            if [ "$MODE" = open ]; then
-              open -n -a "$APP" --stdout "$RUNNER_TEMP/$MODE.out" --stderr "$RUNNER_TEMP/$MODE.err" --args --verbose --locale ko --user-data-dir "$UD" --extensions-dir "$EXT" "$WS"
-            else
-              "$APP/Contents/MacOS/Code" --verbose --locale ko --user-data-dir "$UD" --extensions-dir "$EXT" "$WS" > "$RUNNER_TEMP/$MODE.out" 2> "$RUNNER_TEMP/$MODE.err" &
-            fi
-            sleep 30
-            echo "== $MODE clp:"; ls "$UD/clp" 2>/dev/null || echo none
-            grep -h -i -E "translation|nls|locale|language pack|Generating" "$RUNNER_TEMP/$MODE.out" "$RUNNER_TEMP/$MODE.err" | head -20 || true
-            echo "== $MODE env:"; ps -axo pid,command | grep "$UD" | grep -v grep | head -1
-            PID=$(pgrep -f "Contents/MacOS/Code.*$UD" | head -1)
-            if [ -n "$PID" ]; then ps eww -p "$PID" | tr " " "\n" | grep -E "^(LANG|LC_|VSCODE|ELECTRON|HOME|NODE)" | head -20; fi
-            pkill -f "$UD" || true
-            sleep 3
-          done
-
       - name: Upload macOS evidence
         if: always()
         uses: actions/upload-artifact@v4
