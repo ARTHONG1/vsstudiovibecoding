@@ -1,34 +1,12 @@
 'use strict';
 
-const fs = require('node:fs');
 const { isDeepStrictEqual } = require('node:util');
+const { readObject, parseObject } = require('../assets/workspace-extension/extension/jsonc.js');
 // Microsoft jsonc-parser 3.3.1, vendored with its MIT license.
-const jsonc = require('./vendor/jsonc-parser/lib/umd/main.js');
+const jsonc = require('../assets/workspace-extension/extension/vendor/jsonc-parser/lib/umd/main.js');
 
 function isObject(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function parseObject(text, source) {
-    const errors = [];
-    const value = jsonc.parse(text, errors, { allowTrailingComma: true });
-    if (errors.length) {
-        const first = errors[0];
-        throw new SyntaxError(`Invalid JSONC in ${source}: ${jsonc.printParseErrorCode(first.error)} at offset ${first.offset}`);
-    }
-    if (!isObject(value)) throw new SyntaxError(`Expected a JSON object in ${source}`);
-    return value;
-}
-
-function readObject(file) {
-    let text;
-    try {
-        text = fs.readFileSync(file, 'utf8');
-    } catch (error) {
-        if (error.code === 'ENOENT') return {};
-        throw error;
-    }
-    return parseObject(text.replace(/^\uFEFF/, ''), String(file));
 }
 
 function formattingOptions(text) {

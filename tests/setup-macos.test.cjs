@@ -309,6 +309,30 @@ test('upgrade reuses the matching legacy workspace without losing project settin
   assert.deepEqual(JSON.parse(fs.readFileSync(plan.workspace,'utf8')).settings['vibe.codexArgs'],['--custom-user-arg']);
 });
 
+test('unsafe custom roots get separate mobile workspaces for the same project', () => {
+  const f=fixture(),deps=fakeDeps(f); delete deps.workspaceBase;
+  const project=path.join(f.base,'Existing');fs.mkdirSync(project);fs.writeFileSync(path.join(project,'index.html'),'keep');
+  const args=['--project',project,'--code-app',f.app,'--codex',f.codex,'--desktop',f.desktop];
+  const a=setup.buildPlan(setup.parseArgs([...args,'--root',path.join(f.base,'profile A')]),deps);
+  const b=setup.buildPlan(setup.parseArgs([...args,'--root',path.join(f.base,'profile B')]),deps);
+  assert.notEqual(a.workspace,b.workspace);
+});
+
+test('a new sample identity resolves symlinked ancestors before creation', {skip:process.platform==='win32'}, () => {
+  const f=fixture(),deps=fakeDeps(f),actual=path.join(f.base,'actual'),alias=path.join(f.base,'alias');
+  fs.mkdirSync(actual);fs.symlinkSync(actual,alias,'dir');
+  const opts=setup.parseArgs([...baseArgs(f),'--root',alias]);
+  const before=setup.buildPlan(opts,deps);fs.mkdirSync(before.project);
+  const after=setup.buildPlan(opts,deps);assert.equal(before.workspace,after.workspace);assert.equal(before.shortcut,after.shortcut);
+});
+
+test('reapply uses the saved JSONC remote preview route', () => {
+  const f=fixture(),deps=fakeDeps(f),opts=setup.parseArgs(baseArgs(f));
+  const first=setup.buildPlan(opts,deps);const remote=path.join(first.project,'.vibe/remote-config.json');
+  fs.mkdirSync(path.dirname(remote),{recursive:true});fs.writeFileSync(remote,'{\n // saved route\n "previewUrl":"http://localhost:3012/studio",\n}\n');
+  const plan=setup.buildPlan(opts,deps);assert.equal(plan.previewUrl,'http://localhost:3012/studio');
+});
+
 test('case-distinct real projects never share a workspace', {skip:process.platform==='win32'}, t => {
   const f=fixture(), deps=fakeDeps(f);
   const upper=path.join(f.base,'Music'), lower=path.join(f.base,'music');

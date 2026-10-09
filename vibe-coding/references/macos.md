@@ -39,7 +39,7 @@ Options mirror setup.ps1: `--entry`, `--preview-url`, `--codex`, `--codex-arg` (
 Setup writes:
 
 - isolated VS Code user data and extensions in `~/Library/VibeCoding`, or the selected `--root`. Korean names and spaces are supported in the home, project, app and data paths;
-- the project workspace `<root>/Workspaces/vibe-<id>.code-workspace`. When that path cannot be used directly in a phone URL, setup puts only the workspace in a private user-owned `/Users/Shared/VibeCoding-<user-id>-<home-hash>/Workspaces` directory. The project and data stay in their original locations. Setup rejects a shared alias owned by another user or a symlink;
+- the project workspace `<root>/Workspaces/vibe-<id>.code-workspace`. When that path cannot be used directly in a phone URL, setup puts only the workspace in a private user-owned `/Users/Shared/VibeCoding-<user-id>-<path-hash>/Workspaces` directory. The project and data stay in their original locations. Setup rejects a shared alias owned by another user or a symlink;
 - `.vibe/remote-config.json` in the project. Workspace settings and this file record `vibe.dataRoot` / `dataRoot` and the selected VS Code app so remote modules find the correct VSIX and CLI;
 - `.vscode/tasks.json` for an npm dev server only when the file does not exist;
 - the launcher `~/Desktop/Vibe Coding - <project>-<id>.app`.

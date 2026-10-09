@@ -58,6 +58,17 @@ function isFile(p) { try { return fs.statSync(p).isFile(); } catch { return fals
 function isExecutable(p) { try { fs.accessSync(p, fs.constants.X_OK); return isFile(p); } catch { return false; } }
 function isDir(p) { try { return fs.statSync(p).isDirectory(); } catch { return false; } }
 function sha256(data) { return crypto.createHash('sha256').update(data).digest('hex'); }
+function canonicalPath(value) {
+  let ancestor = value;
+  const tail = [];
+  while (!fs.existsSync(ancestor)) {
+    const parent = path.dirname(ancestor);
+    if (parent === ancestor) return value;
+    tail.unshift(path.basename(ancestor));
+    ancestor = parent;
+  }
+  return path.join(fs.realpathSync(ancestor), ...tail);
+}
 
 function findOnPath(name, env) {
   for (const dir of String(env.PATH || '').split(':').filter(Boolean)) {
@@ -131,9 +142,9 @@ function buildPlan(opts, deps) {
   const root = path.resolve(opts.root || path.join(deps.home, 'Library', 'VibeCoding'));
   // Quoted launcher arguments can use any user path. Only the phone's workspace
   // URL needs an ASCII path; keep that alias separate from the data directory.
-  const safeRoot = /^[a-z0-9_./:\\-]+$/i.test(root);
+  const safeRoot = /^\/[a-z0-9_./-]+$/i.test(root) || (path.sep === '\\' && /^[a-z]:[\\/][a-z0-9_./:\\-]+$/i.test(root));
   const uid = deps.uid !== undefined ? deps.uid : (typeof process.getuid === 'function' ? process.getuid() : 'user');
-  const workspaceBase = safeRoot ? null : (deps.workspaceBase || path.join('/Users/Shared', 'VibeCoding-' + uid + '-' + sha256(Buffer.from(deps.home)).slice(0, 10)));
+  const workspaceBase = safeRoot ? null : (deps.workspaceBase || path.join('/Users/Shared', 'VibeCoding-' + uid + '-' + sha256(Buffer.from(deps.home + '\0' + canonicalPath(root).normalize('NFC'))).slice(0, 10)));
   const projectPath = opts.createSample ? path.join(root, 'SampleProject') : path.resolve(opts.projectPath);
   if (!opts.createSample && !isDir(projectPath)) throw new Error('Project does not exist: ' + projectPath);
 
@@ -149,7 +160,7 @@ function buildPlan(opts, deps) {
 
   let previewUrl = opts.previewUrl;
   if (!opts.previewUrlGiven) {
-    try { previewUrl = JSON.parse(fs.readFileSync(path.join(projectPath, '.vibe', 'remote-config.json'), 'utf8')).previewUrl || undefined; } catch {}
+    previewUrl = readObject(path.join(projectPath, '.vibe', 'remote-config.json')).previewUrl || undefined;
   }
   if (!previewUrl && isFile(path.join(projectPath, 'package.json'))) {
     try {
@@ -177,8 +188,7 @@ function buildPlan(opts, deps) {
   if (!codexPath || !isExecutable(codexPath)) missing.push('OpenAI Codex CLI with execute permission (codex)');
   if (commandLineToolsMissing(deps)) warnings.push('macOS Command Line Tools are missing. Git and the Vibe time machine need them: run xcode-select --install and let the user approve the installer.');
 
-  let identityPath = projectPath;
-  try { identityPath = fs.realpathSync(projectPath); } catch {}
+  const identityPath = canonicalPath(projectPath);
   let id = sha256(Buffer.from('mac\0' + identityPath.normalize('NFC'), 'utf8')).slice(0, 10);
   const workspaceDir = path.join(workspaceBase || root, 'Workspaces');
   // Keep existing launchers/settings when upgrading, but reuse a legacy ID

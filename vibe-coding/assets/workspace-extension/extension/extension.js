@@ -9,6 +9,7 @@ const { getMobileTunnelWebviewHtml } = require('./mobile-tunnel');
 const { getOrStartTunnel, getTunnelStatus } = require('./tunnel-manager');
 const { createPreviewForwarder } = require('./preview-forwarding');
 const platform = require('./platform');
+const { readObject } = require('./jsonc');
 
 function checkPortReachable(urlStr) {
   return new Promise(resolve => {
@@ -44,7 +45,7 @@ function activate(context) {
   if (vscode.workspace.getConfiguration('vibe').get('enabled') === false) return;
   try { platform.setAppRoot(vscode.env && vscode.env.appRoot); } catch {}
   let savedPaths = {};
-  try { savedPaths = JSON.parse(fs.readFileSync(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.vibe', 'remote-config.json'), 'utf8')); } catch {}
+  try { savedPaths = readObject(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.vibe', 'remote-config.json')); } catch {}
   const pathConfig = vscode.workspace.getConfiguration('vibe');
   platform.setWorkspacePaths(pathConfig.get('dataRoot') || savedPaths.dataRoot, pathConfig.get('codePath') || savedPaths.codePath);
   const output = vscode.window.createOutputChannel('Vibe Coding');
@@ -183,7 +184,7 @@ function activate(context) {
     try {
       const rcPath = path.join(projectPath, '.vibe', 'remote-config.json');
       if (fs.existsSync(rcPath)) {
-        const rc = JSON.parse(fs.readFileSync(rcPath, 'utf8'));
+        const rc = readObject(rcPath);
         if (rc && rc.codexPath && fs.existsSync(rc.codexPath)) return rc.codexPath;
       }
     } catch {}
@@ -366,7 +367,7 @@ function activate(context) {
     if (configured && configured.trim()) return configured.trim();
     try {
       const projectPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-      const saved = JSON.parse(fs.readFileSync(path.join(projectPath, '.vibe', 'remote-config.json'), 'utf8')).previewUrl;
+      const saved = readObject(path.join(projectPath, '.vibe', 'remote-config.json')).previewUrl;
       const parsed = new URL(saved);
       if (['http:', 'https:'].includes(parsed.protocol) && ['127.0.0.1', 'localhost', '[::1]'].includes(parsed.hostname)) return parsed.toString();
     } catch {}

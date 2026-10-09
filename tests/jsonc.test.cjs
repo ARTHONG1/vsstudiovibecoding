@@ -153,3 +153,31 @@ test('updateObjectText preserves comment text when removing multiple adjacent fi
         assert.ok(updated.includes(comment));
     }
 });
+
+test('extension reader works with only its packaged helper and vendor files', t => {
+    const directory = path.dirname(fixture(t));
+    const extension = path.resolve(__dirname, '../vibe-coding/assets/workspace-extension/extension');
+    const helper = path.join(extension, 'jsonc.js');
+    assert.ok(fs.existsSync(helper), 'extension must include its JSONC reader');
+    fs.copyFileSync(helper, path.join(directory, 'jsonc.js'));
+    fs.cpSync(path.join(extension, 'vendor/jsonc-parser'), path.join(directory, 'vendor/jsonc-parser'), { recursive: true });
+    const packaged = require(path.join(directory, 'jsonc.js'));
+    const file = path.join(directory, 'remote-config.json');
+    assert.deepEqual(packaged.readObject(file), {});
+    const text = '\uFEFF{\r\n  // Keep runtime settings\r\n  "url": "https://example.test//a,}",\r\n  "ports": [3000,],\r\n}\r\n';
+    fs.writeFileSync(file, text);
+    assert.deepEqual(packaged.readObject(file), { url: 'https://example.test//a,}', ports: [3000] });
+    assert.equal(fs.readFileSync(file, 'utf8'), text);
+});
+
+test('extension reader rejects malformed or non-object JSONC and propagates filesystem errors', t => {
+    const helper = path.resolve(__dirname, '../vibe-coding/assets/workspace-extension/extension/jsonc.js');
+    assert.ok(fs.existsSync(helper), 'extension must include its JSONC reader');
+    const runtime = require(helper);
+    for (const text of ['{"a": }', '{} extra', '[1,]', 'null', '', '// comment only\n']) {
+        assert.throws(() => runtime.readObject(fixture(t, text)), SyntaxError);
+    }
+    const directory = fixture(t);
+    fs.mkdirSync(directory);
+    assert.throws(() => runtime.readObject(directory), error => error.code !== 'ENOENT');
+});

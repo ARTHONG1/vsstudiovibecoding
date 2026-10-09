@@ -132,7 +132,8 @@ function ensureRemoteExtension(options = {}) {
   const extensionRoot = path.join(home, '.vscode-server', 'extensions');
   const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
   const installed = path.join(extensionRoot, manifest.publisher + '.' + manifest.name + '-' + manifest.version);
-  const files = ['extension.js', 'tunnel-manager.js', 'mobile-tunnel.js', 'preview-forwarding.js', 'platform.js', 'qrcode.js'];
+  const files = ['extension.js', 'tunnel-manager.js', 'mobile-tunnel.js', 'preview-forwarding.js', 'platform.js', 'qrcode.js', 'jsonc.js',
+    ...['main.js', 'impl/edit.js', 'impl/format.js', 'impl/parser.js', 'impl/scanner.js', 'impl/string-intern.js'].map(file => 'vendor/jsonc-parser/lib/umd/' + file)];
   if (files.every(file => fs.existsSync(path.join(installed, file)) && fs.readFileSync(path.join(installed, file)).equals(fs.readFileSync(path.join(__dirname, file))))) return true;
   const servers = path.join(home, '.vscode', 'cli', 'servers');
   const candidates = fs.existsSync(servers) ? fs.readdirSync(servers).map(name => path.join(servers, name, 'server'))
