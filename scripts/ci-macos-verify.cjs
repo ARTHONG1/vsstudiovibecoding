@@ -87,7 +87,9 @@ function fixtureReady(child) {
 
 function getRoute(url) {
   return new Promise((resolve, reject) => {
-    const request = http.get(url, response => {
+    // Setup runs synchronous CLI commands for seconds; do not reuse a fixture
+    // keep-alive socket that the server closed while this process was blocked.
+    const request = http.get(url, { agent: false }, response => {
       let body = '';
       response.setEncoding('utf8');
       response.on('data', chunk => { body += chunk; });
