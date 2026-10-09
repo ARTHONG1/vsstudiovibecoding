@@ -70,6 +70,22 @@ async function launch(result) {
   settings['security.workspace.trust.enabled'] = false;
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 4));
   const status = path.join(userDir, 'User', 'globalStorage', manifest.publisher + '.' + manifest.name, 'status.jsonl');
+  // Diagnostic: the very first VS Code launch on this machine, with the launcher's
+  // arguments, a fresh profile copy and captured stderr.
+  const firstDir = path.join(os.tmpdir(), 'vibe-first-launch');
+  fs.mkdirSync(path.join(firstDir, 'User'), { recursive: true });
+  fs.copyFileSync(path.join(userDir, 'languagepacks.json'), path.join(firstDir, 'languagepacks.json'));
+  fs.copyFileSync(settingsPath, path.join(firstDir, 'User', 'settings.json'));
+  const firstOut = path.join(os.tmpdir(), 'vibe-first-launch.out');
+  const firstErr = path.join(os.tmpdir(), 'vibe-first-launch.err');
+  execFileSync('/usr/bin/open', ['-n', '-a', result.code, '--stdout', firstOut, '--stderr', firstErr, '--args', '--new-window', '--skip-release-notes', '--skip-welcome', '--locale', 'ko', '--user-data-dir', firstDir, '--extensions-dir', path.join(result.root, 'VSCodeExtensions'), result.workspace]);
+  await sleep(35000);
+  log('first app launch clp', fs.existsSync(path.join(firstDir, 'clp')));
+  for (const file of [firstOut, firstErr]) {
+    if (fs.existsSync(file)) log(path.basename(file), fs.readFileSync(file, 'utf8').split('\n').filter(line => /translation|nls|locale|language|error/i.test(line)).slice(0, 15).join('\n'));
+  }
+  try { execFileSync('/usr/bin/pkill', ['-f', firstDir]); } catch {}
+  await sleep(4000);
   execFileSync('/usr/bin/open', [result.shortcut]);
   const events = await waitFor(() => {
     if (!fs.existsSync(status)) return null;
@@ -103,22 +119,7 @@ async function launch(result) {
   await waitFor(() => fs.existsSync(checkpoints), 60000, 'time machine checkpoint');
   log('checkpoints', fs.readFileSync(checkpoints, 'utf8').slice(0, 300));
   log('launch ok');
-  // Diagnostics: environment of the launcher-started VS Code and a second launch.
-  try {
-    const pid = execFileSync('/usr/bin/pgrep', ['-f', 'Contents/MacOS/Code .*' + userDir], { encoding: 'utf8' }).trim().split('\n')[0];
-    const env = execFileSync('/bin/ps', ['eww', '-p', pid], { encoding: 'utf8' }).split(/\s+/).filter(item => /^(LANG|LC_|VSCODE|ELECTRON|__CF|PATH=|PWD|XPC_SERVICE)/.test(item));
-    log('first launch env', env.join(' ').slice(0, 1500));
-  } catch (error) { log('env diagnostics failed', error.message); }
-  log('clp after first launch', fs.existsSync(path.join(userDir, 'clp')));
-  try { execFileSync('/usr/bin/pkill', ['-f', userDir]); } catch {}
-  await sleep(5000);
-  const before = fs.readFileSync(status, 'utf8').split('\n').filter(Boolean).length;
-  execFileSync('/usr/bin/open', [result.shortcut]);
-  const second = await waitFor(() => {
-    const lines = fs.readFileSync(status, 'utf8').trim().split('\n').filter(Boolean).slice(before).map(line => JSON.parse(line));
-    return lines.some(event => event.event === 'layout-ready') ? lines : null;
-  }, 180000, 'second layout-ready');
-  log('second launch language', (second.find(event => event.event === 'activated') || {}).language, 'clp', fs.existsSync(path.join(userDir, 'clp')));
+  log('clp after launch', fs.existsSync(path.join(userDir, 'clp')));
 }
 
 function clipboard() {
