@@ -199,8 +199,7 @@ function buildPlan(opts, deps) {
     const legacy = readObject(legacyFile);
     const folder = Array.isArray(legacy.folders) && legacy.folders[0];
     if (folder && typeof folder.path === 'string') {
-      let legacyPath = path.resolve(path.dirname(legacyFile), folder.path);
-      try { legacyPath = fs.realpathSync(legacyPath); } catch {}
+      const legacyPath = canonicalPath(path.resolve(path.dirname(legacyFile), folder.path));
       if (legacyPath.normalize('NFC') === identityPath.normalize('NFC')) id = legacyId;
     }
   }
