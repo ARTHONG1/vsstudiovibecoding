@@ -82,6 +82,15 @@ async function launch(result) {
   const languagePacks = path.join(userDir, 'languagepacks.json');
   log('language packs', fs.existsSync(languagePacks) ? Object.keys(readJson(languagePacks)).join(',') : 'missing');
   log('ui language', (events.find(event => event.event === 'activated') || {}).language);
+  try {
+    const pack = readJson(languagePacks).ko || {};
+    const main = pack.translations && pack.translations.vscode;
+    log('ko pack', JSON.stringify({ hash: pack.hash, label: pack.label, extensions: (pack.extensions || []).map(e => e.extensionIdentifier && e.extensionIdentifier.id + '@' + e.version), main, mainExists: !!main && fs.existsSync(main) }));
+    const clp = path.join(userDir, 'clp');
+    log('clp', fs.existsSync(clp) ? execFileSync('/usr/bin/find', [clp, '-maxdepth', '3'], { encoding: 'utf8' }) : 'missing');
+    const mainLogs = execFileSync('/usr/bin/find', [path.join(userDir, 'logs'), '-name', 'main.log'], { encoding: 'utf8' }).trim().split('\n').filter(Boolean);
+    for (const file of mainLogs) log('main.log', fs.readFileSync(file, 'utf8').split('\n').filter(line => /nls|language|locale|error|warn/i.test(line)).slice(0, 30).join('\n'));
+  } catch (error) { log('language diagnostics failed', error.message); }
   const ready = events.find(event => event.event === 'layout-ready');
   assert.equal(ready.mode, 'split');
   assert.deepEqual(ready.folders, [result.project]);
