@@ -1,12 +1,12 @@
 # Testing and Verification Guide
 
-This document outlines the testing architecture, automated regression suites, and acceptance criteria for the **Vibe Coding** Windows environment.
+This document outlines the testing architecture, automated regression suites, and acceptance criteria for the **Vibe Coding** environment on Windows and macOS.
 
 ## 1. Core Testing Philosophy
 
 * **Evidence over assertions:** Merely verifying process existence (e.g. `Code.exe` running) does not prove user-visible layout success. Real UI elements, status bar items, and responsive viewports must be verified.
 * **Non-destructive preservation:** Tests and setups must never tamper with the user's personal `settings.json`, keybindings, or unrelated projects.
-* **Clean-machine portability:** Verification must pass on pristine Windows machines without manual prerequisites.
+* **Clean-machine portability:** Verification must pass on pristine Windows and macOS machines without manual prerequisites.
 
 ---
 
@@ -110,6 +110,16 @@ Follow the 7-step checklist defined in `vibe-coding/references/verification.md`:
 - Fresh-agent instruction scenarios are reviewed separately from real installation/GUI E2E. This update is not evidence that future agents always use tools appropriately, that every Windows environment works, or that tool availability is identical across client versions.
 - Read-only agent scenario review covered blank independent projects, existing-tool reuse, delegated AGENTS.md/AGENT.md and repeated setup, missing project MCP discovery, standalone versus client calls, and task-dependent tool use. This was a document exercise, not a live autonomous coding test.
 - Release verification (2026-09-28): npm run check and all 42 tests passed and exited. Mode tests mock the tunnel manager rather than launching a real tunnel. Regression coverage includes Codex argument arrays, HTTP 404/500 rejection, safety-ref failure preventing restore/clean, failed checkpoint notification, and byte-identical user index after restore. Earlier standalone tool probes and unverified client/E2E layers above remain explicitly separate.
+
+## v2.9.0 macOS support (beta), QR encoder and release ZIP (2026-10-09)
+
+- **macOS setup.** `setup-macos.sh` runs `setup-macos.cjs` on Node.js 18+ or on the JavaScript runtime inside VS Code. `tests/setup-macos.test.cjs` runs plan and apply on every host with injected commands. It checks settings merge and preservation, the absence of Windows-only keys, unchanged keybindings, the workspace and remote config, VSIX packaging, AppleScript quoting, a second apply without reinstalling, and the launcher backup.
+- **macOS end-to-end.** `.github/workflows/macos-e2e.yml` runs in CI and before every release on a clean `macos-latest` runner (Apple silicon). It installs the official VS Code archive and `@openai/codex`, plans with the VS Code runtime while Node is removed from PATH, then applies and re-applies the setup to a sample project. It verifies the extension list, a single layout extension version, the launcher bundle, the decompiled AppleScript and `codesign --verify --deep --strict`. It then opens the launcher and waits for `layout-ready` (split mode, intended folder, Codex terminal, no extension errors), a running Codex process and a time machine checkpoint. It saves a PNG from the clipboard through osascript, rejects a text clipboard, resolves `Contents/Resources/app/bin/code-tunnel` and reads `tunnel status`. First run: VS Code 1.141.0, Codex CLI 0.162.0, VS Code runtime electron 43.7.7.
+- **First-run overlay.** The first run's screenshot showed the Vibe layout under VS Code's new Copilot sign-in onboarding, which appears for every new profile. Setup now sets `workbench.welcomePage.experimentalOnboarding` to false and launchers pass `--skip-welcome` on both platforms.
+- **CI-only trust.** Workspace trust is disabled only inside the CI job's disposable profile so the extension can run unattended. Real setups never change trust.
+- **QR encoder.** The bundled JavaScript encoder used level-M block tables while writing level-L format bits, and it omitted version information for versions 7 and above. zxing-cpp 3.1.1 decoded none of 16 sample lengths (60–271 bytes). After the fix all 16 decode, and the SVG output decodes for Windows and macOS link shapes. The Python/reportlab path, which existed only on the maintainer's PC, was removed. `tests/qrcode.test.cjs` checks format bits, level-L capacity boundaries and both version information blocks.
+- **Release ZIP.** Windows PowerShell's `CreateFromDirectory` stored backslashes in entry names. Entries now use forward slashes under `vibe-coding/`, and the build checks names and the LF endings of `setup-macos.sh`.
+- **Not verified yet:** a real user's Mac (Files and Folders prompts, the Command Line Tools installer, Gatekeeper prompts, Korean folder names created in Finder), phone access through a tunnel hosted on a Mac, and Intel Macs.
 
 ## v2.8.1 Time machine without a Git identity (2026-09-30)
 

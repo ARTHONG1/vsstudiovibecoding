@@ -35,6 +35,7 @@ const requiredFiles = [
   'vibe-coding/references/execution.md',
   'vibe-coding/references/verification.md',
   'vibe-coding/references/mobile-remote.md',
+  'vibe-coding/references/macos.md',
   'vibe-coding/references/agent-tools.md',
   'vibe-coding/references/codex-startup.md',
   'vibe-coding/references/playwright.md',
@@ -47,7 +48,10 @@ const requiredFiles = [
   'vibe-coding/assets/workspace-extension/extension/qrcode.js',
   'vibe-coding/assets/workspace-extension/extension/tunnel-manager.js',
   'vibe-coding/assets/workspace-extension/extension/mobile-tunnel.js',
-  'vibe-coding/assets/workspace-extension/extension/preview-forwarding.js'
+  'vibe-coding/assets/workspace-extension/extension/preview-forwarding.js',
+  'vibe-coding/assets/workspace-extension/extension/platform.js',
+  '.gitattributes',
+  '.github/workflows/macos-e2e.yml'
 ];
 
 for (const rel of requiredFiles) {

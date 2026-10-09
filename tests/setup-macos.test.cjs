@@ -142,6 +142,8 @@ test('apply merges isolated settings, installs the packaged extension and create
 
   const script = fs.readFileSync(path.join(result.shortcut, 'Contents', 'Resources', 'Scripts', 'main.applescript'), 'utf8');
   assert.match(script, /\/usr\/bin\/open -n -a /);
+  assert.ok(script.includes('quoted form of "--skip-welcome"'), 'first-run onboarding is skipped');
+  assert.equal(settings['workbench.welcomePage.experimentalOnboarding'], false);
   assert.ok(script.includes('quoted form of ' + JSON.stringify(result.workspace)));
   assert.ok(script.includes('quoted form of ' + JSON.stringify(f.app)));
   assert.equal(fs.readFileSync(path.join(result.shortcut, 'Contents', 'Resources', 'applet.icns'), 'utf8'), 'vscode-icon');

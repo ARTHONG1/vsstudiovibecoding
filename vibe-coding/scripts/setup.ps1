@@ -194,6 +194,8 @@ Set-Key $settings 'livePreview.openPreviewTarget' 'Embedded Preview'
 Set-Key $settings 'livePreview.debugOnExternalPreview' $true
 Set-Key $settings 'livePreview.autoRefreshPreview' 'On All Changes in Editor'
 Set-Key $settings 'workbench.startupEditor' 'none'
+# A new isolated profile counts as a first-time user; skip the Copilot sign-in onboarding overlay.
+Set-Key $settings 'workbench.welcomePage.experimentalOnboarding' $false
 Set-Key $settings 'locale' 'ko'
 Set-Key $settings 'files.autoSave' 'afterDelay'
 Set-Key $settings 'files.autoSaveDelay' 500
@@ -290,7 +292,7 @@ if (Test-Path -LiteralPath $shortcutPath) { Copy-Item -LiteralPath $shortcutPath
 $shell = New-Object -ComObject WScript.Shell
 $link = $shell.CreateShortcut($shortcutPath)
 $link.TargetPath = $CodePath
-$link.Arguments = '--new-window --skip-release-notes --locale ko --user-data-dir "' + $userDir + '" --extensions-dir "' + $extensionsDir + '" "' + $workspacePath + '"'
+$link.Arguments = '--new-window --skip-release-notes --skip-welcome --locale ko --user-data-dir "' + $userDir + '" --extensions-dir "' + $extensionsDir + '" "' + $workspacePath + '"'
 $link.WorkingDirectory = $ProjectPath
 $link.IconLocation = $CodePath + ',0'
 $link.Save()

@@ -12,9 +12,9 @@ Official reference, checked 2026-09-24: https://code.visualstudio.com/docs/remot
 
 ### 1. Discover the environment
 
-Resolve the VS Code workspace actual project directory, the isolated `.code-workspace` file, the Codex executable and the installed VS Code tunnel binary. Prefer `code-tunnel.exe` from the installed VS Code `bin` directory and launch it without a shell, passing arguments as an array. An installation path containing a space breaks at that space when run through a shell, which surfaces as an immediate exit code 1.
+Resolve the VS Code workspace actual project directory, the isolated `.code-workspace` file, the Codex executable and the installed VS Code tunnel binary. Prefer the tunnel binary bundled with the installed VS Code: `code-tunnel.exe` in the `bin` folder on Windows, `Visual Studio Code.app/Contents/Resources/app/bin/code-tunnel` on macOS. Launch it without a shell, passing arguments as an array. An installation path containing a space breaks at that space when run through a shell, which surfaces as an immediate exit code 1.
 
-Register the server install directory once with `version use stable --install-dir <VS Code install folder>`. Without it the phone reports that the VS Code gateway is not running. A CLI help command succeeding does not prove the tunnel works; treat unverified state as unverified rather than guessing.
+On Windows, register the server install directory once with `version use stable --install-dir <VS Code install folder>`. Without it the phone reports that the VS Code gateway is not running. A CLI help command succeeding does not prove the tunnel works; treat unverified state as unverified rather than guessing.
 
 ### 2. Choose the connection target
 
@@ -28,7 +28,7 @@ Never fall back to the tunnel root. A bare `https://vscode.dev/tunnel/<name>/` o
 
 ### 3. Install the extension on the remote server
 
-The tunnel runs a separate VS Code server with its own extension directory under the user profile `.vscode-server` folder. Installing the extension only into the desktop environment leaves the phone with no Vibe buttons and no layout. Do not pass --install-extension to the long-running Windows tunnel: its running-server reconnect installation path invokes bash. Install the VSIX separately through the Windows server node.exe/out/server-main.js CLI before starting or reusing the tunnel. Install the packaged VSIX into the remote server as well, then confirm the extension id appears in that server extension list and that its `extension.js` matches the desktop copy by hash.
+The tunnel runs a separate VS Code server with its own extension directory under the user profile `.vscode-server` folder. Installing the extension only into the desktop environment leaves the phone with no Vibe buttons and no layout. Do not pass --install-extension to the long-running Windows tunnel: its running-server reconnect installation path invokes bash. Install the VSIX separately through the Windows server node.exe/out/server-main.js CLI before starting or reusing the tunnel. macOS has bash, so a new tunnel started by the mobile button passes `--install-extension` with the packaged VSIX; for an existing server, the extension installs it through that server's `node out/server-main.js`. Install the packaged VSIX into the remote server as well, then confirm the extension id appears in that server extension list and that its `extension.js` matches the desktop copy by hash.
 
 ### 4. Shape the phone layout
 
@@ -50,11 +50,11 @@ On web clients, `asExternalUri` can return the same loopback address. The bundle
 
 During requested mobile setup, the agent verifies server response, CLI support, Private address issuance and authenticated rendering separately. The phone may need to authenticate the devtunnels.ms origin even when vscode.dev is signed in. The preview button opens Private devtunnels in a top-level browser tab every time; authenticate there and return to vscode.dev to continue terminal work. Keep access Private. An authentication redirect proves transport only, not app rendering. Browser cookie restrictions and application frame headers can require external-browser preview; do not claim universal in-editor support. Static projects also need a real local HTTP preview URL; identify and verify the Live Preview server or configure an appropriate static server rather than assuming an empty URL works.
 
-When the user asks for UI changes from the phone, perform the edits, confirm the dev server responds, then capture a mobile-viewport screenshot with Windows native Edge headless at a 412x915 window size, writing the PNG under the project `.vibe/previews` directory. Embed that image in the completion response so the result is visible without switching applications.
+When the user asks for UI changes from the phone, perform the edits, confirm the dev server responds, then capture a mobile-viewport screenshot at a 412x915 window size (Windows: native Edge headless; macOS: the Playwright CLI or Chrome headless from [macos.md](macos.md)), writing the PNG under the project `.vibe/previews` directory. Embed that image in the completion response so the result is visible without switching applications.
 
 ## Verification and completion
 
-Reuse the host's existing tunnel using `code-tunnel.exe tunnel status` before starting another. A shared startup lock prevents concurrent VS Code windows from launching competing tunnels. A disconnected existing tunnel is reported rather than killed. Connection status and `has_editor_link` confirm transport readiness only; the gateway is started on demand and phone rendering still needs verification. The QR guide periodically checks transport status and stops showing a stale success card after disconnection. Startup output is saved, with secrets masked, to the project's `.vibe/tunnel.log`.
+Reuse the host's existing tunnel using `code-tunnel tunnel status` before starting another. A shared startup lock prevents concurrent VS Code windows from launching competing tunnels. A disconnected existing tunnel is reported rather than killed. Connection status and `has_editor_link` confirm transport readiness only; the gateway is started on demand and phone rendering still needs verification. The QR guide periodically checks transport status and stops showing a stale success card after disconnection. Startup output is saved, with secrets masked, to the project's `.vibe/tunnel.log`.
 
 For the web client's preview button, first check the configured development server over HTTP. Keep the terminal visible if it does not respond. Private devtunnels leave the terminal intact and open externally. For other embeddable forwarded URLs, restore the panel size before hiding it and reduce editors to one group. This prevents terminal/preview round trips from reversing the panel maximization state. A successfully invoked browser command is logged as an open request, not proof of rendered content.
 
@@ -70,7 +70,7 @@ Track each fact separately rather than collapsing them into one success flag.
 
 Never fabricate a connection URL when the CLI has not printed one. On timeout, stop the child process and report the failure with the captured output. Distinguish authentication failures, which justify a sign-in prompt, from executable-path or network failures, which do not. Mask tokens and authorization codes in any surfaced output.
 
-The host must stay awake and online; the `--no-sleep` flag covers sleep during an active tunnel. Do not edit the same files from the phone and the PC at the same time. If phone verification is unavailable, finish the local preparation and report the exact pending step, for example: tunnel started confirmed, remote extension confirmed, phone connection pending, preview reflection unverified.
+The host must stay awake and online; the `--no-sleep` flag covers idle sleep during an active tunnel. A closed MacBook lid still puts the Mac to sleep. Do not edit the same files from the phone and the PC at the same time. If phone verification is unavailable, finish the local preparation and report the exact pending step, for example: tunnel started confirmed, remote extension confirmed, phone connection pending, preview reflection unverified.
 
 ## Review scenarios for future updates
 
