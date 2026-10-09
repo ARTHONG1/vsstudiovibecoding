@@ -187,3 +187,31 @@ test('createZip stores every file under a forward-slash name with its exact byte
   assert.deepEqual(Object.keys(entries).sort(), ['[Content_Types].xml', 'extension/extension.js']);
   assert.equal(entries['extension/extension.js'], 'console.log("한글");\n');
 });
+
+test('the Korean language pack is registered before the first launch, with VS Code\'s hash', () => {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'vibe-lp-'));
+  const userDir = path.join(base, 'user');
+  const extensionsDir = path.join(base, 'extensions');
+  const relative = 'ms-ceintl.vscode-language-pack-ko-1.131.2026090407';
+  fs.mkdirSync(path.join(extensionsDir, relative, 'translations'), { recursive: true });
+  fs.mkdirSync(userDir, { recursive: true });
+  fs.writeFileSync(path.join(extensionsDir, relative, 'package.json'), JSON.stringify({
+    name: 'vscode-language-pack-ko', version: '1.131.2026090407',
+    contributes: { localizations: [{ languageId: 'ko', languageName: 'Korean', localizedLanguageName: '한국어', translations: [{ id: 'vscode', path: './translations/main.i18n.json' }] }] }
+  }));
+  // A CLI install records the gallery id in metadata, not yet in identifier.uuid.
+  fs.writeFileSync(path.join(extensionsDir, 'extensions.json'), JSON.stringify([
+    { identifier: { id: 'ms-ceintl.vscode-language-pack-ko' }, version: '1.131.2026090407', relativeLocation: relative, metadata: { id: '7c15d326-cfdd-4932-9409-634b512daebe' } },
+    { identifier: { id: 'ms-vscode.live-server' }, version: '1.0.0', relativeLocation: 'missing-folder' }
+  ]));
+  fs.writeFileSync(path.join(userDir, 'languagepacks.json'), JSON.stringify({ ja: { hash: 'keep' } }));
+  assert.equal(setup.writeLanguagePacks(userDir, extensionsDir), true);
+  const packs = JSON.parse(fs.readFileSync(path.join(userDir, 'languagepacks.json'), 'utf8'));
+  // Value written by VS Code 1.141 itself for this language pack version.
+  assert.equal(packs.ko.hash, 'd7d556079a3b7c73bd10ddac55bcb029');
+  assert.equal(packs.ko.label, '한국어');
+  assert.equal(packs.ko.translations.vscode, path.join(extensionsDir, relative, 'translations', 'main.i18n.json'));
+  assert.deepEqual(packs.ko.extensions, [{ extensionIdentifier: { id: 'ms-ceintl.vscode-language-pack-ko', uuid: '7c15d326-cfdd-4932-9409-634b512daebe' }, version: '1.131.2026090407' }]);
+  assert.deepEqual(packs.ja, { hash: 'keep' }, 'other languages are preserved');
+  assert.equal(setup.writeLanguagePacks(userDir, extensionsDir), false, 'an up-to-date file is left alone');
+});

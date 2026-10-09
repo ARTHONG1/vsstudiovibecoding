@@ -21,7 +21,7 @@ AI가 코드를 수정할 때마다 대화/작업 단위로 그림자 스냅샷�
 - Preserve unrelated VS Code settings, installed extensions, project files, unsaved buffers, model selections, and credentials. Back up each file before changing it; merge managed keys.
 - Do not change OS security policy or disable workspace trust to get the task working. Follow the available tools' permission/authentication rules. Agent ownership does not authorize bypassing denied actions.
 - Skill paths: The primary recommended user skill location is `$HOME/.agents/skills/vibe-coding` (or repository `.agents/skills/vibe-coding`), with legacy `$HOME/.codex/skills/vibe-coding` supported for backward compatibility.
-- Beginner-ready baseline: Ensure Korean language pack (locale: ko), autoSave (afterDelay, 500ms), terminal UTF-8 encoding and a quiet first launch (no Copilot sign-in onboarding over the layout) are configured automatically without burdening the user with technical setup questions.
+- Beginner-ready baseline: Ensure Korean language pack (locale: ko, registered in the profile's `languagepacks.json` by the setup scripts so the first window is already Korean), autoSave (afterDelay, 500ms), terminal UTF-8 encoding and a quiet first launch (no Copilot sign-in onboarding over the layout) are configured automatically without burdening the user with technical setup questions.
 
 ## Workflow
 

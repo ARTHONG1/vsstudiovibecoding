@@ -286,6 +286,7 @@ if (!(Test-Path -LiteralPath $DesktopPath -PathType Container)) { throw 'Desktop
 if (!(Test-VibeExtensionContent (Join-Path $packageSource 'extension') $installedLayout)) {
   throw 'Installed layout extension differs from the skill source. Preserve the existing installation and inspect the CLI result before creating a shortcut.'
 }
+[void](Write-VibeLanguagePacks $userDir $extensionsDir)
 $installedFiles = @(Get-ChildItem -LiteralPath $installedLayout -File -Recurse | Select-Object -ExpandProperty FullName)
 Assert-VibeNativeFiles (@($workspacePath, $entryPath, $settingsPath) + $installedFiles)
 if (Test-Path -LiteralPath $shortcutPath) { Copy-Item -LiteralPath $shortcutPath -Destination $backup }

@@ -35,7 +35,7 @@ For manual installation, download the release ZIP, extract the complete folder w
 
 On a Mac the agent runs `sh vibe-coding/scripts/setup-macos.sh`, which keeps VS Code data in `~/Library/VibeCoding` and creates a `Vibe Coding - <project>-<id>.app` launcher on the Desktop. The user approves the Command Line Tools installer (needed for Git and the time machine), password prompts for VS Code or Node.js, Files and Folders access for projects in Documents or Desktop, and Screen Recording / Accessibility for screen verification. Shortcuts follow macOS: ⌘C/⌘V, ⌥Z for the time machine, ⌥V for image paste.
 
-Every change runs an end-to-end job on a clean GitHub macOS runner (Apple silicon): it installs the official VS Code and Codex CLI, applies and re-applies the setup, opens the launcher, and checks the three-column layout, the Codex process, a time machine checkpoint, clipboard image saving and the bundled tunnel CLI. A check on a real user's Mac and phone access from a Mac are still pending; please report problems through the issue forms.
+Every change runs an end-to-end job on a clean GitHub macOS runner (Apple silicon): it installs the official VS Code and Codex CLI, applies and re-applies the setup, opens the launcher, and checks that the first window already uses the Korean UI, the three-column layout, the Codex process, a time machine checkpoint, clipboard image saving and the bundled tunnel CLI. A check on a real user's Mac and phone access from a Mac are still pending; please report problems through the issue forms.
 
 ## Boundaries and evidence
 

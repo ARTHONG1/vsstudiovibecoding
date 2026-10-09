@@ -39,6 +39,13 @@ function checkInstall(result) {
   }
   const installedDirs = fs.readdirSync(extensionsDir).filter(name => name.startsWith(manifest.publisher + '.' + manifest.name + '-'));
   assert.deepEqual(installedDirs, [manifest.publisher + '.' + manifest.name + '-' + manifest.version], 'exactly one layout extension version');
+  // VS Code picks the display language before its first window opens, so the
+  // setup must register the Korean pack itself (see writeLanguagePacks).
+  const languagePacks = readJson(path.join(userDir, 'languagepacks.json'));
+  const ko = languagePacks.ko || {};
+  assert.match(String(ko.hash), /^[0-9a-f]{32}$/, 'Korean language pack registered before the first launch');
+  assert.ok(ko.translations && ko.translations.vscode && fs.existsSync(ko.translations.vscode), 'Korean translation file exists: ' + JSON.stringify(ko.translations));
+  log('languagepacks.json ko', ko.hash, result.languagePacksWritten ? '(written now)' : '(already up to date)');
   for (const file of ['Contents/Info.plist', 'Contents/MacOS/applet', 'Contents/Resources/Scripts/main.scpt']) {
     assert.ok(fs.existsSync(path.join(result.shortcut, file)), 'launcher is missing ' + file);
   }
@@ -70,22 +77,10 @@ async function launch(result) {
   settings['security.workspace.trust.enabled'] = false;
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 4));
   const status = path.join(userDir, 'User', 'globalStorage', manifest.publisher + '.' + manifest.name, 'status.jsonl');
-  // Diagnostic: the very first VS Code launch on this machine, with the launcher's
-  // arguments, a fresh profile copy and captured stderr.
-  const firstDir = path.join(os.tmpdir(), 'vibe-first-launch');
-  fs.mkdirSync(path.join(firstDir, 'User'), { recursive: true });
-  fs.copyFileSync(path.join(userDir, 'languagepacks.json'), path.join(firstDir, 'languagepacks.json'));
-  fs.copyFileSync(settingsPath, path.join(firstDir, 'User', 'settings.json'));
-  const firstOut = path.join(os.tmpdir(), 'vibe-first-launch.out');
-  const firstErr = path.join(os.tmpdir(), 'vibe-first-launch.err');
-  execFileSync('/usr/bin/open', ['-n', '-a', result.code, '--stdout', firstOut, '--stderr', firstErr, '--args', '--new-window', '--skip-release-notes', '--skip-welcome', '--locale', 'ko', '--user-data-dir', firstDir, '--extensions-dir', path.join(result.root, 'VSCodeExtensions'), result.workspace]);
-  await sleep(35000);
-  log('first app launch clp', fs.existsSync(path.join(firstDir, 'clp')));
-  for (const file of [firstOut, firstErr]) {
-    if (fs.existsSync(file)) log(path.basename(file), fs.readFileSync(file, 'utf8').split('\n').filter(line => /translation|nls|locale|language|error/i.test(line)).slice(0, 15).join('\n'));
-  }
-  try { execFileSync('/usr/bin/pkill', ['-f', firstDir]); } catch {}
-  await sleep(4000);
+  const languagePacksPath = path.join(userDir, 'languagepacks.json');
+  const hashBefore = (readJson(languagePacksPath).ko || {}).hash;
+  // The setup only used the VS Code CLI, so this is the profile's first window.
+  log('first window of the isolated profile:', !fs.existsSync(path.join(userDir, 'clp')));
   execFileSync('/usr/bin/open', [result.shortcut]);
   const events = await waitFor(() => {
     if (!fs.existsSync(status)) return null;
@@ -93,20 +88,8 @@ async function launch(result) {
     return lines.some(event => event.event === 'layout-ready') ? lines : null;
   }, 240000, 'layout-ready in ' + status);
   for (const event of events) log('event', JSON.stringify(event));
-  const mainProcess = execFileSync('/bin/ps', ['-axo', 'command'], { encoding: 'utf8' }).split('\n').find(line => line.includes('/Contents/MacOS/') && line.includes(userDir) && !line.includes('Helper'));
-  log('vscode main process', mainProcess);
-  const languagePacks = path.join(userDir, 'languagepacks.json');
-  log('language packs', fs.existsSync(languagePacks) ? Object.keys(readJson(languagePacks)).join(',') : 'missing');
-  log('ui language', (events.find(event => event.event === 'activated') || {}).language);
-  try {
-    const pack = readJson(languagePacks).ko || {};
-    const main = pack.translations && pack.translations.vscode;
-    log('ko pack', JSON.stringify({ hash: pack.hash, label: pack.label, extensions: (pack.extensions || []).map(e => e.extensionIdentifier && e.extensionIdentifier.id + '@' + e.version), main, mainExists: !!main && fs.existsSync(main) }));
-    const clp = path.join(userDir, 'clp');
-    log('clp', fs.existsSync(clp) ? execFileSync('/usr/bin/find', [clp, '-maxdepth', '3'], { encoding: 'utf8' }) : 'missing');
-    const mainLogs = execFileSync('/usr/bin/find', [path.join(userDir, 'logs'), '-name', 'main.log'], { encoding: 'utf8' }).trim().split('\n').filter(Boolean);
-    for (const file of mainLogs) log('main.log', fs.readFileSync(file, 'utf8').split('\n').filter(line => /nls|language|locale|error|warn/i.test(line)).slice(0, 30).join('\n'));
-  } catch (error) { log('language diagnostics failed', error.message); }
+  const activated = events.find(event => event.event === 'activated') || {};
+  assert.equal(activated.language, 'ko', 'the first window shows the Korean UI');
   const ready = events.find(event => event.event === 'layout-ready');
   assert.equal(ready.mode, 'split');
   assert.deepEqual(ready.folders, [result.project]);
@@ -118,8 +101,10 @@ async function launch(result) {
   const checkpoints = path.join(result.project, '.vibe', 'checkpoints.json');
   await waitFor(() => fs.existsSync(checkpoints), 60000, 'time machine checkpoint');
   log('checkpoints', fs.readFileSync(checkpoints, 'utf8').slice(0, 300));
+  // Informational: VS Code rewrites this file later with its own hash. A
+  // different value only renames VS Code's translation cache folder.
+  log('ko language pack hash, setup / VS Code:', hashBefore, (readJson(languagePacksPath).ko || {}).hash);
   log('launch ok');
-  log('clp after launch', fs.existsSync(path.join(userDir, 'clp')));
 }
 
 function clipboard() {

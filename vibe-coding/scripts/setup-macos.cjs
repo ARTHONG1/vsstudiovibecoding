@@ -332,6 +332,45 @@ function extensionMatches(sourceDir, installedDir) {
   return true;
 }
 
+// VS Code writes languagepacks.json only after its window starts, when the
+// display language has already been chosen, so a new profile opened in English
+// once. Write the same file (format and hash as in VS Code's LanguagePacksCache)
+// right after the CLI installs the Korean language pack.
+function writeLanguagePacks(userDir, extensionsDir) {
+  let registry = [];
+  try { registry = JSON.parse(fs.readFileSync(path.join(extensionsDir, 'extensions.json'), 'utf8')); } catch {}
+  const packs = {};
+  for (const entry of Array.isArray(registry) ? registry : []) {
+    const id = entry && entry.identifier && entry.identifier.id;
+    const dir = entry && entry.relativeLocation ? path.join(extensionsDir, entry.relativeLocation) : null;
+    if (!id || !dir) continue;
+    let manifest;
+    try { manifest = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8')); } catch { continue; }
+    const localizations = manifest.contributes && Array.isArray(manifest.contributes.localizations) ? manifest.contributes.localizations : [];
+    for (const localization of localizations) {
+      if (typeof localization.languageId !== 'string' || !Array.isArray(localization.translations) || !localization.translations.length) continue;
+      const pack = packs[localization.languageId] || (packs[localization.languageId] = { hash: '', label: localization.localizedLanguageName || localization.languageName, extensions: [], translations: {} });
+      const uuid = entry.identifier.uuid || (entry.metadata && entry.metadata.id);
+      pack.extensions.push({ extensionIdentifier: uuid ? { id, uuid } : { id }, version: manifest.version });
+      for (const translation of localization.translations) {
+        if (typeof translation.id === 'string' && typeof translation.path === 'string') pack.translations[translation.id] = path.join(dir, translation.path);
+      }
+    }
+  }
+  for (const pack of Object.values(packs)) {
+    const md5 = crypto.createHash('md5');
+    for (const extension of pack.extensions) md5.update(extension.extensionIdentifier.uuid || extension.extensionIdentifier.id).update(extension.version);
+    pack.hash = md5.digest('hex');
+  }
+  if (!packs.ko) return false;
+  const file = path.join(userDir, 'languagepacks.json');
+  let current = {};
+  try { current = JSON.parse(fs.readFileSync(file, 'utf8')) || {}; } catch {}
+  if (current.ko && current.ko.hash === packs.ko.hash) return false;
+  fs.writeFileSync(file, JSON.stringify({ ...current, ...packs }), 'utf8');
+  return true;
+}
+
 function appleScriptString(value) {
   return '"' + String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
 }
@@ -518,6 +557,7 @@ function applySetup(plan, opts, deps) {
   if (!extensionMatches(sourceExtension, installedLayout)) {
     throw new Error('Installed layout extension differs from the skill source. Preserve the existing installation and inspect the VS Code CLI result before creating a launcher. Backup: ' + backup);
   }
+  const languagePacksWritten = writeLanguagePacks(userDir, extensionsDir);
 
   const previousLauncher = createLauncher(plan, { backup, userDir, extensionsDir }, deps);
   if (opts.launch) deps.run('/usr/bin/open', [plan.shortcut]);
@@ -528,6 +568,7 @@ function applySetup(plan, opts, deps) {
     applied: true,
     backup,
     previousLauncher,
+    languagePacksWritten,
     codexVersion,
     codeVersion,
     uiVerification: 'PENDING: agent must open the launcher and complete references/verification.md and references/macos.md'
@@ -579,4 +620,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { applySetup, buildPlan, createZip, crc32, extensionMatches, launcherSource, main, parseArgs };
+module.exports = { applySetup, buildPlan, createZip, crc32, extensionMatches, launcherSource, main, parseArgs, writeLanguagePacks };
