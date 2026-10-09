@@ -123,6 +123,7 @@ test("getOrStartTunnel invokes spawn with shell: false and handles spaces in CLI
   const projectWithKorean = "C:\\Users\\user\\Documents\\과전강 테스트";
 
   const result = await getOrStartTunnel(projectWithKorean, {
+    platform: "win32",
     findCli: () => cliWithSpaces,
     findVsix: () => "C:\\Users\\user\\AppData\\Local\\VibeCoding\\vibe-workspace.vsix",
     workspaceFile: __filename.replace(/tunnel.test.cjs$/, "tunnel-fixture.code-workspace"),
