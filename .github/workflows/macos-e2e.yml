@@ -70,6 +70,21 @@ jobs:
           node scripts/ci-macos-verify.cjs clipboard
           node scripts/ci-macos-verify.cjs tunnel "$RUNNER_TEMP/apply.json"
 
+      - name: Debug locale (temporary)
+        if: always()
+        run: |
+          APP="$HOME/Applications/Visual Studio Code.app"
+          pkill -f VSCodeUserData || true
+          sleep 5
+          WS=$(node -p "require('$RUNNER_TEMP/apply.json').workspace")
+          "$APP/Contents/MacOS/Code" --verbose --locale ko --user-data-dir "$HOME/Library/VibeCoding/VSCodeUserData" --extensions-dir "$HOME/Library/VibeCoding/VSCodeExtensions" "$WS" > "$RUNNER_TEMP/code-verbose.log" 2>&1 &
+          sleep 30
+          ls -la "$HOME/Library/VibeCoding/VSCodeUserData/clp" || echo "no clp"
+          grep -i -E "nls|translation|language|locale" "$RUNNER_TEMP/code-verbose.log" | head -40 || true
+          head -c 4000 "$RUNNER_TEMP/code-verbose.log"
+          tail -n 5 "$HOME/Library/VibeCoding/VSCodeUserData/User/globalStorage/local-vibe.vibe-workspace/status.jsonl" || true
+          pkill -f VSCodeUserData || true
+
       - name: Upload macOS evidence
         if: always()
         uses: actions/upload-artifact@v4
