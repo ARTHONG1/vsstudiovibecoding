@@ -123,6 +123,7 @@ test("getOrStartTunnel invokes spawn with shell: false and handles spaces in CLI
   const projectWithKorean = "C:\\Users\\user\\Documents\\과전강 테스트";
 
   const result = await getOrStartTunnel(projectWithKorean, {
+    platform: "win32",
     findCli: () => cliWithSpaces,
     findVsix: () => "C:\\Users\\user\\AppData\\Local\\VibeCoding\\vibe-workspace.vsix",
     workspaceFile: __filename.replace(/tunnel.test.cjs$/, "tunnel-fixture.code-workspace"),
@@ -130,7 +131,7 @@ test("getOrStartTunnel invokes spawn with shell: false and handles spaces in CLI
   });
 
   assert.ok(result && result.url);
-  assert.equal(result.url, "https://vscode.dev/tunnel/vibe-test/" + __filename.replace(/tunnel.test.cjs$/, "tunnel-fixture.code-workspace").replace(/\\/g, "/"));
+  assert.equal(result.url, "https://vscode.dev/tunnel/vibe-test/" + __filename.replace(/tunnel.test.cjs$/, "tunnel-fixture.code-workspace").replace(/\\/g, "/").replace(/^\/+/, ""));
   assert.equal(spawnArgsRecord.cliPath, cliWithSpaces);
   assert.equal(spawnArgsRecord.options.shell, false, "shell must be false to prevent command line splitting on spaces");
   assert.equal(spawnArgsRecord.options.cwd, projectWithKorean);
@@ -150,7 +151,7 @@ test("getOrStartTunnel throws clear error when CLI executable is not found", asy
       });
     },
     err => {
-      assert.ok(err.message.includes("code-tunnel.exe"));
+      assert.ok(err.message.includes(process.platform === "win32" ? "code-tunnel.exe" : "code-tunnel"));
       assert.ok(!err.message.includes("code tunnel user login"));
       return true;
     }
@@ -282,9 +283,40 @@ test("getMobileTunnelWebviewHtml safely falls back to copyable URL when QR fails
 
 test('project URL uses ASCII workspace and never CLI encoded folder or root', () => {
   const url=buildProjectTunnelUrl('https://vscode.dev/tunnel/vibe-pc/c:/wrong/%EA%B3%BC', 'C:/과전강', fixture);
-  assert.equal(url, 'https://vscode.dev/tunnel/vibe-pc/' + fixture.replace(/\\/g,'/'));
+  assert.equal(url, 'https://vscode.dev/tunnel/vibe-pc/' + fixture.replace(/\\/g,'/').replace(/^\/+/, ''));
   assert.ok(!url.includes('%'));
   assert.deepEqual(JSON.parse(fs.readFileSync(fixture,'utf8')).folders,[{path:'C:/Users/user/Documents/과전강'}]);
   assert.throws(()=>buildProjectTunnelUrl('https://vscode.dev/tunnel/vibe-pc/', 'C:/과전강', 'C:/missing.code-workspace'));
   assert.equal(buildProjectTunnelUrl('https://vscode.dev/tunnel/vibe-pc/', 'C:/project'), 'https://vscode.dev/tunnel/vibe-pc/C:/project');
+});
+
+test('macOS tunnel start asks the CLI to install the packaged Vibe extension', async () => {
+  resetTunnelState();
+  let spawnArgs;
+  const result = await getOrStartTunnel('/Users/me/project', {
+    platform: 'darwin',
+    findCli: () => '/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code-tunnel',
+    findVsix: () => '/Users/me/Library/VibeCoding/vibe-workspace.vsix',
+    spawn: (cli, args) => {
+      spawnArgs = args;
+      const child = new EventEmitter();
+      child.stdout = new EventEmitter();
+      child.stderr = new EventEmitter();
+      child.kill = () => {};
+      process.nextTick(() => child.stdout.emit('data', 'Open: https://vscode.dev/tunnel/vibe-mac/' + LF));
+      return child;
+    }
+  });
+  const at = spawnArgs.indexOf('--install-extension');
+  assert.deepEqual(spawnArgs.slice(at, at + 2), ['--install-extension', '/Users/me/Library/VibeCoding/vibe-workspace.vsix']);
+  assert.equal(result.url, 'https://vscode.dev/tunnel/vibe-mac/Users/me/project');
+  resetTunnelState();
+});
+
+test('macOS tunnel links accept ASCII paths and reject spaces or Korean names', () => {
+  assert.equal(buildProjectTunnelUrl('https://vscode.dev/tunnel/vibe-mac/', '/Users/me/Library/VibeCoding/Workspaces/vibe-0123456789.code-workspace'),
+    'https://vscode.dev/tunnel/vibe-mac/Users/me/Library/VibeCoding/Workspaces/vibe-0123456789.code-workspace');
+  assert.throws(() => buildProjectTunnelUrl('https://vscode.dev/tunnel/vibe-mac/', '/Users/me/Documents/과전강'));
+  assert.throws(() => buildProjectTunnelUrl('https://vscode.dev/tunnel/vibe-mac/', '/Users/me/My Project'));
+  assert.throws(() => buildProjectTunnelUrl('https://vscode.dev/tunnel/vibe-mac/', '/Users/me/../etc'));
 });

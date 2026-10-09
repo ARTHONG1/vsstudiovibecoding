@@ -1,5 +1,7 @@
 # Execution context and setup
 
+This file covers Windows. On macOS read [macos.md](macos.md); the inputs, preservation and verification rules below still apply, but MSIX, WMI and PowerShell policy do not.
+
 ## Resolve real paths before changing files
 
 An agent's `$env:LOCALAPPDATA`, desktop shortcut resolution, and even apparently absolute paths may be virtualized by a packaged Windows app (MSIX). Elevating a shell outside its sandbox does not necessarily escape that app's filesystem virtualization. Typical symptom: the agent sees index.html, but a user-launched VS Code opens an empty unsaved tab bearing that filename. A terminal path containing `Packages/.../LocalCache/Local/...` is another clue.

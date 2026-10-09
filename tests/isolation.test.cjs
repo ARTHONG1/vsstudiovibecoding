@@ -129,7 +129,7 @@ test('restore preserves non-browser clean tabs (Settings, Welcome, etc.)', async
   assert.equal(closedTabs.includes(stalePreviewTab), true, 'Stale preview tab must be closed');
 });
 
-test('setup.ps1 dry-run enforces pure Codex agent in plan', () => {
+test('setup.ps1 dry-run enforces pure Codex agent in plan', { skip: process.platform !== 'win32' && 'setup.ps1 runs on Windows only' }, () => {
   const ROOT = path.resolve(__dirname, '..');
   const SETUP_SCRIPT = path.join(ROOT, 'vibe-coding/scripts/setup.ps1');
   const cmd = 'powershell -ExecutionPolicy Bypass -NoProfile -File "' + SETUP_SCRIPT + '" -CreateSample';

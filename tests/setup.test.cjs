@@ -7,13 +7,14 @@ const os = require('os');
 
 const ROOT = path.resolve(__dirname, '..');
 const SETUP_SCRIPT = path.join(ROOT, 'vibe-coding/scripts/setup.ps1');
+const WINDOWS_ONLY = { skip: process.platform !== 'win32' && 'setup.ps1 runs on Windows only' };
 
 function runPowerShell(args) {
   const cmd = `powershell -ExecutionPolicy Bypass -NoProfile -File "${SETUP_SCRIPT}" ${args}`;
   return execSync(cmd, { cwd: ROOT, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
 }
 
-test('setup.ps1 dry-run with -CreateSample returns valid JSON plan', () => {
+test('setup.ps1 dry-run with -CreateSample returns valid JSON plan', WINDOWS_ONLY, () => {
   const output = runPowerShell('-CreateSample');
   const plan = JSON.parse(output);
   assert.equal(plan.applied, false);
@@ -23,19 +24,19 @@ test('setup.ps1 dry-run with -CreateSample returns valid JSON plan', () => {
   assert.ok(Array.isArray(plan.missing));
 });
 
-test('setup.ps1 honors -RegisterContextMenu flag in plan', () => {
+test('setup.ps1 honors -RegisterContextMenu flag in plan', WINDOWS_ONLY, () => {
   const output = runPowerShell('-CreateSample -RegisterContextMenu');
   const plan = JSON.parse(output);
   assert.equal(plan.registerContextMenu, true);
 });
 
-test('setup.ps1 throws when neither ProjectPath nor CreateSample is specified', () => {
+test('setup.ps1 throws when neither ProjectPath nor CreateSample is specified', WINDOWS_ONLY, () => {
   assert.throws(() => {
     runPowerShell('');
   });
 });
 
-test('setup.ps1 prevents path traversal in EntryFile', () => {
+test('setup.ps1 prevents path traversal in EntryFile', WINDOWS_ONLY, () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vibe-test-traversal-'));
   try {
     fs.writeFileSync(path.join(tempDir, 'index.html'), '<html></html>');
@@ -47,7 +48,7 @@ test('setup.ps1 prevents path traversal in EntryFile', () => {
   }
 });
 
-test('setup.ps1 auto-detects framework dev server port from package.json', () => {
+test('setup.ps1 auto-detects framework dev server port from package.json', WINDOWS_ONLY, () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vibe-test-vite-'));
   try {
     fs.writeFileSync(path.join(tempDir, 'index.html'), '<html></html>');
@@ -60,7 +61,7 @@ test('setup.ps1 auto-detects framework dev server port from package.json', () =>
   }
 });
 
-test('setup.ps1 preserves existing project and does not touch project .vscode/settings.json', () => {
+test('setup.ps1 preserves existing project and does not touch project .vscode/settings.json', WINDOWS_ONLY, () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vibe-test-clean-project-'));
   try {
     fs.writeFileSync(path.join(tempDir, 'index.html'), '<html><body>clean</body></html>');
@@ -73,7 +74,7 @@ test('setup.ps1 preserves existing project and does not touch project .vscode/se
   }
 });
 
-test('setup retains saved preview route when PreviewUrl is omitted', () => {
+test('setup retains saved preview route when PreviewUrl is omitted', WINDOWS_ONLY, () => {
   const tempDir=fs.mkdtempSync(path.join(os.tmpdir(),'vibe-saved-preview-'));
   try {
     fs.writeFileSync(path.join(tempDir,'index.html'),'<html></html>');

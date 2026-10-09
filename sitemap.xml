@@ -6,7 +6,7 @@
     <video:video>
       <video:thumbnail_loc>https://arthong1.github.io/vsstudiovibecoding/media/vibe-coding-intro-poster.webp</video:thumbnail_loc>
       <video:title>Vibe Coding — VS Code 환경 세팅을 AI 에이전트에게 맡기세요</video:title>
-      <video:description>AI찬우쌤이 만든 Windows VS Code 세팅 스킬. 미리보기, 코드, Codex 화면과 타임머신을 소개합니다.</video:description>
+      <video:description>AI찬우쌤이 만든 Windows·macOS VS Code 세팅 스킬. 미리보기, 코드, Codex 화면과 타임머신을 소개합니다.</video:description>
       <video:content_loc>https://arthong1.github.io/vsstudiovibecoding/media/vibe-coding-intro.mp4</video:content_loc>
       <video:duration>35</video:duration>
     </video:video>

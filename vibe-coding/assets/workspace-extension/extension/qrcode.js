@@ -1,80 +1,6 @@
 'use strict';
-const { execFileSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-
-function findPython() {
-  const localAppData = process.env.LOCALAPPDATA || '';
-  const candidates = [
-    'C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe',
-    path.join(localAppData, 'Programs', 'Python', 'Python312', 'python.exe'),
-    path.join(localAppData, 'Programs', 'Python', 'Python311', 'python.exe'),
-    path.join(localAppData, 'Programs', 'Python', 'Python310', 'python.exe'),
-    'python.exe',
-    'python3'
-  ];
-  for (const c of candidates) {
-    if (c.includes('/') || c.includes('\\')) {
-      if (fs.existsSync(c)) return c;
-    } else {
-      try {
-        const checkCmd = process.platform === 'win32' ? 'where.exe' : 'which';
-        const { execSync } = require('child_process');
-        const out = execSync(checkCmd + ' ' + c, { stdio: ['ignore', 'pipe', 'ignore'], encoding: 'utf8' }).trim();
-        if (out) {
-          const first = out.split(/\r?\n/)[0].trim();
-          if (first && fs.existsSync(first)) return first;
-        }
-      } catch {}
-    }
-  }
-  return null;
-}
-
-function generateSvgViaPython(text, options = {}) {
-  const pythonPath = findPython();
-  if (!pythonPath) return null;
-
-  const size = options.size || 220;
-  const margin = options.margin !== undefined ? options.margin : 4;
-
-  const pyScript = [
-    'import sys',
-    'try:',
-    '    import reportlab.graphics.barcode.qr as qr',
-    '    url = sys.argv[1]',
-    '    size = int(sys.argv[2])',
-    '    margin = int(sys.argv[3])',
-    '    w = qr.QrCodeWidget(url)',
-    '    q = w.qr',
-    '    q.make()',
-    '    n = len(q.modules)',
-    '    total = n + margin * 2',
-    '    paths = []',
-    '    for r in range(n):',
-    '        for c in range(n):',
-    '            if q.modules[r][c]:',
-    '                paths.append(f"M{c+margin},{r+margin}h1v1h-1z")',
-    '    d = " ".join(paths)',
-    '    print(f\'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {total} {total}" width="{size}" height="{size}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#ffffff"/><path d="{d}" fill="#000000"/></svg>\')',
-    'except Exception as e:',
-    '    sys.exit(1)'
-  ].join('\n');
-
-  try {
-    const output = execFileSync(pythonPath, ['-c', pyScript, text, String(size), String(margin)], {
-      encoding: 'utf8',
-      windowsHide: true,
-      timeout: 3000
-    }).trim();
-    if (output && output.startsWith('<svg') && output.endsWith('</svg>')) {
-      return output;
-    }
-  } catch {}
-  return null;
-}
-
-// 순수 JS 폴백 엔진 (표준 사양 호환)
+// QR Code Model 2 byte-mode encoder (versions 1-10). Pure JavaScript:
+// no Python or other runtime is needed on Windows or macOS.
 const EXP_TABLE = new Array(256);
 const LOG_TABLE = new Array(256);
 for (let i = 0; i < 8; i++) EXP_TABLE[i] = 1 << i;
@@ -136,8 +62,11 @@ const RS_BLOCK_TABLE = [
   [2, 86, 68, 2, 87, 69], [4, 69, 43, 1, 70, 44], [6, 43, 19, 2, 44, 20], [6, 43, 15, 2, 44, 16]
 ];
 
+// errorCorrectLevel uses the format-information bits (L=1, M=0, Q=3, H=2).
+// RS_BLOCK_TABLE rows are ordered L, M, Q, H for each version.
+const RS_TABLE_OFFSET = { 1: 0, 0: 1, 3: 2, 2: 3 };
 function getRSBlocks(typeNumber, errorCorrectLevel) {
-  const rsBlock = RS_BLOCK_TABLE[(typeNumber - 1) * 4 + errorCorrectLevel];
+  const rsBlock = RS_BLOCK_TABLE[(typeNumber - 1) * 4 + RS_TABLE_OFFSET[errorCorrectLevel]];
   if (!rsBlock) throw new Error('bad rs block: typeNumber=' + typeNumber + '/errorCorrectLevel=' + errorCorrectLevel);
   const length = rsBlock.length / 3;
   const list = [];
@@ -196,6 +125,14 @@ const QRUtil = {
   ],
   G15: (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0),
   G15_MASK: (1 << 14) | (1 << 12) | (1 << 10) | (1 << 4) | (1 << 1),
+  G18: (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0),
+  getBCHTypeNumber(data) {
+    let d = data << 12;
+    while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) >= 0) {
+      d ^= (QRUtil.G18 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18)));
+    }
+    return (data << 12) | d;
+  },
   getBCHTypeInfo(data) {
     let d = data << 10;
     while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) >= 0) {
@@ -310,6 +247,8 @@ QRCode.prototype = {
     this.setupPositionAdjustPattern();
     this.setupTimingPattern();
     this.setupTypeInfo(test, maskPattern);
+    // Versions 7 and above carry an 18-bit version information block.
+    if (this.typeNumber >= 7) this.setupTypeNumber(test);
     if (this.dataCache === null) {
       this.dataCache = QRCode.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
     }
@@ -370,6 +309,17 @@ QRCode.prototype = {
           }
         }
       }
+    }
+  },
+  setupTypeNumber(test) {
+    const bits = QRUtil.getBCHTypeNumber(this.typeNumber);
+    for (let i = 0; i < 18; i++) {
+      const mod = (!test && ((bits >> i) & 1) === 1);
+      this.modules[Math.floor(i / 3)][i % 3 + this.moduleCount - 8 - 3] = mod;
+    }
+    for (let i = 0; i < 18; i++) {
+      const mod = (!test && ((bits >> i) & 1) === 1);
+      this.modules[i % 3 + this.moduleCount - 8 - 3][Math.floor(i / 3)] = mod;
     }
   },
   setupTypeInfo(test, maskPattern) {
@@ -497,9 +447,6 @@ QRCode.createBytes = function(buffer, rsBlocks) {
 };
 
 function generateQRCodeSVG(text, options = {}) {
-  const pySvg = generateSvgViaPython(text, options);
-  if (pySvg) return pySvg;
-
   const size = options.size || 220;
   const margin = options.margin !== undefined ? options.margin : 4;
   const qr = new QRCode(0, 1);

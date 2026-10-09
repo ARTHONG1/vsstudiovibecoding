@@ -28,11 +28,14 @@ const requiredFiles = [
   'vibe-coding/SKILL.md',
   'vibe-coding/agents/openai.yaml',
   'vibe-coding/scripts/setup.ps1',
+  'vibe-coding/scripts/setup-macos.sh',
+  'vibe-coding/scripts/setup-macos.cjs',
   'vibe-coding/scripts/native-files.ps1',
   'vibe-coding/scripts/setup-files.ps1',
   'vibe-coding/references/execution.md',
   'vibe-coding/references/verification.md',
   'vibe-coding/references/mobile-remote.md',
+  'vibe-coding/references/macos.md',
   'vibe-coding/references/agent-tools.md',
   'vibe-coding/references/codex-startup.md',
   'vibe-coding/references/playwright.md',
@@ -45,7 +48,10 @@ const requiredFiles = [
   'vibe-coding/assets/workspace-extension/extension/qrcode.js',
   'vibe-coding/assets/workspace-extension/extension/tunnel-manager.js',
   'vibe-coding/assets/workspace-extension/extension/mobile-tunnel.js',
-  'vibe-coding/assets/workspace-extension/extension/preview-forwarding.js'
+  'vibe-coding/assets/workspace-extension/extension/preview-forwarding.js',
+  'vibe-coding/assets/workspace-extension/extension/platform.js',
+  '.gitattributes',
+  '.github/workflows/macos-e2e.yml'
 ];
 
 for (const rel of requiredFiles) {
@@ -86,7 +92,10 @@ const jsFilesToCheck = [
   'vibe-coding/assets/workspace-extension/extension/qrcode.js',
   'vibe-coding/assets/workspace-extension/extension/tunnel-manager.js',
   'vibe-coding/assets/workspace-extension/extension/preview-forwarding.js',
+  'vibe-coding/assets/workspace-extension/extension/platform.js',
   'site.js',
+  'vibe-coding/scripts/setup-macos.cjs',
+  'scripts/ci-macos-verify.cjs',
   'scripts/check.cjs'
 ];
 

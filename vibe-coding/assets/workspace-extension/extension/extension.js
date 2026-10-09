@@ -8,6 +8,7 @@ const { execSync, execFileSync } = require('child_process');
 const { getMobileTunnelWebviewHtml } = require('./mobile-tunnel');
 const { getOrStartTunnel, getTunnelStatus } = require('./tunnel-manager');
 const { createPreviewForwarder } = require('./preview-forwarding');
+const platform = require('./platform');
 
 function checkPortReachable(urlStr) {
   return new Promise(resolve => {
@@ -41,6 +42,7 @@ function checkPortReachable(urlStr) {
 
 function activate(context) {
   if (vscode.workspace.getConfiguration('vibe').get('enabled') === false) return;
+  try { platform.setAppRoot(vscode.env && vscode.env.appRoot); } catch {}
   const output = vscode.window.createOutputChannel('Vibe Coding');
   context.subscriptions.push(output);
   let terminal;
@@ -152,6 +154,24 @@ function activate(context) {
     fs.mkdirSync(context.globalStorageUri.fsPath, { recursive: true });
     fs.appendFileSync(path.join(context.globalStorageUri.fsPath, 'status.jsonl'), JSON.stringify(data) + '\n');
   }
+  // macOS ships /usr/bin/git as an installer stub. Warn once instead of
+  // letting every background checkpoint open the Command Line Tools dialog.
+  let gitWarningShown = false;
+  function gitReady(userInitiated) {
+    let reason = null;
+    try { reason = platform.gitUnavailableReason(); } catch {}
+    if (!reason) return true;
+    if (userInitiated || !gitWarningShown) {
+      gitWarningShown = true;
+      const message = reason === 'command-line-tools'
+        ? 'Vibe 타임머신에는 macOS 개발자 도구(Command Line Tools)가 필요합니다. AI에게 설치를 요청하거나 터미널에서 xcode-select --install 을 실행한 뒤 다시 시도해주세요.'
+        : 'Vibe 타임머신에는 Git이 필요합니다. AI에게 Git 설치를 요청한 뒤 다시 시도해주세요.';
+      if (vscode.window.showWarningMessage) vscode.window.showWarningMessage(message);
+      else vscode.window.showErrorMessage(message);
+      record('git-unavailable', { reason });
+    }
+    return false;
+  }
   function resolveCodexExecutable(projectPath) {
     const config = vscode.workspace.getConfiguration('vibe');
     let executable = config.get('codexPath');
@@ -164,20 +184,8 @@ function activate(context) {
       }
     } catch {}
     try {
-      const whereOut = execFileSync('where.exe', ['codex'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-      const firstLine = whereOut.split('\n')[0].trim();
-      if (firstLine && fs.existsSync(firstLine)) return firstLine;
-    } catch {}
-    try {
-      const localAppData = process.env.LOCALAPPDATA || '';
-      const codexBinDir = path.join(localAppData, 'OpenAI', 'Codex', 'bin');
-      if (fs.existsSync(codexBinDir)) {
-        const subdirs = fs.readdirSync(codexBinDir);
-        for (const d of subdirs) {
-          const candidate = path.join(codexBinDir, d, 'codex.exe');
-          if (fs.existsSync(candidate)) return candidate;
-        }
-      }
+      const discovered = platform.findCodexExecutable();
+      if (discovered) return discovered;
     } catch {}
     return executable || '';
   }
@@ -194,12 +202,7 @@ function activate(context) {
           shellArgs: vscode.workspace.getConfiguration('vibe').get('codexArgs', []),
           cwd: vscode.workspace.workspaceFolders[0].uri.fsPath,
           location: vscode.TerminalLocation.Panel,
-          env: {
-            CODEX_CALLER: 'vscode',
-            VIBE_PROJECT: projectPath,
-            LANG: 'ko_KR.UTF-8',
-            PYTHONIOENCODING: 'utf-8'
-          }
+          env: { ...platform.codexTerminalEnv(executable), VIBE_PROJECT: projectPath }
         });
         record('terminal-created', { agent: 'Codex' });
       }
@@ -435,10 +438,8 @@ function activate(context) {
     try { fs.mkdirSync(imgDir, { recursive: true }); } catch {}
     const filename = `clip_${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
     const destPath = path.join(imgDir, filename);
-    const psScript = `Add-Type -AssemblyName System.Windows.Forms; \$img = [System.Windows.Forms.Clipboard]::GetImage(); if (\$img) { \$img.Save('${destPath.replace(/'/g, "''")}', [System.Drawing.Imaging.ImageFormat]::Png); Write-Output 'OK'; } else { Write-Output 'EMPTY'; }`;
     try {
-      const res = execSync(`powershell -NoProfile -Command "${psScript}"`, { encoding: 'utf8', timeout: 3000 }).trim();
-      if (res.includes('OK')) {
+      if (platform.saveClipboardImage(destPath)) {
         terminal.sendText(`"${destPath}" `, false);
         record('image-pasted', { path: destPath });
         vscode.window.showInformationMessage(`클립보드 이미지가 터미널에 첨부되었습니다: ${filename}`);
@@ -478,7 +479,8 @@ function activate(context) {
       const userHome = process.env.USERPROFILE || process.env.HOME;
       const sessionsDir = path.join(userHome, '.codex', 'sessions');
       if (!fs.existsSync(sessionsDir)) return null;
-      const normProj = path.normalize(p).toLowerCase();
+      const normProj = platform.comparablePath(p);
+      const projectName = path.basename(p).normalize('NFC').toLowerCase();
       const isApproval = /^(응|어|네|예|진행|진행해|해줘|확인|ㅇㅇ|ㅇㅋ|yes|y|ok|okay|sure|go|proceed|do it|1|2)\s*$/i;
 
       const candidateFiles = [];
@@ -498,7 +500,7 @@ function activate(context) {
 
       for (const cf of candidateFiles) {
         const content = fs.readFileSync(cf.path, 'utf8');
-        if (!content.toLowerCase().includes(path.basename(p).toLowerCase())) continue;
+        if (!content.normalize('NFC').toLowerCase().includes(projectName)) continue;
 
         const lines = content.split('\n');
         let matchingCwd = false;
@@ -508,7 +510,7 @@ function activate(context) {
           try {
             const item = JSON.parse(line);
             if (item.type === 'session_meta' && item.payload?.cwd) {
-              if (path.normalize(item.payload.cwd).toLowerCase() === normProj) matchingCwd = true;
+              if (platform.comparablePath(item.payload.cwd) === normProj) matchingCwd = true;
             }
             if (matchingCwd) {
               let text = null;
@@ -588,6 +590,7 @@ function activate(context) {
   }
   function createShadowCheckpoint(p, customLabel) {
     try {
+      if (!gitReady(false)) return null;
       initGit(p);
       const vibeDir = path.join(p, '.vibe');
       try { fs.mkdirSync(vibeDir, { recursive: true }); } catch {}
@@ -688,6 +691,7 @@ function activate(context) {
   }
 
   async function showTimeMachinePicker(p) {
+    if (!gitReady(true)) return;
     initGit(p);
     const list = getCheckpoints(p).filter(cp => !cp.title.includes('롤백 직전 자동 백업') && !cp.title.includes('checkpoints.json'));
     let safety = null;
@@ -822,6 +826,7 @@ function activate(context) {
     vscode.commands.registerCommand('vibe.restoreCheckpoint', () => guarded(() => showTimeMachinePicker(vscode.workspace.workspaceFolders[0].uri.fsPath))),
     vscode.commands.registerCommand('vibe.createCheckpoint', () => guarded(async () => {
       const p = vscode.workspace.workspaceFolders[0].uri.fsPath;
+      if (!gitReady(true)) return;
       const input = await vscode.window.showInputBox({ prompt: '스냅샷 이름을 입력하세요', placeHolder: '예: 결제창 수정 전' });
       if (input) {
         if (createShadowCheckpoint(p, input)) vscode.window.showInformationMessage('스냅샷 [' + input + '] 저장 완료');
@@ -830,7 +835,7 @@ function activate(context) {
     vscode.window.onDidCloseTerminal(t => { if (t === terminal) terminal = undefined; }),
   );
   updateStatusBars();
-  record('activated');
+  record('activated', { language: vscode.env && vscode.env.language });
   return guarded(async () => {
     if (vscode.UIKind && vscode.env.uiKind === vscode.UIKind.Web) {
       await exec('workbench.action.closeSidebar');

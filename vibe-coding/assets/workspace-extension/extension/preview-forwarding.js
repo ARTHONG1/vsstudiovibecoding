@@ -11,7 +11,7 @@ function createPreviewForwarder(options = {}) {
   const send = p => p.stdin.write(JSON.stringify([...ports].map(number=>({number,privacy:'private',protocol:'http'})))+'\n');
   async function start() {
     const cli=(options.findCli || findCodeTunnelCli)();
-    if (!cli) throw new Error('미리보기 포트 전달용 code-tunnel.exe를 찾을 수 없습니다.');
+    if (!cli) throw new Error('미리보기 포트 전달용 VS Code 터널 실행 파일(code-tunnel)을 찾을 수 없습니다.');
     return new Promise((resolve,reject)=>{
       const p=(options.spawn || spawn)(cli,['tunnel','forward-internal','--provider','github'],{shell:false,windowsHide:true,stdio:['pipe','pipe','pipe']});
       startingChild=p;

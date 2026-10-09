@@ -1,21 +1,22 @@
 # Vibe Coding
 
-> An MIT-licensed Windows skill for delegating VS Code environment setup to an AI agent. Made by AI찬우쌤 (Hong Chanwoo), creator of 클래스똑딱 / classddok.com.
+> An MIT-licensed skill for delegating VS Code environment setup on Windows and macOS to an AI agent. Made by AI찬우쌤 (Hong Chanwoo), creator of 클래스똑딱 / classddok.com.
 
-Current release: v2.8.2. This is environment automation, not a model, hosted coding service, or replacement for Codex.
+Current release: v2.9.0 (macOS support in beta). This is environment automation, not a model, hosted coding service, or replacement for Codex.
 
 ## Start here
 - [Project and introduction video](https://arthong1.github.io/vsstudiovibecoding/): Korean landing page, 35-second video, installation request, creator links.
 - [Repository](https://github.com/ARTHONG1/vsstudiovibecoding): Source code and issue tracker.
-- [Skill instructions](https://raw.githubusercontent.com/ARTHONG1/vsstudiovibecoding/v2.8.2/vibe-coding/SKILL.md): Read before setup; preserve existing projects and settings.
-- [Release](https://github.com/ARTHONG1/vsstudiovibecoding/releases/tag/v2.8.2): Windows skill ZIP.
+- [Skill instructions](https://raw.githubusercontent.com/ARTHONG1/vsstudiovibecoding/v2.9.0/vibe-coding/SKILL.md): Read before setup; preserve existing projects and settings.
+- [Release](https://github.com/ARTHONG1/vsstudiovibecoding/releases/tag/v2.9.0): skill ZIP for Windows and macOS.
+- [macOS setup](https://github.com/ARTHONG1/vsstudiovibecoding/blob/main/vibe-coding/references/macos.md): prerequisites, user approvals, launcher and differences on a Mac.
 - [Verification and limitations](https://github.com/ARTHONG1/vsstudiovibecoding/blob/main/TESTING.md): Automated checks are distinct from real phone rendering.
 
 - [English quick start](https://github.com/ARTHONG1/vsstudiovibecoding/blob/main/README.en.md): Installation, capabilities and boundaries.
 - [Media and descriptions](https://github.com/ARTHONG1/vsstudiovibecoding/blob/main/SHARING.md): Copy-ready Korean and English descriptions.
 
 ## What the agent prepares
-Inspect the actual project, identify its startup command and verified preview URL, install an isolated VS Code environment, prepare Preview / Code / Codex layout and a desktop shortcut. Full setup includes Playwright CLI and its skill, Context7 MCP, Chrome DevTools MCP, and contextual project instructions. Login, trust prompts, external-service access, and human approvals remain separate.
+Inspect the actual project, identify its startup command and verified preview URL, install an isolated VS Code environment, prepare Preview / Code / Codex layout and a desktop shortcut (Windows) or launcher app (macOS). Full setup includes Playwright CLI and its skill, Context7 MCP, Chrome DevTools MCP, and contextual project instructions. Login, trust prompts, external-service access, and human approvals remain separate.
 
 Mobile work uses Microsoft's official tunnel. The PC stays online. Private devtunnels previews open in a separate browser tab for authentication; return to vscode.dev for terminal work. The port-forwarding CLI protocol is version-dependent. Phone rendering must be tested; never claim universal or error-free support.
 
