@@ -300,7 +300,7 @@ test('upgrade reuses the matching legacy workspace without losing project settin
   const f=fixture(),deps=fakeDeps(f),opts=setup.parseArgs(baseArgs(f));
   const initial=setup.buildPlan(opts,deps);
   const oldId=require('crypto').createHash('sha256').update(initial.project.normalize('NFC').toLowerCase()).digest('hex').slice(0,10);
-  const legacy=path.join(initial.root,'Workspaces','vibe-'+oldId+'.code-workspace');
+  const legacy=path.join(path.dirname(initial.workspace),'vibe-'+oldId+'.code-workspace');
   fs.mkdirSync(path.dirname(legacy),{recursive:true});
   fs.writeFileSync(legacy,JSON.stringify({folders:[{path:initial.project}],settings:{'vibe.codexArgs':['--custom-user-arg']}}));
   const plan=setup.buildPlan(opts,deps);
