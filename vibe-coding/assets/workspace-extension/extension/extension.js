@@ -835,7 +835,7 @@ function activate(context) {
     vscode.window.onDidCloseTerminal(t => { if (t === terminal) terminal = undefined; }),
   );
   updateStatusBars();
-  record('activated');
+  record('activated', { language: vscode.env && vscode.env.language });
   return guarded(async () => {
     if (vscode.UIKind && vscode.env.uiKind === vscode.UIKind.Web) {
       await exec('workbench.action.closeSidebar');

@@ -77,6 +77,11 @@ async function launch(result) {
     return lines.some(event => event.event === 'layout-ready') ? lines : null;
   }, 240000, 'layout-ready in ' + status);
   for (const event of events) log('event', JSON.stringify(event));
+  const mainProcess = execFileSync('/bin/ps', ['-axo', 'command'], { encoding: 'utf8' }).split('\n').find(line => line.includes('/Contents/MacOS/') && line.includes(userDir) && !line.includes('Helper'));
+  log('vscode main process', mainProcess);
+  const languagePacks = path.join(userDir, 'languagepacks.json');
+  log('language packs', fs.existsSync(languagePacks) ? Object.keys(readJson(languagePacks)).join(',') : 'missing');
+  log('ui language', (events.find(event => event.event === 'activated') || {}).language);
   const ready = events.find(event => event.event === 'layout-ready');
   assert.equal(ready.mode, 'split');
   assert.deepEqual(ready.folders, [result.project]);
