@@ -63,7 +63,14 @@ jobs:
 
       - name: Capture the screen
         if: always()
-        run: screencapture -x "$RUNNER_TEMP/vibe-macos.png" || true
+        run: |
+          # The runner's display can be asleep; wake it and retry before giving up.
+          for attempt in 1 2 3 4 5; do
+            caffeinate -u -t 2 || true
+            if screencapture -x "$RUNNER_TEMP/vibe-macos.png"; then break; fi
+            sleep 3
+          done
+          ls -l "$RUNNER_TEMP/vibe-macos.png" || echo "no screenshot captured"
 
       - name: Check clipboard image paste and the bundled tunnel CLI
         run: |

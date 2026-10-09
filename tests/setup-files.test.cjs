@@ -46,7 +46,8 @@ try {
   if (!(Write-VibeLanguagePacks $user $ext)) { throw 'Language pack not written' }
   $packs=[IO.File]::ReadAllText((Join-Path $user 'languagepacks.json')) | ConvertFrom-Json
   if ($packs.ko.hash -ne 'd7d556079a3b7c73bd10ddac55bcb029') { throw ('Hash ' + $packs.ko.hash) }
-  if ($packs.ko.translations.vscode -ne (Join-Path $translations 'main.i18n.json')) { throw ('Path ' + $packs.ko.translations.vscode) }
+  # GetFullPath expands 8.3 names such as RUNNER~1 in TEMP on CI runners.
+  if ($packs.ko.translations.vscode -ne [IO.Path]::GetFullPath((Join-Path $translations 'main.i18n.json'))) { throw ('Path ' + $packs.ko.translations.vscode) }
   if ($packs.ko.extensions[0].extensionIdentifier.uuid -ne '7c15d326-cfdd-4932-9409-634b512daebe') { throw 'uuid' }
   if (Write-VibeLanguagePacks $user $ext) { throw 'Up-to-date file rewritten' }
   'VERIFIED'
