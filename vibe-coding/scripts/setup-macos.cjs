@@ -69,8 +69,12 @@ function codeCliOf(app) {
   return path.join(app, 'Contents', 'Resources', 'app', 'bin', 'code');
 }
 
-function vsCodeAppCandidates(opts, deps) {
-  if (opts.codeApp) return [path.resolve(opts.codeApp)];
+// Known locations come first; Spotlight is asked only when none of them has VS Code.
+function findVsCodeApp(opts, deps) {
+  if (opts.codeApp) {
+    const app = path.resolve(opts.codeApp);
+    return isFile(codeCliOf(app)) ? app : null;
+  }
   const list = [];
   if (deps.env.VIBE_CODE_APP) list.push(deps.env.VIBE_CODE_APP);
   const shellCommand = findOnPath('code', deps.env);
@@ -81,11 +85,12 @@ function vsCodeAppCandidates(opts, deps) {
     } catch {}
   }
   list.push('/Applications/Visual Studio Code.app', path.join(deps.home, 'Applications', 'Visual Studio Code.app'));
+  const known = list.find(app => isFile(codeCliOf(app)));
+  if (known) return known;
   try {
     const found = deps.run('/usr/bin/mdfind', ['kMDItemCFBundleIdentifier == "com.microsoft.VSCode"'], { timeout: 10000 });
-    list.push(...found.split('\n').map(line => line.trim()).filter(Boolean));
-  } catch {}
-  return [...new Set(list)];
+    return found.split('\n').map(line => line.trim()).filter(Boolean).find(app => isFile(codeCliOf(app))) || null;
+  } catch { return null; }
 }
 
 function codexCandidates(deps) {
@@ -157,7 +162,7 @@ function buildPlan(opts, deps) {
     }
   }
 
-  const codeApp = vsCodeAppCandidates(opts, deps).find(app => isFile(codeCliOf(app))) || null;
+  const codeApp = findVsCodeApp(opts, deps);
   const codexPath = opts.codexPath ? path.resolve(opts.codexPath) : (codexCandidates(deps).find(isFile) || null);
   const missing = [];
   const warnings = [];
