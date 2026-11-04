@@ -1,6 +1,6 @@
 # Default AI development tools
 
-Read this during every full Vibe Coding environment setup. The setup agent owns the work below; do not move tool installation, credentials, or task-by-task tool routing into the VS Code layout extension. **Playwright CLI + official Skill, Context7 MCP, and Chrome DevTools MCP are all default setup targets**, including fresh projects with no chosen framework. Explicit user exclusions take precedence. Existing installations may be reused after verification; a browser substitute requires a documented reason rather than silently omitting a requested tool.
+Read this during every full Vibe Coding environment setup. The setup agent owns the work below; do not move tool installation, credentials, or task-by-task tool routing into the VS Code layout extension. **Playwright CLI + official Skill, Context7 MCP, Chrome DevTools MCP + four official debugging Skills, and REA (`rea-agents` CLI + MCP + official Skill) are all default setup targets**, including fresh projects with no chosen framework. Explicit user exclusions take precedence. Existing installations may be reused after verification; a browser substitute requires a documented reason rather than silently omitting a requested tool.
 
 ## Inspect before writing
 
@@ -9,9 +9,9 @@ Read this during every full Vibe Coding environment setup. The setup agent owns 
 3. Read the project's instruction chain, including parent AGENTS.md files and any delegated AGENT.md. Inspect existing MCP names, executable versions and enabled state without printing credentials or full global configuration. Do not replace models/providers, authentication, approvals or unrelated tools.
 4. Back up files outside skill discovery paths before merging. Repeated setup should update one managed block and reuse compatible packages, not append duplicate instructions, MCP entries or skills.
 
-## Install and connect all three
+## Install and connect all four
 
-Follow [playwright.md](playwright.md), [context7.md](context7.md), and [chrome-devtools.md](chrome-devtools.md). Check current official documentation and installed command help before choosing versions/options. Record concrete installed versions; avoid a startup command that downloads `@latest` on every session.
+Follow [playwright.md](playwright.md), [context7.md](context7.md), [chrome-devtools.md](chrome-devtools.md), and [rea.md](rea.md). Check current official documentation and installed command help before choosing versions/options. Record concrete installed versions; avoid a startup command that downloads `@latest` on every session.
 
 Use an installation directory outside the user's application dependencies, for example the native user's `%LOCALAPPDATA%/VibeCoding/AgentTools/<tool>/<version>` on Windows or `~/Library/VibeCoding/AgentTools/<tool>/<version>` on macOS. Do not hardcode a particular user's name, project, port or Codex executable version. Reuse the same compatible binary installation across projects; do not upgrade a shared version in place and break another project. Install the required Node/browser prerequisites within authorization. Do not alter application package.json merely to add agent tools.
 
@@ -27,7 +27,7 @@ Create a short project-specific tool guide (for example `docs/AGENT-TOOLS.md`) w
 
 Use [agent-tool-guidance.md](../assets/agent-tool-guidance.md) as a template, not a file to copy blindly. Replace every placeholder. Merge one marked section into the effective agent instructions. If AGENTS.md delegates to AGENT.md, preserve that delegation and add the section to the delegated file. If no instruction file exists, create AGENTS.md. Other clients must use their documented instruction discovery mechanism; an unreferenced AGENT.md is not sufficient. For multi-root workspaces, verify which project/instruction/config layer the terminal actually uses.
 
-The instructions must direct future agents to verify relevant UI changes, consult applicable library documentation, and diagnose browser faults with evidence. They must not force all three tools on every prompt, impose a new planning/TDD methodology, or weaken the project's existing requirements. Tool installation provides capability; written guidance is not proof of future compliance.
+The instructions must direct future agents to verify relevant UI changes, consult applicable library documentation, diagnose browser faults with evidence, and use REA when cloning or reverse-engineering reference URLs/apps. They must not force all four tools on every prompt, impose a new planning/TDD methodology, or weaken the project's existing requirements. Tool installation provides capability; written guidance is not proof of future compliance.
 
 ## Acceptance and handoff
 
@@ -35,12 +35,12 @@ Record each layer independently:
 
 | Layer | Evidence |
 |---|---|
-| Installed/reused | Exact package/version, reachable executable; Playwright official Skill is discoverable |
-| Target-client discovery | From the intended project and user, Codex lists both MCP entries enabled; a new session discovers the Skill |
-| Real capability | Playwright opens/snapshots/captures a local page; Context7 resolves and retrieves documentation; DevTools opens the correct page ID and reads its console/network |
+| Installed/reused | Exact package/version, reachable executable; Playwright official Skill, the four Chrome DevTools official Skills and REA official Skill (`reverse-engineer-anything`) are installed or reused |
+| Target-client discovery | From the intended project and user, Codex lists the MCP entries (`vibe-context7`, `vibe-chrome-devtools`, `rea`) enabled; a new session discovers the Skills |
+| Real capability | Playwright opens/snapshots/captures a local page; Context7 resolves and retrieves documentation; DevTools opens the correct page ID and reads its console/network; REA passes `rea doctor --client codex` and can inspect a target artifact/bundle |
 | Client call | A call through the actual coding client; if it cannot be observed/authorized, mark pending and do not claim full tool readiness. Standalone SDK calls alone do not prove this layer |
 | Future usage | Instruction link resolves, generated commands work; fresh-agent behavior trial only when model execution is authorized |
 
 `codex mcp list` is configuration evidence, not a successful handshake or call. Likewise `--help`, tool listing, screenshot file existence, or an SDK process alone does not prove the whole workflow. Check MCP `isError` and result content. Context7 quota/auth failure remains pending; identify missing version coverage instead of claiming a version match. For DevTools, use the page identifier returned by the tool, never assume page 1 or an empty tab.
 
-When direct calls are available, perform bounded smoke checks without editing application code or sending model prompts. Close only the test sessions/server processes you started. Preserve unrelated tabs and terminals. If a client/session/authentication action remains, report exactly which layer is pending. Keep the base VS Code environment usable, but do not label the full three-tool setup complete until its required checks pass.
+When direct calls are available, perform bounded smoke checks without editing application code or sending model prompts. Close only the test sessions/server processes you started. Preserve unrelated tabs and terminals. If a client/session/authentication action remains, report exactly which layer is pending. Keep the base VS Code environment usable, but do not label the full four-tool setup complete until its required checks pass.

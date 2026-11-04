@@ -201,6 +201,8 @@ Set-Key $settings 'files.autoSave' 'afterDelay'
 Set-Key $settings 'files.autoSaveDelay' 500
 Set-Key $settings 'vibe.enabled' $true
 Set-Key $settings 'vibe.codexPath' $(if ($CodexPath) {$CodexPath} else {''})
+Set-Key $settings 'vibe.dataRoot' $Root
+Set-Key $settings 'vibe.codePath' $CodePath
 Set-Key $settings 'vibe.entryFile' $EntryFile
 Set-Key $settings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
 Set-Key $settings 'chat.commandCenter.enabled' $false
@@ -224,6 +226,8 @@ if (!$wsSettings) { $wsSettings = [pscustomobject]@{} }
 Set-Key $wsSettings 'vibe.enabled' $true
 if ($PSBoundParameters.ContainsKey('CodexArgs')) { Set-Key $wsSettings 'vibe.codexArgs' @($CodexArgs) }
 Set-Key $wsSettings 'vibe.codexPath' $(if ($CodexPath) {$CodexPath} else {''})
+Set-Key $wsSettings 'vibe.dataRoot' $Root
+Set-Key $wsSettings 'vibe.codePath' $CodePath
 Set-Key $wsSettings 'vibe.entryFile' $EntryFile
 Set-Key $wsSettings 'vibe.previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
 Set-Key $wsSettings 'task.allowAutomaticTasks' 'on'
@@ -250,14 +254,15 @@ Set-Key $workspace 'settings' $wsSettings
 Save-Json $workspacePath $workspace
 $vibeDir = Join-Path $ProjectPath '.vibe'
 New-Item -ItemType Directory -Force -Path $vibeDir | Out-Null
-$remoteConfig = [ordered]@{
-  version = 1
-  entryFile = $EntryFile
-  previewUrl = $(if ($PreviewUrl) {$PreviewUrl} else {''})
-  codexPath = $(if ($CodexPath) {$CodexPath} else {''})
-  codePath = $CodePath
-}
-[IO.File]::WriteAllText((Join-Path $vibeDir 'remote-config.json'), ($remoteConfig | ConvertTo-Json -Depth 5), $utf8)
+$remotePath = Join-Path $vibeDir 'remote-config.json'
+$remoteConfig = Read-Object $remotePath
+Set-Key $remoteConfig 'version' 1
+Set-Key $remoteConfig 'entryFile' $EntryFile
+Set-Key $remoteConfig 'previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})
+Set-Key $remoteConfig 'codexPath' $(if ($CodexPath) {$CodexPath} else {''})
+Set-Key $remoteConfig 'codePath' $CodePath
+Set-Key $remoteConfig 'dataRoot' $Root
+Save-Json $remotePath $remoteConfig
 $packageSource = Join-Path $SkillRoot 'assets\workspace-extension'
 $manifest = Get-Content -Raw -Encoding UTF8 (Join-Path $packageSource 'extension\package.json') | ConvertFrom-Json
 $installedLayout = Join-Path $extensionsDir ($manifest.publisher + '.' + $manifest.name + '-' + $manifest.version)

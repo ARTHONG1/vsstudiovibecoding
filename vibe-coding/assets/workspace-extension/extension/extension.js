@@ -87,6 +87,19 @@ function activate(context) {
   mobileBtn.command = 'vibe.openMobileRemote';
   context.subscriptions.push(mobileBtn);
 
+  // VS Code's integrated browser (what simpleBrowser.show opens since 1.1xx) has no
+  // public TabInput class and is labelled with the page title, so a label check
+  // misses it and every restore opened one more preview tab. Treat any tab whose
+  // input is none of the known editor kinds as a browser tab.
+  const KNOWN_TAB_INPUTS = ['TabInputText', 'TabInputTextDiff', 'TabInputTextMultiDiff', 'TabInputCustom', 'TabInputWebview', 'TabInputNotebook', 'TabInputNotebookDiff', 'TabInputTerminal', 'TabInputInteractiveWindow', 'TabInputChat', 'TabInputTextMerge']
+    .map(n => vscode[n]).filter(c => typeof c === 'function');
+  const NON_BROWSER_LABELS = /^(설정|Settings|바로 가기 키|Keyboard Shortcuts|확장|Extension|시작|Welcome|릴리스 정보|Release Notes)/;
+  function isBrowserTab(t) {
+    if (!t || NON_BROWSER_LABELS.test(t.label || '')) return false;
+    if (t.input === undefined || t.input === null) return true;
+    return !KNOWN_TAB_INPUTS.some(c => t.input instanceof c);
+  }
+
   function setMode(mode) {
     currentMode = mode;
     try { context.workspaceState?.update?.('vibeMode', mode); } catch {}
@@ -250,7 +263,7 @@ function activate(context) {
           const isSimpleBrowser = t.input?.viewType === 'simpleBrowser.view';
           const isLivePreview = typeof t.input?.viewType === 'string' && t.input.viewType.includes('preview');
           const isLocalhostLabel = /127\.0\.0\.1|localhost|Simple Browser|Live Preview/i.test(t.label);
-          const isStaleBrowser = (isSimpleBrowser || isLivePreview || isLocalhostLabel);
+          const isStaleBrowser = (isSimpleBrowser || isLivePreview || isLocalhostLabel || isBrowserTab(t));
           const isWrongColumnEntry = g.viewColumn === vscode.ViewColumn.One && t.input?.uri && t.input.uri.fsPath.endsWith(entryFileName) && !t.isDirty;
           if (isFailed || (isStaleBrowser && t !== previewTabRef) || isWrongColumnEntry) {
             vscode.window.tabGroups.close(t);
@@ -302,7 +315,7 @@ function activate(context) {
         }
         for (let attempt = 0; attempt < 50; attempt++) {
           previewGroup = vscode.window.tabGroups.all.find(g => {
-            previewTab = g.tabs.find(t => t.input?.viewType === 'simpleBrowser.view' || /127\.0\.0\.1|localhost/.test(t.label) || (previewUrl && ['Simple Browser', '간단한 브라우저'].includes(t.label)));
+            previewTab = g.tabs.find(t => t.input?.viewType === 'simpleBrowser.view' || isBrowserTab(t) || /127\.0\.0\.1|localhost/.test(t.label) || (previewUrl && ['Simple Browser', '간단한 브라우저'].includes(t.label)));
             return !!previewTab;
           });
           if (previewGroup) break;
@@ -430,8 +443,8 @@ function activate(context) {
     });
   }
   async function openExternalBrowser() {
-    const config = vscode.workspace.getConfiguration('vibe');
-    const previewUrl = config.get('previewUrl', '') || 'http://127.0.0.1:3000';
+    const previewUrl = resolvePreviewUrl();
+    if (!previewUrl) throw new Error('이 프로젝트의 미리보기 서버 주소가 설정되지 않았습니다.');
     await vscode.env.openExternal(vscode.Uri.parse(previewUrl));
     record('external-browser-opened', { url: previewUrl });
   }
@@ -620,7 +633,7 @@ function activate(context) {
       // If the latest checkpoint in the list belongs to the SAME turn, update it with the final state!
       if (list.length > 0 && !customLabel) {
         const oldId = list[0].id;
-        const isSameTurn = (turnId && list[0].turnId === turnId) || (list[0].title === title);
+        const isSameTurn = !!turnId && list[0].turnId === turnId;
         if (isSameTurn) {
           const commitMsg = 'Vibe Checkpoint: ' + title + ' (' + timeStr + ')';
           const commitSha = commitCheckpointTree(p, treeSha, commitMsg);
@@ -654,6 +667,12 @@ function activate(context) {
 
   async function restoreShadowCheckpoint(p, targetSha, targetTitle) {
     try {
+      // Never revert editor buffers that the disk-only Git safety backup cannot
+      // capture. Conservatively block until a proper buffer backup is available.
+      const dirty = (vscode.workspace.textDocuments || []).filter(doc => doc.isDirty);
+      if (dirty.length) {
+        throw new Error('저장되지 않은 편집 내용이 있어 복원을 중단했습니다. 내용을 보존한 뒤 다시 시도해주세요.');
+      }
       initGit(p);
       const vibeDir = path.join(p, '.vibe');
       try { fs.mkdirSync(vibeDir, { recursive: true }); } catch {}
