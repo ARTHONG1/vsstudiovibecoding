@@ -60,7 +60,7 @@ function createMockVSCode(config = {}) {
     fs.readFileSync(
       path.join(__dirname, '../vibe-coding/assets/workspace-extension/extension/extension.js'),
       'utf8'
-    ),
+    ) + (config.previewUnavailable ? '\ncheckPortReachable = async () => false;' : ''),
     {
       module,
       exports: module.exports,
@@ -271,4 +271,23 @@ test('web preview recovers saved project URL when workspace URL is blank', async
   await env.module.exports.activate({subscriptions:[],globalStorageUri:{fsPath:'C:/test'}});
   await env.commands.get('vibe.togglePreview')();
   assert.equal(env.getOpenedUrl(),'https://test-3012.jpe1.devtunnels.ms/studio');
+});
+
+
+test('unavailable configured desktop server reports failure without static fallback', async () => {
+  const env = createMockVSCode({previewUrl:'http://localhost:5173/app?mode=test', previewUnavailable:true});
+  const calls=[];
+  env.vscode.commands.executeCommand=async command=>calls.push(command);
+  await env.module.exports.activate({subscriptions:[],globalStorageUri:{fsPath:'C:/test'}});
+  assert.ok(env.events.some(event=>event.event==='preview-unavailable' && event.url==='http://localhost:5173/app?mode=test'));
+  assert.ok(!calls.includes('livePreview.start.internalPreview.atFile'));
+  assert.equal(env.terminals.length,1);
+});
+
+test('external browser does not guess a port when project URL is missing', async () => {
+  const env = createMockVSCode();
+  await env.module.exports.activate({subscriptions:[],globalStorageUri:{fsPath:'C:/test'}});
+  await env.commands.get('vibe.openExternalBrowser')();
+  assert.equal(env.getOpenedUrl(),null);
+  assert.ok(env.events.some(event=>event.event==='error'));
 });

@@ -8,13 +8,13 @@ https://github.com/user-attachments/assets/05ad2995-62e7-4ae0-baa9-389ecaa69941
 
 An agent inspects your project, identifies its startup command and preview URL, and prepares an isolated VS Code workspace with Preview, Code, and Codex. A desktop shortcut (a launcher app on macOS) reopens that workspace. This is an MIT-licensed environment setup skill, not a model or a hosted coding service.
 
-v2.9.1 improves macOS setup and reinstallation: Unicode/space paths, custom installation locations, JSONC comments, existing port settings and backups are preserved. A replacement launcher is built before the working app is moved. Native Mac CI includes an existing web project and a verified localhost HTTP route. macOS remains beta; authenticated phone access and Intel Macs require separate verification.
+v2.10.0 adds REA and four official Chrome DevTools skills to full setup guidance. Separate turns no longer merge by title. Time Machine refuses restoration while any editor has unsaved changes; automatic buffer backup is not implemented. Layout restoration preserves unrelated tabs, and unavailable development servers are reported rather than replaced with static preview. Windows remote configuration is backed up and merged. macOS remains beta; see [verification and limits](TESTING.md).
 
 ## What it prepares
 
 - Preview / Code / Codex layout and full-screen terminal and preview modes.
 - Project-scoped setup that preserves existing files and configuration.
-- Playwright CLI and its skill, Context7 MCP, and Chrome DevTools MCP, with project guidance on when to use them. The agent verifies installation, recognition and actual calls separately.
+- Playwright CLI and its skill, Context7 MCP, Chrome DevTools MCP with four official skills, and REA CLI/MCP with its official skill, with project guidance on when to use them. The agent verifies installation, recognition and actual calls separately.
 - Git-backed checkpoints under hidden refs and a time machine menu.
 - Optional mobile work through Microsoft's official tunnel. Private previews open in a separate browser tab; return to vscode.dev for terminal work.
 
@@ -26,7 +26,7 @@ Use a local agent with filesystem and shell access. Paste:
 Install the vibe-coding folder from https://github.com/ARTHONG1/vsstudiovibecoding
 into my agent's skills directory and read its SKILL.md.
 Set up a separate sample VS Code workspace on this computer (Windows or macOS)
-with Preview, Code and Codex, a desktop launcher, and Playwright, Context7 and Chrome DevTools.
+with Preview, Code and Codex, a desktop launcher, and Playwright, Context7, Chrome DevTools and REA.
 Preserve my files and existing settings. Verify the preview, tools and mode switches.
 Tell me exactly which login or trust prompts I must complete myself.
 ```

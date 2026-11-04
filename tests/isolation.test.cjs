@@ -126,7 +126,7 @@ test('restore preserves non-browser clean tabs (Settings, Welcome, etc.)', async
   await commands.get('vibe.restoreLayout')({ maximized: false });
 
   assert.equal(closedTabs.includes(settingsTab), false, 'Settings tab must be preserved');
-  assert.equal(closedTabs.includes(stalePreviewTab), true, 'Stale preview tab must be closed');
+  assert.equal(closedTabs.includes(stalePreviewTab), false, 'Existing browser tabs without Vibe ownership must be preserved');
 });
 
 test('setup.ps1 dry-run enforces pure Codex agent in plan', { skip: process.platform !== 'win32' && 'setup.ps1 runs on Windows only' }, () => {

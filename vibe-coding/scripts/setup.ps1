@@ -141,6 +141,12 @@ if (Test-Path -LiteralPath $keybindingsPath) {
   if (@($keys | Where-Object { !$_.key -or !$_.command }).Count) { throw 'Existing keybindings contain invalid entries. Preserve and repair before applying.' }
 }
 $workspace = Read-Object $workspacePath
+# Validate managed configuration before the first configuration write.
+$argvPath = Join-Path $userDir 'argv.json'
+$argv = Read-Object $argvPath
+$vibeDir = Join-Path $ProjectPath '.vibe'
+$remotePath = Join-Path $vibeDir 'remote-config.json'
+$remoteConfig = Read-Object $remotePath
 New-Item -ItemType Directory -Force -Path (Join-Path $userDir 'User'),$extensionsDir,$workspaceDir,$backup | Out-Null
 if ($CreateSample) {
   New-Item -ItemType Directory -Force -Path $ProjectPath | Out-Null
@@ -213,8 +219,6 @@ Set-Key $settings 'chat.agentHost.allowSignedOutWhenUsable' $true
 Set-Key $settings 'chat.agentSessions.showExternal' 'recent'
 Set-Key $settings 'remote.tunnels.access.preventSleep' $true
 Save-Json $settingsPath $settings
-$argvPath = Join-Path $userDir 'argv.json'
-$argv = Read-Object $argvPath
 Set-Key $argv 'locale' 'ko'
 Save-Json $argvPath $argv
 $keys = @($keys | Where-Object { $_ -and $_.command -notin @('vibe.toggleTerminal','vibe.restoreLayout','workbench.action.terminal.paste','workbench.action.terminal.copySelection') })
@@ -252,10 +256,7 @@ $otherFolders = @($workspace.folders | Where-Object { $_ -and $_.path -ne $Proje
 Set-Key $workspace 'folders' (@(@{path=$ProjectPath}) + $otherFolders)
 Set-Key $workspace 'settings' $wsSettings
 Save-Json $workspacePath $workspace
-$vibeDir = Join-Path $ProjectPath '.vibe'
 New-Item -ItemType Directory -Force -Path $vibeDir | Out-Null
-$remotePath = Join-Path $vibeDir 'remote-config.json'
-$remoteConfig = Read-Object $remotePath
 Set-Key $remoteConfig 'version' 1
 Set-Key $remoteConfig 'entryFile' $EntryFile
 Set-Key $remoteConfig 'previewUrl' $(if ($PreviewUrl) {$PreviewUrl} else {''})

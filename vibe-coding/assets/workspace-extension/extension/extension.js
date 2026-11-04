@@ -254,19 +254,16 @@ function activate(context) {
     await exec('workbench.action.evenEditorWidths');
 
     const config = vscode.workspace.getConfiguration('vibe');
-    const entryFileName = path.basename(config.get('entryFile', 'index.html'));
 
     try {
       for (const g of vscode.window.tabGroups.all) {
         for (const t of [...g.tabs]) {
-          const isFailed = t.label === 'Failed to Load Page' || t.label.includes('ERR_');
-          const isSimpleBrowser = t.input?.viewType === 'simpleBrowser.view';
-          const isLivePreview = typeof t.input?.viewType === 'string' && t.input.viewType.includes('preview');
-          const isLocalhostLabel = /127\.0\.0\.1|localhost|Simple Browser|Live Preview/i.test(t.label);
-          const isStaleBrowser = (isSimpleBrowser || isLivePreview || isLocalhostLabel || isBrowserTab(t));
-          const isWrongColumnEntry = g.viewColumn === vscode.ViewColumn.One && t.input?.uri && t.input.uri.fsPath.endsWith(entryFileName) && !t.isDirty;
-          if (isFailed || (isStaleBrowser && t !== previewTabRef) || isWrongColumnEntry) {
-            vscode.window.tabGroups.close(t);
+          // Preserve unrelated webviews and unknown future TabInput types.
+          const entryPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.get('entryFile', 'index.html'));
+          const isWrongColumnEntry = g.viewColumn === vscode.ViewColumn.One &&
+            t.input?.uri && platform.comparablePath(t.input.uri.fsPath) === platform.comparablePath(entryPath) && !t.isDirty;
+          if (isWrongColumnEntry) {
+            await vscode.window.tabGroups.close(t);
           }
         }
       }
@@ -275,29 +272,21 @@ function activate(context) {
     const uri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, config.get('entryFile', 'index.html'));
     await vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Two, preview: false });
 
-    const previewUrl = config.get('previewUrl', '');
+    const previewUrl = resolvePreviewUrl();
     let previewTab = previewTabRef;
     let previewGroup = previewTab && vscode.window.tabGroups.all.find(g => g.tabs.includes(previewTab));
     if (!previewGroup) {
+      const previousTabs = new Set(vscode.window.tabGroups.all.flatMap(g => g.tabs));
       try {
         if (previewUrl) {
           let reachable = await checkPortReachable(previewUrl);
           if (!reachable) {
-            for (let i = 0; i < 40; i++) {
+            for (let i = 0; i < 2; i++) {
               await new Promise(r => setTimeout(r, 250));
               reachable = await checkPortReachable(previewUrl);
               if (reachable) break;
             }
           }
-          try {
-            for (const g of vscode.window.tabGroups.all) {
-              for (const t of [...g.tabs]) {
-                if (t.label === 'Failed to Load Page' || t.label.includes('ERR_')) {
-                  vscode.window.tabGroups.close(t);
-                }
-              }
-            }
-          } catch {}
           if (reachable) {
            let targetUrl = previewUrl;
            if ((vscode.UIKind && vscode.env.uiKind === vscode.UIKind.Web) || !!vscode.env.remoteName) {
@@ -308,21 +297,22 @@ function activate(context) {
             }
             await exec('simpleBrowser.show', targetUrl);
           } else {
-            await exec('livePreview.start.internalPreview.atFile', uri);
+            throw new Error('개발 서버가 응답하지 않습니다: ' + previewUrl);
           }
         } else {
           await exec('livePreview.start.internalPreview.atFile', uri);
         }
         for (let attempt = 0; attempt < 50; attempt++) {
           previewGroup = vscode.window.tabGroups.all.find(g => {
-            previewTab = g.tabs.find(t => t.input?.viewType === 'simpleBrowser.view' || isBrowserTab(t) || /127\.0\.0\.1|localhost/.test(t.label) || (previewUrl && ['Simple Browser', '간단한 브라우저'].includes(t.label)));
+            previewTab = g.tabs.find(t => t.input?.viewType === 'simpleBrowser.view' || (!previousTabs.has(t) && isBrowserTab(t)) || /127\.0\.0\.1|localhost/.test(t.label) || (previewUrl && ['Simple Browser', '간단한 브라우저'].includes(t.label)));
             return !!previewTab;
           });
           if (previewGroup) break;
           await new Promise(resolve => setTimeout(resolve, 100));
         }
       } catch (e) {
-        output.appendLine('Preview start fallback: ' + e.message);
+        record('preview-unavailable', { url: previewUrl, message: e.message });
+        vscode.window.showWarningMessage?.('Vibe 미리보기: ' + e.message);
       }
     }
     if (previewGroup && previewTab) {
