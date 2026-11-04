@@ -8,7 +8,7 @@
 VS Code 환경 세팅 때문에 시작이 어려우셨나요?
 Vibe Coding은 AI 에이전트에게 그 준비를 맡기는 Windows·macOS용 오픈소스 스킬입니다.
 미리보기·코드·Codex 화면, 바탕화면 바로가기와
-Playwright·Context7·Chrome DevTools까지 에이전트가 준비하고 확인합니다.
+Playwright·Context7·Chrome DevTools·REA까지 에이전트가 준비하고 확인합니다.
 35초 소개 영상: https://arthong1.github.io/vsstudiovibecoding/
 코드와 설치 안내: https://github.com/ARTHONG1/vsstudiovibecoding
 만든 사람 AI찬우쌤 · 클래스똑딱 https://classddok.com/
@@ -19,7 +19,7 @@ Playwright·Context7·Chrome DevTools까지 에이전트가 준비하고 확인�
 ```text
 Let an AI agent set up your VS Code workspace on Windows or macOS.
 Vibe Coding prepares Preview / Code / Codex, a desktop shortcut,
-and Playwright, Context7 and Chrome DevTools with project guidance.
+and Playwright, Context7, Chrome DevTools and REA with project guidance.
 MIT-licensed, with optional mobile work and Git-backed checkpoints.
 35-second demo: https://arthong1.github.io/vsstudiovibecoding/
 Source: https://github.com/ARTHONG1/vsstudiovibecoding

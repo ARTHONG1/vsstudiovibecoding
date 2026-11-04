@@ -1,5 +1,17 @@
 # Testing and Verification Guide
 
+## v2.10.0 stabilization: verified behavior and remaining work
+
+- Full setup guidance now includes REA CLI/MCP and its official skill, plus four official Chrome DevTools skills. The matching npm package contents were inspected; installation guidance is not evidence of successful calls through the user's Codex session. No new authenticated tool-client or phone verification is claimed.
+- Actual-Git regression coverage verifies distinct checkpoints for identical titles with different turn IDs, and verifies that restoration refuses to change disk files or revert editors while unsaved documents are open. The real Git-index preservation and safety-ref failure tests remain in the suite.
+- Unsaved buffers are protected by **refusing restoration**. Automatic buffer backup and restoration, including undoing unsaved buffer edits, remain unimplemented. This is a conservative guard, not completion of the full buffer-recovery design.
+- Layout restoration no longer closes arbitrary browser-looking or unknown tabs. Unknown tab inputs are considered only when newly created during preview startup. A configured development server that fails readiness checks produces a warning/event instead of falling back to static Live Preview. External browser launch requires a configured or saved project URL.
+- Windows setup backs up/merges remote configuration, passes custom VS Code/data-root paths, and validates argv/remote configuration before configuration writes. Its existing PowerShell parser still rejects JSONC comments; full Windows JSONC parity, more selective keybinding merging and automatic merging of pre-existing tasks remain follow-up work. Existing files are not silently parsed as empty objects.
+- Setup backups have no automatic retention cap. Time Machine lists at most 50 checkpoints, but Git object storage and setup backups are separate; 50 entries is not a disk-size guarantee. No existing backups are automatically deleted in this release.
+- Local verification for this candidate (2026-11-04, macOS arm64, Node 24.21.0): `npm run check` passed; `npm test` ran 114 tests, with 100 passed, 14 skipped and 0 failed. Skips include Windows-only and environment-dependent cases.
+- Automated Windows CI and macOS native setup/launch jobs are required before publishing. Mocked tab/dirty-buffer regressions are distinguished from native macOS launcher evidence. Actual interactive dirty-buffer undo, Intel Macs, authenticated mobile rendering and new target-client tool calls remain unverified.
+
+
 ## v2.9.1 macOS reliability regressions
 
 - JSONC editing is tested with comments, trailing commas, nested fields, literal punctuation inside strings, deletions, BOM and CRLF. The vendored Microsoft jsonc-parser 3.3.1 retains its MIT license and requires no runtime package installation.

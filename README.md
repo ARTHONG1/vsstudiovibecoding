@@ -1,6 +1,6 @@
 # Vibe Coding
 
-[![Version](https://img.shields.io/badge/version-2.9.1-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
+[![Version](https://img.shields.io/badge/version-2.10.0-blue.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-0078D6.svg)](https://github.com/ARTHONG1/vsstudiovibecoding)
 [![CI](https://github.com/ARTHONG1/vsstudiovibecoding/actions/workflows/ci.yml/badge.svg)](https://github.com/ARTHONG1/vsstudiovibecoding/actions)
@@ -27,13 +27,15 @@ https://github.com/user-attachments/assets/05ad2995-62e7-4ae0-baa9-389ecaa69941
 
 한 문장만 던지면 에이전트가 프로젝트를 열어 구조를 읽고, 실행 명령과 미리보기 주소를 직접 찾아내고, 기존 VS Code와 분리된 전용 작업 환경을 만들고, 바탕화면 바로가기(맥은 실행 앱)까지 만든 뒤 화면이 실제로 뜨는지 확인합니다. 필요한 로그인·프로젝트 신뢰 승인은 사용자가 확인합니다.
 
-**v2.9.1은 맥 설치·재설치 안정성을 보완했습니다.** 한글·공백 경로, 사용자 지정 설치 위치, 기존 설정의 주석·포트 설정을 보존합니다. 실행 앱 교체에 실패하면 기존 앱을 유지하고, 기존 웹 프로젝트 설치·재설치도 맥 자동 검증에 포함합니다. macOS 지원은 베타입니다. 자동 검증과 실제 기기 검증 범위는 [TESTING.md](TESTING.md)에 구분해 기록합니다.
+**v2.10.0은 개발 도구 지침과 작업 보호를 보완했습니다.** REA와 Chrome DevTools 공식 스킬 4개를 기본 준비 범위에 추가했습니다. 같은 제목의 서로 다른 대화 기록을 분리하고, 미저장 편집 내용이 있으면 타임머신 복원을 중단합니다. 관련 없는 탭을 닫지 않으며 개발 서버 실패를 정적 미리보기로 가리지 않습니다. Windows 연결 설정은 기존 필드를 백업·병합합니다. macOS는 베타이며 검증 범위와 남은 제한은 [TESTING.md](TESTING.md)에 기록합니다.
 
 ### 기본 AI 작업 도구 — 기본 도구 세팅
 
 ![화면 확인 Playwright, 문서 조회 Context7, 오류 진단 Chrome DevTools](images/vibe-coding-agent-tools.webp)
 
-전체 환경 세팅을 맡은 AI 에이전트는 **Playwright CLI + 공식 Skill, Context7 MCP, Chrome DevTools MCP**를 기본으로 설치·연결합니다. 이미 정상 작동하면 재사용하고, 실제 VS Code의 Codex에서 사용할 수 있는지 확인합니다. 화면 동작 확인, 필요한 라이브러리 문서 조회, 브라우저 오류 진단에 적절히 쓰도록 프로젝트의 `AGENTS.md` 또는 연결된 지침도 보존·보완합니다. 모든 작업에 세 도구를 강제로 실행하지는 않습니다.
+위 도구 소개 이미지는 이전 구성입니다. 현재는 아래의 REA와 DevTools 공식 스킬도 포함합니다.
+
+전체 환경 세팅을 맡은 AI 에이전트는 **Playwright CLI + 공식 Skill, Context7 MCP, Chrome DevTools MCP + 공식 스킬 4개, REA CLI·MCP + 공식 스킬**를 기본으로 설치·연결합니다. 이미 정상 작동하면 재사용하고, 실제 VS Code의 Codex에서 사용할 수 있는지 확인합니다. 화면 동작 확인, 필요한 라이브러리 문서 조회, 브라우저 오류 진단에 적절히 쓰도록 프로젝트의 `AGENTS.md` 또는 연결된 지침도 보존·보완합니다. 모든 작업에 네 계열 도구를 강제로 실행하지는 않습니다.
 
 이 절차는 [스킬의 도구 세팅 지침](vibe-coding/references/agent-tools.md)을 읽은 **AI 에이전트가 수행**합니다. `setup.ps1`·`setup-macos.sh`나 VS Code 확장만 실행해서는 설치되지 않습니다. Node·브라우저 설치, 외부 문서 서비스의 인증/호출 제한, Codex 프로젝트 신뢰에 따라 일부 단계가 대기할 수 있으며 설치·클라이언트 인식·실제 호출을 구분해 보고합니다.
 
@@ -43,7 +45,7 @@ https://github.com/user-attachments/assets/05ad2995-62e7-4ae0-baa9-389ecaa69941
 
 ![3열 분할, 터미널 전체, 미리보기 전체 세 가지 화면 모드와 상태바 버튼](images/vibe-coding-view-modes.webp)
 
-**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.9.1/vibe-coding-2.9.1.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
+**[친절한 시작 안내 →](https://arthong1.github.io/vsstudiovibecoding/)** · **[스킬 ZIP 다운로드](https://github.com/ARTHONG1/vsstudiovibecoding/releases/download/v2.10.0/vibe-coding-2.10.0.zip)** · [문제 신고](https://github.com/ARTHONG1/vsstudiovibecoding/issues)
 
 ## 가장 쉬운 시작
 
@@ -56,7 +58,7 @@ https://github.com/ARTHONG1/vsstudiovibecoding 의 vibe-coding 폴더를
 내 AI 도구의 스킬 폴더에 설치하고 SKILL.md를 읽어 실행해줘.
 내 컴퓨터(Windows 또는 macOS)에 별도 샘플 프로젝트를 만들고 VS Code, Codex CLI,
 필수 확장, 미리보기 | 코드 | Codex 3열 화면과 상태바 토글 버튼까지 설정해줘.
-Playwright·Context7·Chrome DevTools 세 가지를 기본 준비하고,
+Playwright·Context7·Chrome DevTools·REA 네 계열을 기본 준비하고,
 Codex에서의 사용 가능 여부와 프로젝트의 도구 사용 지침도 확인해줘.
 기존 설정과 파일은 보존하고 실제 화면, 버튼, 3대 모드 전환,
 바탕화면 실행 아이콘 재실행을 검증해줘. 보안 승인과 로그인이 필요하면
@@ -144,6 +146,8 @@ v2.9.0부터 같은 요청문으로 맥에서도 세팅합니다. 에이전트�
 문제 신고에는 OS, 버전, 기대/실제 동작, 민감정보를 가린 오류만 포함하세요. 전체 로그나 사용자 경로·API 키를 그대로 게시하지 마세요.
 
 ## ⏪ Vibe 타임머신 (대화 단위 되돌리기)
+
+미저장 편집 내용이 있으면 복원을 시작하지 않습니다. 저장을 마친 뒤 다시 복원하세요. 미저장 버퍼의 자동 백업·재적용은 아직 지원하지 않습니다.
 
 ![대화 제목으로 저장된 시점을 고르는 Vibe 타임머신 선택 창](images/vibe-coding-time-machine.webp)
 

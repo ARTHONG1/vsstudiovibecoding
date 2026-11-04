@@ -45,6 +45,7 @@ const requiredFiles = [
   'vibe-coding/references/playwright.md',
   'vibe-coding/references/context7.md',
   'vibe-coding/references/chrome-devtools.md',
+  'vibe-coding/references/rea.md',
   'vibe-coding/assets/agent-tool-guidance.md',
   'vibe-coding/assets/sample.html',
   'vibe-coding/assets/workspace-extension/extension/package.json',
@@ -80,6 +81,11 @@ try {
 
   const manifest = fs.readFileSync(path.join(ROOT, 'vibe-coding/assets/workspace-extension/extension.vsixmanifest'), 'utf8');
   if (!manifest.includes('Version="' + rootPkg.version + '"')) error('VSIX manifest version mismatch');
+  for (const file of ['index.html', 'llms.txt']) {
+    const content = fs.readFileSync(path.join(ROOT, file), 'utf8');
+    if (!content.includes('/releases/download/v' + rootPkg.version + '/vibe-coding-' + rootPkg.version + '.zip') && file === 'index.html') error(file + ' download version mismatch');
+    if (!content.includes('v' + rootPkg.version)) error(file + ' release version mismatch');
+  }
   const expectedDownloadUrl = `/releases/download/v${rootPkg.version}/vibe-coding-${rootPkg.version}.zip`;
   if (!readmeText.includes(expectedDownloadUrl)) {
     error(`README.md does not reference the exact release download URL: ${expectedDownloadUrl}`);
@@ -115,12 +121,22 @@ for (const js of jsFilesToCheck) {
 }
 
 console.log('\x1b[36m[4/4] Checking documentation and links...\x1b[0m');
-const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
-if (!fs.existsSync(path.join(ROOT, 'TESTING.md')) && readme.includes('[검증 범위](TESTING.md)')) {
-  error('README links to TESTING.md, but the file does not exist.');
-} else {
-  success('Documentation links are valid.');
+function inspectDocs(dir) {
+  for (const item of fs.readdirSync(dir, {withFileTypes: true})) {
+    const full = path.join(dir, item.name);
+    if (item.isDirectory()) { inspectDocs(full); continue; }
+    if (/\.bak(?:[-.]|$)|~$|^\.DS_Store$/.test(item.name)) error('Backup/temp file in skill package: ' + full);
+    if (!item.name.endsWith('.md')) continue;
+    const content = fs.readFileSync(full, 'utf8');
+    for (const match of content.matchAll(/\]\(([^)]+)\)/g)) {
+      const target = match[1].split('#')[0];
+      if (!target || /^(?:[a-z]+:|\/)/i.test(target) || target.includes(' ') || target.startsWith('<')) continue;
+      if (!fs.existsSync(path.resolve(path.dirname(full), target))) error('Broken local link in ' + full + ': ' + target);
+    }
+  }
 }
+inspectDocs(path.join(ROOT, 'vibe-coding'));
+if (!errors) success('Skill documentation targets and package file exclusions verified.');
 
 if (errors > 0) {
   console.error(`\n\x1b[31mInspection failed with ${errors} error(s).\x1b[0m\n`);

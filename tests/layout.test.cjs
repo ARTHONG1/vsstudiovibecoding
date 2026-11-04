@@ -50,7 +50,8 @@ test('restore cleans up misplaced entry file tab in column 1 without reference e
     isDirty: false
   };
   const previewTab = { label: '127.0.0.1:3000', isActive: true };
-  const group1 = { viewColumn: 1, tabs: [misplacedTab, previewTab] };
+  const unrelatedTabs = [{label:'My custom dashboard', input:{}}, {label:'ERR_dashboard', input:undefined}, {label:'Settings', input:{viewType:'settings'}}, {label:'Other preview', input:{viewType:'custom.preview'}}];
+  const group1 = { viewColumn: 1, tabs: [misplacedTab, previewTab, ...unrelatedTabs] };
   const config = { enabled: true, entryFile: 'index.html', codexPath: 'C:/tools/codex.exe' };
   const vscode = {
     workspace: {
@@ -86,4 +87,5 @@ test('restore cleans up misplaced entry file tab in column 1 without reference e
   await commands.get('vibe.restoreLayout')({ maximized: false });
   assert.equal(events.filter(e => e.event === 'error').length, 0, JSON.stringify(events));
   assert.ok(closedTabs.includes(misplacedTab), 'Misplaced entry tab in column 1 must be closed');
+  assert.ok(unrelatedTabs.every(tab => !closedTabs.includes(tab)), 'Unrelated and unknown tabs must remain open');
 });
